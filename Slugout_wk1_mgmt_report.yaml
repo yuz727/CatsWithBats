@@ -1,0 +1,35 @@
+# Magagment week end report
+manager_lastname: "Young"
+week: 1
+# Team member evalution
+team_members:
+  Zhou:
+    score: 0
+    desc: "Looked into behavior trees to implement the AI non playable characters"
+  Yan:
+    score: 0
+    desc: "Also looked into behavior trees to implement the AI non playable characters"
+  Charlesworth:
+    score: 0
+    desc: "Looked into networked multiplayer in Bevy"
+  Poliski:
+    score: 0
+    desc: "Researched how to simulate physics on a 2D plane in Rust using Bevy"
+  Ringenbach:
+    score: 0
+    desc: "Researched how to implement basic visuals and movement in Rust using Bevy"
+  Hollero:
+    score: 0
+    desc: "Looked into getting started with Bevy and setting up the basic framework of a game in Rust"
+  Lining Liu:
+    score: 0
+    desc: "Also researched how to simulate physics on a 2D plane in Rust using Bevy"
+  Ross:
+    score: 0
+    desc: "Also looked into networked multiplayer in Bevy"
+  Young:
+    score: 0
+    desc: "Looked into possible physics equations we may need to use. Completed the readme for the project github"
+  
+  
+
