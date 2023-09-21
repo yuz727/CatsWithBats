@@ -33,7 +33,7 @@ Advanced physics will be implemented when the ball, characters, walls, and surfa
     
 ### AI
 
-AI will be used to create non-playable characters. We will have three options: easy, medium, and hard. Players will be able to select the difficulty for each AI player that is added. Each option will have a different behavior tree.
+AI will be used to create non-playable characters. We want to have a difficulty slider that will allow the players to customize what level of difficulty they want. This slider will correspond to probabilities within the behavior tree. Players will be able to select the difficulty for each AI player that is added.
 
 ### Networked Multiplayer
 
@@ -43,37 +43,36 @@ AI will be used to create non-playable characters. We will have three options: e
 ## Midterm Goals
 
 * Basic visuals are on screen
-	Playable character that can move around and has a swinging animation 
-	Map is setup with background visuals and objects around map
+	Playable character that can move around and has a swinging animation
+	Map is setup with background visuals and 2 - 3 objects around map. If the player is 1 tile in our game, the map will be 400 tiles. 
 * Intro screen is implemented with all options available (1-4 players and AI players)
 * Physics - Ball to map and player to map physics are done
 	Ball is bouncing off of surfaces and walls accounting for the size, weight, elasticity, and density of the ball and energy absorption of the wall.
 	Ball is slowing down due to friction from the ground
-	Player is bouncing off of surfaces and walls
+	Player is bouncing off of surfaces and walls accounting for energy absorption of the wall
 	Does not include player to player, ball to ball, and ball to player physics.
-* AI - at least one of the non playable characters is fully functioning.
-* Networked Multiplayer - Possesses basic functionality of client-server architecture 
+* AI - A basic behavior tree is implemented. This will be the base for building off of for the difficulty slider. 
+* Networked Multiplayer - Up to 4 players should be able to all be on the same server at once.
 
 
 ## Final Goals
 
-* 10%: All visuals make sense and can be easily understood and followed and scoring is implemented
-* 10%: Player controls are working
-	The players can hit the ball and move accurately
+* 10%: All visuals (map, characters, ball, and objects) make sense and can be easily understood and followed. Health is fully implemented including health decreasing when hit by a ball, "death" of characters when their health runs out, and a health bar on screen. 
+* 10%: Player controls are working.
+	The players can hit the ball and move accurately and can swing and hit a ball accurately.
 * 20%: AI
-	AI characters play with purpose and strategy. There are fully implemented decision trees for an easy medium and hard mode.
+	AI characters play with purpose and strategy. There is a fully implemented decision tree that can be adjusted by the player using a difficulty slider.
 * 20%: Networked Multiplayer
 	2-4 characters can compete at once.
 * Physics
-	5%: The ball accurately bounces around the map and off players and other balls accordingly
-		This includes spinning when hit a certain way
-	5%: The players will accurately bounce off of eachother and the walls
-	5%: There are different surfaces and materials that vary and effect the ball and players differently
-	5%: There are different balls that vary and will move and be affected differently by the same surfaces
+	5%: The ball accurately bounces around the map and off players and other balls accounting for the size, weight, elasticity, density, and angular velocity of the 	ball and energy absorption of the wall. This includes spinning when hit a certain way by the players bat.
+	5%: The players will accurately bounce off of eachother and the walls accounting for the energy absorption of the wall.
+	5%: There are different surfaces and materials that vary in friction and energy absorption and effect the ball and players differently. 
+	5%: There are different balls that vary in size, weight, elasticity, and density.
 
 
 ## Stretch Goals
 
-* Implement multiple maps that are unique and vary.
-	They will all have at least one new element such as a new material or surface, or a new type of ball. Some might also have different characteristics, for example the balls may move significantly faster on one map. 
-* Implement powerups that give various benefits or disadvantages to the players and AI. 
+* Implement 3 more maps that are unique and vary.
+	They will also have at least 1 extra/different characteristic, for example the balls may move significantly faster on one map, or there may be a new surface. 
+* Implement 5 or more powerups that give various benefits or disadvantages to the players and AI, for example a larger bat. 
