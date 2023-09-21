@@ -44,7 +44,7 @@ AI will be used to create non-playable characters. We want to have a difficulty 
 
 * Basic visuals are on screen
 	Playable character that can move around and has a swinging animation
-	Map is setup with background visuals and 2 - 3 objects around map. If the player is 1 tile in our game, the map will be 400 tiles. 
+	Map is setup with background visuals and 2 - 3 objects around map. If the player is 1 tile in our game, the map will be 1200 tiles or more. 
 * Intro screen is implemented with all options available (1-4 players and AI players)
 * Physics - Ball to map and player to map physics are done
 	Ball is bouncing off of surfaces and walls accounting for the size, weight, elasticity, and density of the ball and energy absorption of the wall.
