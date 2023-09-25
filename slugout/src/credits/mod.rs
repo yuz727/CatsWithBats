@@ -1,1 +1,1 @@
-// pub mod credits;
+pub mod credits;
