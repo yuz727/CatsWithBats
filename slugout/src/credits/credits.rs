@@ -10,7 +10,7 @@ pub struct Credits;
 pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer>){
     
     // Spawn credits sprite
-    let credits_lib = vec!["Alex_Credits.png", "PaulR.png", "JakobR.png", "brayden.png", "nicolecredit.png", "lgy2credits.png", "RafaelCredits.png", "LukeCredits.png"] ;
+    let credits_lib = vec!["Alex_Credits.png", "PaulR.png", "JakobR.png", "brayden.png", "nicolecredit.png", "lgy2credits.png", "RafaelCredits.png", "LukeCredits.png", "Jimmy.png"] ;
     // Let all sprites start with negative z for despawning conditions
     let mut starting_location = -1.;
     for slides in credits_lib{
