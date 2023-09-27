@@ -8,7 +8,7 @@ const TITLE: &str = "Slugout";
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(0., 0., 1.0)))
+        .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: TITLE.into(),
