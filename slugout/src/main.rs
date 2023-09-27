@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PresentMode, render::texture};
+use bevy::{prelude::*, window::PresentMode};
 
 mod credits;
 
@@ -8,7 +8,7 @@ const TITLE: &str = "Slugout";
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::rgb(0., 1., 1.0)))
+        .insert_resource(ClearColor(Color::rgb(0., 0., 1.0)))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: TITLE.into(),
@@ -24,7 +24,7 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 }
 
