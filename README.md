@@ -33,7 +33,7 @@ Advanced physics will be implemented when the ball, characters, walls, and surfa
     
 ### AI
 
-AI will be used to create non-playable characters. We want to have a difficulty slider that will allow the players to customize what level of difficulty they want. This slider will correspond to probabilities within the behavior tree. Players will be able to select the difficulty for each AI player that is added.
+AI will be used to create non-playable characters. We want to have a difficulty slider that will allow the players to customize what level of difficulty they want. This slider will correspond to probabilities within the behaviour tree. Players will be able to select the difficulty for each AI player that is added. The behaviour tree will have branches enabled/disabled based on the behaviour mode the AI is in, which is determined by the current state of the game. The difficulty slider would affect AI behaviour in aggression, hit accuracy, and quality of play.
 
 ### Networked Multiplayer
 
