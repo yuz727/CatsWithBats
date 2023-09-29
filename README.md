@@ -33,7 +33,7 @@ Advanced physics will be implemented when the ball, characters, walls, and surfa
     
 ### AI
 
-AI will be used to create non-playable characters. We want to have a difficulty slider that will allow the players to customize what level of difficulty they want. This slider will correspond to probabilities within the behaviour tree. Players will be able to select the difficulty for each AI player that is added. The behaviour tree will have branches enabled/disabled based on the behaviour mode the AI is in, which is determined by the current state of the game. The difficulty slider would affect AI behaviour in aggression, hit accuracy, and quality of play.
+AI will be used to create non-playable characters. We want to have a difficulty slider that will allow the players to customize what level of difficulty they want. This slider will correspond to probabilities within the behaviour tree. Players will be able to select the difficulty for each AI player that is added. Depending on the state of the game, the AI would either act aggressively, passively, or a more idle state. These three modes would be reflected by their change to the behaviour tree, enabling/disabling certain branches, and change some aspect of the random number generation in the decision-making. The difficulty slider would affect AI behaviour in aggression, hit accuracy, and quality of play.
 
 ### Networked Multiplayer
 
@@ -61,7 +61,7 @@ AI will be used to create non-playable characters. We want to have a difficulty 
 * 10%: Player controls are working.
 	The players can hit the ball and move accurately and can swing and hit a ball accurately.
 * 20%: AI
-	AI characters play with purpose and strategy. There is a fully implemented decision tree that can be adjusted by the player using a difficulty slider.
+	AI characters play with purpose and strategy. There is a fully implemented decision tree with the aforementioned system. With three behaviour modes reflected by the decision tree. With some randomness in the action to make the AI less predictable. The aggression, hit accuracy, and overall difficulty that can be adjusted by the player using a difficulty slider.
 * 20%: Networked Multiplayer
 	2-4 characters can compete at once.
 * Physics
