@@ -29,7 +29,7 @@ Slugout is a top down view multiplayer game. The main goal of the game is to be 
 
 ### Physics
 
-Advanced physics will be implemented when the ball, characters, walls, and surfaces interact. We will implement different surfaces and materials that will vary in friction and energy absorption which will effect the ball and characters differently. There will be multiple balls that vary in size, weight, elasticity, and density. The balls will also be implemented to allow spinning. Different players will also have different reactions when hitting eachother and other surfaces. 
+Advanced physics will be implemented when the ball, characters, walls, and surfaces interact. We will implement different surfaces and materials that will vary in friction and energy absorption which will effect the ball and characters differently. There will be multiple balls that vary in size, weight, elasticity, and density. The balls will also be implemented to allow spinning. 
     
 ### AI
 
@@ -43,13 +43,17 @@ AI will be used to create non-playable characters. We want to have a difficulty 
 ## Midterm Goals
 
 * Basic visuals are on screen
-	Playable character that can move around and has a swinging animation
-	Map is setup with background visuals and 2 - 3 objects around map. If the player is 1 tile in our game, the map will be 1200 tiles or more. 
+  	Top down view
+	Includes a playable cat character that can move up, down, left, and right around a static map and will stop when hitting the edge of the screen,
+	a swinging (animated) bat that the player holds and swings,
+	a map that is modeled off the living room of a cat grandma,
+	2 - 3 objects around the map (recliner, a cat tree, a coffee table, etc.)
+	and yarn balls moving around the map.
 * Intro screen is implemented with all options available (1-4 players and AI players)
-* Physics - Ball to map and player to map physics are done
-	Ball is bouncing off of surfaces and walls accounting for the size, weight, elasticity, and density of the ball and energy absorption of the wall.
-	Ball is slowing down due to friction from the ground
-	Player is bouncing off of surfaces and walls accounting for energy absorption of the wall
+* Physics 
+	Ball is bouncing off of surfaces and walls accounting for the angle that the ball hits.
+	Ball is slowing down due to friction from the ground.
+	Player is bouncing off of surfaces and walls.
 	Does not include player to player, ball to ball, and ball to player physics.
 * AI - A basic behavior tree is implemented. This will be the base for building off of for the difficulty slider. 
 * Networked Multiplayer - Up to 4 players should be able to all be on the same server at once.
@@ -57,7 +61,7 @@ AI will be used to create non-playable characters. We want to have a difficulty 
 
 ## Final Goals
 
-* 10%: All visuals (map, characters, ball, and objects) make sense and can be easily understood and followed. Health is fully implemented including health decreasing when hit by a ball, "death" of characters when their health runs out, and a health bar on screen. 
+* 10%: All visuals (map, characters, ball, and objects) make sense and can be easily understood and followed. Health is fully implemented including health decreasing when hit by a ball, "death" of characters when their health runs out, and a health bar on screen. If our character is 1 tile in our game, the map will be 1200 tiles or more.
 * 10%: Player controls are working.
 	The players can hit the ball and move accurately and can swing and hit a ball accurately.
 * 20%: AI
@@ -75,4 +79,4 @@ AI will be used to create non-playable characters. We want to have a difficulty 
 
 * Implement 3 more maps that are unique and vary.
 	They will also have at least 1 extra/different characteristic, for example the balls may move significantly faster on one map, or there may be a new surface. 
-* Implement 5 or more powerups that give various benefits or disadvantages to the players and AI, for example a larger bat. 
+* Implement 3 or more powerups that give various benefits or disadvantages to the players and AI, for example a larger bat. 
