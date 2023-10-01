@@ -1,10 +1,20 @@
 use bevy::prelude::*;
 
+
 #[derive(Component, Deref, DerefMut)]
 pub struct CreditsTimer(Timer);
 
 #[derive(Component)]
 pub struct Credits;
+
+pub struct CreditsPlugin;
+
+impl Plugin for CreditsPlugin{
+    fn build(&self, app: &mut App){
+        app.add_systems(Startup, load_credit_texture);
+        app.add_systems(Update,cycle_credits);
+    }
+}
 
 // Load credit screen assets
 pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer>){
