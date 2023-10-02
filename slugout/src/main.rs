@@ -50,14 +50,14 @@ fn setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Load Player
     commands.spawn(SpriteBundle{
         texture: _asset_server.load("Player.png"),
-        transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.18)),
+        transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
         ..default()
     }).insert(Player);
 
     // Load Bat
     commands.spawn(SpriteBundle{
         texture: _asset_server.load("Bat.png"),
-        transform: Transform::with_scale(Transform::from_xyz(20., 25., 2.), Vec3::splat(0.18)),
+        transform: Transform::with_scale(Transform::from_xyz(20., 25., 2.), Vec3::splat(0.13)),
         ..default()
     }).insert(Bat);
 
