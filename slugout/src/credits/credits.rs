@@ -27,19 +27,16 @@ pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer
 }
 
 pub fn cycle_credits(mut commands: Commands, mut move_credits: Query<(&mut Transform, &mut CreditsTimer, Entity), With<Credits>>, time: Res<Time>, list_players: Query<Entity, With<Player>>){
-    // If there is no players left
-    //if list_players.is_empty(){
-        for(mut transform, mut timer, entity) in move_credits.iter_mut(){ 
-            timer.tick(time.delta());
-            if timer.just_finished() {
-                // move the location up so the shown slides can be despawn
-                transform.translation.z += 10.;
-                timer.reset();
-            }
-            if transform.translation.z >= 0.{
-                // despawn shown slides
-                commands.entity(entity).despawn();
-            }
+    for(mut transform, mut timer, entity) in move_credits.iter_mut(){ 
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            // move the location up so the shown slides can be despawn
+            transform.translation.z += 10.;
+            timer.reset();
         }
-    //}
+        if transform.translation.z >= 0.{
+            // despawn shown slides
+            commands.entity(entity).despawn();
+        }
+    }
 }
