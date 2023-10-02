@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use crate::Player;
 
 #[derive(Component, Deref, DerefMut)]
 pub struct CreditsTimer(Timer);
@@ -26,7 +25,7 @@ pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer
   
 }
 
-pub fn cycle_credits(mut commands: Commands, mut move_credits: Query<(&mut Transform, &mut CreditsTimer, Entity), With<Credits>>, time: Res<Time>, list_players: Query<Entity, With<Player>>){
+pub fn cycle_credits(mut commands: Commands, mut move_credits: Query<(&mut Transform, &mut CreditsTimer, Entity), With<Credits>>, time: Res<Time>){
     for(mut transform, mut timer, entity) in move_credits.iter_mut(){ 
         timer.tick(time.delta());
         if timer.just_finished() {
