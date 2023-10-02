@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::Player;
 
 #[derive(Component, Deref, DerefMut)]
 pub struct CreditsTimer(Timer);
@@ -12,7 +13,7 @@ pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer
     // Spawn credits sprite
     let credits_lib = vec!["Alex_Credits.png", "PaulR.png", "JakobR.png", "brayden.png", "nicolecredit.png", "lgy2credits.png", "RafaelCredits.png", "LukeCredits.png", "Jimmy.png"] ;
     // Let all sprites start with negative z for despawning conditions
-    let mut starting_location = -1.;
+    let mut starting_location = -10.;
     for slides in credits_lib{
         commands.spawn(SpriteBundle {
             texture: asset_server.load(slides),
@@ -25,17 +26,20 @@ pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer
   
 }
 
-pub fn cycle_credits(mut commands: Commands, mut move_credits: Query<(&mut Transform, &mut CreditsTimer, Entity), With<Credits>>, time: Res<Time>){
-    for(mut transform, mut timer, entity) in move_credits.iter_mut(){ 
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            // move the location up so the shown slides can be despawn
-            transform.translation.z += 10.;
-            timer.reset();
+pub fn cycle_credits(mut commands: Commands, mut move_credits: Query<(&mut Transform, &mut CreditsTimer, Entity), With<Credits>>, time: Res<Time>, list_players: Query<Entity, With<Player>>){
+    // If there is no players left
+    //if list_players.is_empty(){
+        for(mut transform, mut timer, entity) in move_credits.iter_mut(){ 
+            timer.tick(time.delta());
+            if timer.just_finished() {
+                // move the location up so the shown slides can be despawn
+                transform.translation.z += 10.;
+                timer.reset();
+            }
+            if transform.translation.z >= 0.{
+                // despawn shown slides
+                commands.entity(entity).despawn();
+            }
         }
-        if transform.translation.z >= 0.{
-            // despawn shown slides
-            commands.entity(entity).despawn();
-        }
-    }
+    //}
 }

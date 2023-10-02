@@ -6,6 +6,12 @@ const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
 const TITLE: &str = "Slugout";
 
+#[derive(Component)]
+pub struct Player;
+
+#[derive(Component)]
+pub struct Background;
+
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
@@ -26,5 +32,19 @@ fn main() {
 
 fn setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
+
+    // Load Background
+    commands.spawn(SpriteBundle{
+        texture: _asset_server.load("background1_small.png"),
+        transform: Transform::from_xyz(0., 0., 0.),
+        ..default()
+    }).insert(Background);
+
+    // Load Player
+    commands.spawn(SpriteBundle{
+        texture: _asset_server.load("Player.png"),
+        transform: Transform::with_scale(Transform::from_xyz(0., 0., 0.), Vec3::splat(0.2)),
+        ..default()
+    }).insert(Player);
 }
 
