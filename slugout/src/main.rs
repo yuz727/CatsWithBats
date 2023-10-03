@@ -10,6 +10,9 @@ const TITLE: &str = "Slugout";
 pub struct Player;
 
 #[derive(Component)]
+pub struct Face;
+
+#[derive(Component)]
 pub struct Bat;
 
 
@@ -50,14 +53,20 @@ fn setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Load Player
     commands.spawn(SpriteBundle{
         texture: _asset_server.load("Player.png"),
-        transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
+        transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.18)),
         ..default()
     }).insert(Player);
+
+    commands.spawn(SpriteBundle{
+        texture: _asset_server.load("Face.png"),
+        transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.18)),
+        ..default()
+    }).insert(Face);
 
     // Load Bat
     commands.spawn(SpriteBundle{
         texture: _asset_server.load("Bat.png"),
-        transform: Transform::with_scale(Transform::from_xyz(20., 25., 2.), Vec3::splat(0.13)),
+        transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.18)),
         ..default()
     }).insert(Bat);
 
@@ -80,4 +89,3 @@ fn setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
         ..default()
     }).insert(Object);
 }
-
