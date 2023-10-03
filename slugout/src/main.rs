@@ -39,6 +39,8 @@ fn main() {
         .add_systems(Startup, setup)
         .add_plugins(npc::npc::NPCPlugin)
         .add_systems(Update, move_player)
+        .add_systems(Update, move_face)
+        .add_systems(Update, move_bat)
         .run();
 }
 
@@ -111,5 +113,53 @@ fn move_player(input: Res<Input<KeyCode>>, mut player: Query<&mut Transform, Wit
 
     player_transform.translation.x += x_vel;
     player_transform.translation.y += y_vel;
+
+}
+
+fn move_face(input: Res<Input<KeyCode>>, mut face: Query<&mut Transform, With<Face>>){
+    let mut face_transform = face.single_mut();
+
+    let mut x_vel = 0.;
+    let mut y_vel = 0.;
+
+    if input.pressed(KeyCode::A){
+        x_vel -= 1.;
+    }
+    if input.pressed(KeyCode::D){
+        x_vel += 1.;
+    }
+    if input.pressed(KeyCode::W){
+        y_vel += 1.;
+    }
+    if input.pressed(KeyCode::S){
+        y_vel -= 1.;
+    }
+
+    face_transform.translation.x += x_vel;
+    face_transform.translation.y += y_vel;
+
+}
+
+fn move_bat(input: Res<Input<KeyCode>>, mut bat: Query<&mut Transform, With<Bat>>){
+    let mut bat_transform = bat.single_mut();
+
+    let mut x_vel = 0.;
+    let mut y_vel = 0.;
+
+    if input.pressed(KeyCode::A){
+        x_vel -= 1.;
+    }
+    if input.pressed(KeyCode::D){
+        x_vel += 1.;
+    }
+    if input.pressed(KeyCode::W){
+        y_vel += 1.;
+    }
+    if input.pressed(KeyCode::S){
+        y_vel -= 1.;
+    }
+
+    bat_transform.translation.x += x_vel;
+    bat_transform.translation.y += y_vel;
 
 }
