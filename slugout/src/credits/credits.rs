@@ -1,10 +1,20 @@
 use bevy::prelude::*;
 
+
 #[derive(Component, Deref, DerefMut)]
 pub struct CreditsTimer(Timer);
 
 #[derive(Component)]
 pub struct Credits;
+
+pub struct CreditsPlugin;
+
+impl Plugin for CreditsPlugin{
+    fn build(&self, app: &mut App){
+        app.add_systems(Startup, load_credit_texture);
+        app.add_systems(Update,cycle_credits);
+    }
+}
 
 // Load credit screen assets
 pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer>){
@@ -12,7 +22,7 @@ pub fn load_credit_texture(mut commands: Commands, asset_server: Res<AssetServer
     // Spawn credits sprite
     let credits_lib = vec!["Alex_Credits.png", "PaulR.png", "JakobR.png", "brayden.png", "nicolecredit.png", "lgy2credits.png", "RafaelCredits.png", "LukeCredits.png", "Jimmy.png"] ;
     // Let all sprites start with negative z for despawning conditions
-    let mut starting_location = -10.;
+    let mut starting_location = -1.;
     for slides in credits_lib{
         commands.spawn(SpriteBundle {
             texture: asset_server.load(slides),
