@@ -38,7 +38,7 @@ fn main() {
         //.add_plugins(credits::credits::CreditsPlugin)
         .add_systems(Startup, setup)
         .add_plugins(npc::npc::NPCPlugin)
-        
+        .add_systems(Update, move_player)
         .run();
 }
 
@@ -90,3 +90,26 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     }).insert(Object);
 }
 
+fn move_player(input: Res<Input<KeyCode>>, mut player: Query<&mut Transform, With<Player>>){
+    let mut player_transform = player.single_mut();
+
+    let mut x_vel = 0.;
+    let mut y_vel = 0.;
+
+    if input.pressed(KeyCode::A){
+        x_vel -= 1.;
+    }
+    if input.pressed(KeyCode::D){
+        x_vel += 1.;
+    }
+    if input.pressed(KeyCode::W){
+        y_vel += 1.;
+    }
+    if input.pressed(KeyCode::S){
+        y_vel -= 1.;
+    }
+
+    player_transform.translation.x += x_vel;
+    player_transform.translation.y += y_vel;
+
+}
