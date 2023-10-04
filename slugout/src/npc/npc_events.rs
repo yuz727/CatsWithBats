@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::time::Duration;
 use rand::prelude::*;
 
-use super::npc::{MovementTimer, NPC, Velocity};
+use super::npc::{MovementTimer, NPC, NPCVelocity};
 
 const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
@@ -11,7 +11,7 @@ const PLAYER_SPEED: f32 = 300.;
 const ACCEL_RATE: f32 = 3600.;
 
 
-pub fn rand_movement(mut npcs: Query<(&mut Transform, &mut MovementTimer, &mut Velocity), With<NPC>>, time: Res<Time>){
+pub fn rand_movement(mut npcs: Query<(&mut Transform, &mut MovementTimer, &mut NPCVelocity), With<NPC>>, time: Res<Time>){
     let (mut transform, mut timer, mut velocity) = npcs.single_mut();
     let mut rng = thread_rng();
    

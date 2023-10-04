@@ -1,26 +1,16 @@
 use bevy::{prelude::*, window::PresentMode};
+// use crate::player_movement::*;
+use crate::components::*;
 
 mod credits;
 mod npc;
+mod player_movement;
+mod components;
+mod ball;
 
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
 const TITLE: &str = "Slugout";
-
-#[derive(Component)]
-pub struct Player;
-
-#[derive(Component)]
-pub struct Background;
-
-#[derive(Component)]
-pub struct Face;
-
-#[derive(Component)]
-pub struct Bat;
-#[derive(Component)]
-pub struct Object;
-
 
 
 fn main() {
@@ -38,9 +28,10 @@ fn main() {
         //.add_plugins(credits::credits::CreditsPlugin)
         .add_systems(Startup, setup)
         .add_plugins(npc::npc::NPCPlugin)
-        .add_systems(Update, move_player)
-        .add_systems(Update, move_face)
-        .add_systems(Update, move_bat)
+        .add_plugins(ball::ball::BallPlugin)
+        .add_systems(Update, player_movement::move_player)
+        .add_systems(Update, player_movement::move_face)
+        .add_systems(Update, player_movement::move_bat)
         .run();
 }
 
@@ -57,19 +48,19 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         texture: asset_server.load("Player.png"),
         transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Player);
+    }).insert(Player).insert(player_movement::PlayerVelocity::new());
 
     commands.spawn(SpriteBundle{
         texture: asset_server.load("Face.png"),
         transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Face);
+    }).insert(Face).insert(player_movement::PlayerVelocity::new());
 
     commands.spawn(SpriteBundle{
         texture: asset_server.load("Bat.png"),
         transform: Transform::with_scale(Transform::from_xyz(-5., 0., 2.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Bat);
+    }).insert(Bat).insert(player_movement::PlayerVelocity::new());
 
     
     // Load Objects
@@ -92,74 +83,5 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     }).insert(Object);
 }
 
-fn move_player(input: Res<Input<KeyCode>>, mut player: Query<&mut Transform, With<Player>>){
-    let mut player_transform = player.single_mut();
 
-    let mut x_vel = 0.;
-    let mut y_vel = 0.;
 
-    if input.pressed(KeyCode::A){
-        x_vel -= 1.;
-    }
-    if input.pressed(KeyCode::D){
-        x_vel += 1.;
-    }
-    if input.pressed(KeyCode::W){
-        y_vel += 1.;
-    }
-    if input.pressed(KeyCode::S){
-        y_vel -= 1.;
-    }
-
-    player_transform.translation.x += x_vel;
-    player_transform.translation.y += y_vel;
-
-}
-
-fn move_face(input: Res<Input<KeyCode>>, mut face: Query<&mut Transform, With<Face>>){
-    let mut face_transform = face.single_mut();
-
-    let mut x_vel = 0.;
-    let mut y_vel = 0.;
-
-    if input.pressed(KeyCode::A){
-        x_vel -= 1.;
-    }
-    if input.pressed(KeyCode::D){
-        x_vel += 1.;
-    }
-    if input.pressed(KeyCode::W){
-        y_vel += 1.;
-    }
-    if input.pressed(KeyCode::S){
-        y_vel -= 1.;
-    }
-
-    face_transform.translation.x += x_vel;
-    face_transform.translation.y += y_vel;
-
-}
-
-fn move_bat(input: Res<Input<KeyCode>>, mut bat: Query<&mut Transform, With<Bat>>){
-    let mut bat_transform = bat.single_mut();
-
-    let mut x_vel = 0.;
-    let mut y_vel = 0.;
-
-    if input.pressed(KeyCode::A){
-        x_vel -= 1.;
-    }
-    if input.pressed(KeyCode::D){
-        x_vel += 1.;
-    }
-    if input.pressed(KeyCode::W){
-        y_vel += 1.;
-    }
-    if input.pressed(KeyCode::S){
-        y_vel -= 1.;
-    }
-
-    bat_transform.translation.x += x_vel;
-    bat_transform.translation.y += y_vel;
-
-}

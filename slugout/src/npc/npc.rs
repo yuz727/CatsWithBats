@@ -7,14 +7,15 @@ use crate::npc::npc_events::rand_movement;
 pub struct MovementTimer(Timer);
 
 #[derive(Component)]
-pub struct Velocity {
+pub struct NPCVelocity {
     pub velocity: Vec2,
 }
+
 
 #[derive(Component)]
 pub struct NPC;
 
-impl Velocity {
+impl NPCVelocity {
     fn new() -> Self {
         Self {
             velocity: Vec2::splat(0.),
@@ -39,5 +40,5 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>){
         ..default()
     })  .insert(MovementTimer(Timer::from_seconds(rng.gen_range(0.0..5.0), TimerMode::Repeating)))
         .insert(NPC)
-        .insert(Velocity::new());
+        .insert(NPCVelocity::new());
 }
