@@ -1,17 +1,16 @@
 use bevy::prelude::*;
-use bevy::{prelude::*, window::PresentMode};
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 
 #[derive(Component)]
-struct Ball {
+struct BallVelocity {
     velocity: Vec3,
 }
 
-pub struct Omg;
+pub struct BallPlugin;
 
-impl Plugin for Omg
+impl Plugin for BallPlugin
 {
     fn build(&self, app: &mut App){
         app.add_systems(Startup, setup);
@@ -19,17 +18,13 @@ impl Plugin for Omg
     }
 }
 
-//ball
-fn setup(mut commands: Commands, mut texture_atlases: ResMut<Assets<TextureAtlas>>,) {
+//ball Creation
+fn setup(mut commands: Commands) {
 
-    commands.spawn(Camera2dBundle::default());
-        commands
-            .spawn(SpriteBundle {
-                transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
-                ..default()
-            })
-            
-    .insert(Ball {
+    commands.spawn(SpriteBundle {
+        transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
+        ..default()
+    })  .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
     });
 }
@@ -37,7 +32,7 @@ fn setup(mut commands: Commands, mut texture_atlases: ResMut<Assets<TextureAtlas
 //bounce the ball
 fn bounce(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Ball)>,
+    mut query: Query<(&mut Transform, &mut BallVelocity)>,
 ) {
     for (mut transform, mut ball) in query.iter_mut() {
         transform.translation += ball.velocity * time.delta_seconds();
