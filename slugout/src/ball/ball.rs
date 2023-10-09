@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
@@ -11,9 +11,8 @@ struct BallVelocity {
 
 pub struct BallPlugin;
 
-impl Plugin for BallPlugin
-{
-    fn build(&self, app: &mut App){
+impl Plugin for BallPlugin {
+    fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce);
     }
@@ -21,20 +20,20 @@ impl Plugin for BallPlugin
 
 //ball Creation
 fn setup(mut commands: Commands) {
-
-    commands.spawn(SpriteBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
-        ..default()
-    }) .insert(Ball) .insert(BallVelocity {
-        velocity: Vec3::new(300.0, 300.0, 2.0),
-    }).insert(Colliding::new());
+    commands
+        .spawn(SpriteBundle {
+            transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0, 2.0)),
+            ..default()
+        })
+        .insert(Ball)
+        .insert(BallVelocity {
+            velocity: Vec3::new(300.0, 300.0, 2.0),
+        })
+        .insert(Colliding::new());
 }
 
 //bounce the ball
-fn bounce(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut BallVelocity)>,
-) {
+fn bounce(time: Res<Time>, mut query: Query<(&mut Transform, &mut BallVelocity)>) {
     for (mut transform, mut ball) in query.iter_mut() {
         transform.translation += ball.velocity * time.delta_seconds();
 
@@ -45,7 +44,5 @@ fn bounce(
         if transform.translation.y.abs() > WIN_H / 2.0 {
             ball.velocity.y = -ball.velocity.y;
         }
-
-        
     }
 }
