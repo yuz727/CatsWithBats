@@ -6,6 +6,7 @@ mod npc;
 mod components;
 mod ball;
 mod player;
+mod collisions;
 
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
@@ -28,7 +29,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_plugins(npc::npc::NPCPlugin)
         .add_plugins(ball::ball::BallPlugin)
-        .add_plugins(player::player_collisions::CollisionsPlugin)
+        .add_plugins(collisions::collisions::CollisionsPlugin)
         .add_systems(Update, player::player_movement::move_player)
         .add_systems(Update, player::player_movement::move_face)
         .add_systems(Update, player::player_movement::move_bat)
