@@ -1,3 +1,4 @@
+use crate::components::*;
 use bevy::prelude::*;
 
 const WIN_W: f32 = 1280.;
@@ -24,6 +25,7 @@ fn setup(mut commands: Commands) {
             transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0, 2.0)),
             ..default()
         })
+        .insert(Ball)
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         });
