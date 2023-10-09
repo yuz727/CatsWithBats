@@ -10,9 +10,8 @@ struct BallVelocity {
 
 pub struct BallPlugin;
 
-impl Plugin for BallPlugin
-{
-    fn build(&self, app: &mut App){
+impl Plugin for BallPlugin {
+    fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce);
     }
@@ -20,20 +19,18 @@ impl Plugin for BallPlugin
 
 //ball Creation
 fn setup(mut commands: Commands) {
-
-    commands.spawn(SpriteBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
-        ..default()
-    })  .insert(BallVelocity {
-        velocity: Vec3::new(300.0, 300.0, 2.0),
-    });
+    commands
+        .spawn(SpriteBundle {
+            transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0, 2.0)),
+            ..default()
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(300.0, 300.0, 2.0),
+        });
 }
 
 //bounce the ball
-fn bounce(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut BallVelocity)>,
-) {
+fn bounce(time: Res<Time>, mut query: Query<(&mut Transform, &mut BallVelocity)>) {
     for (mut transform, mut ball) in query.iter_mut() {
         transform.translation += ball.velocity * time.delta_seconds();
 
