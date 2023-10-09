@@ -3,13 +3,10 @@ use bevy::{prelude::*, window::PresentMode};
 use crate::components::*;
 
 mod ball;
-mod ball;
-mod components;
 mod components;
 mod credits;
 mod npc;
 mod player;
-mod player_movement;
 
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;

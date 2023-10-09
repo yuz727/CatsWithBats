@@ -1,7 +1,7 @@
-use crate::npc::npc_events::rand_movement;
+use crate::components::*;
+use crate::npc::npc_events::*;
 use bevy::prelude::*;
 use rand::prelude::*;
-
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
 pub struct MovementTimer(Timer);
@@ -32,7 +32,8 @@ pub struct NPCPlugin;
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, load_npc);
-        app.add_systems(Update, rand_movement);
+        //app.add_systems(Update, approach_player);
+        app.add_systems(Update, approach_ball);
     }
 }
 
@@ -51,4 +52,16 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         )))
         .insert(NPC)
         .insert(NPCVelocity::new());
+}
+
+pub fn select(
+    mut commands: Commands,
+    mut npcs: Query<&mut Transform, (With<NPC>, Without<Player>, Without<Ball>)>,
+    mut player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>)>,
+    mut ball: Query<&mut Transform, (With<Ball>, Without<Player>, Without<NPC>)>,
+    time: Res<Time>,
+) {
+    let npc_transform = npcs.single_mut();
+    let player_transform = player.single_mut();
+    let ball_transform = ball.single_mut();
 }
