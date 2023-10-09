@@ -28,7 +28,8 @@ fn setup(mut commands: Commands) {
         .insert(Ball)
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
-        });
+        })
+        .insert(Colliding::new());
 }
 
 //bounce the ball

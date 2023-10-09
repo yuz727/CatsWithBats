@@ -17,3 +17,16 @@ pub struct Background;
 
 #[derive(Component)]
 pub struct Ball;
+
+#[derive(Component)]
+pub struct Colliding {
+    pub currently_colliding: bool,
+}
+
+impl Colliding{
+    pub fn new() -> Self {
+        Self {
+            currently_colliding: false,
+        }
+    }
+}
