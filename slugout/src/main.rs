@@ -1,5 +1,4 @@
 use bevy::{prelude::*, window::PresentMode};
-// use crate::player_movement::*;
 use crate::components::*;
 
 mod credits;
@@ -29,10 +28,10 @@ fn main() {
         .add_systems(Startup, setup)
         .add_plugins(npc::npc::NPCPlugin)
         .add_plugins(ball::ball::BallPlugin)
+        .add_plugins(player::player_collisions::CollisionsPlugin)
         .add_systems(Update, player::player_movement::move_player)
         .add_systems(Update, player::player_movement::move_face)
         .add_systems(Update, player::player_movement::move_bat)
-        .add_systems(Update, player::player_collisions::player_ball_collision)
         .run();
 }
 
@@ -49,7 +48,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         texture: asset_server.load("Player.png"),
         transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Player).insert(player::player_movement::PlayerVelocity::new());
+    }).insert(Player).insert(player::player_movement::PlayerVelocity::new()).insert(Colliding::new());
 
     commands.spawn(SpriteBundle{
         texture: asset_server.load("Face.png"),
