@@ -60,6 +60,7 @@ pub fn move_player(input: Res<Input<KeyCode>>, mut player: Query<(&mut Transform
         -(720. / 2.) + PLAYER_SIZE / 2.,
         720. / 2. - PLAYER_SIZE / 2.,
     );
+    
 }
 
 pub fn move_face(input: Res<Input<KeyCode>>, mut face: Query<(&mut Transform, &mut PlayerVelocity), With<Face>>, time: Res<Time>){

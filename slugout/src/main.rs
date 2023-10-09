@@ -4,9 +4,9 @@ use crate::components::*;
 
 mod credits;
 mod npc;
-mod player_movement;
 mod components;
 mod ball;
+mod player;
 
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
@@ -29,9 +29,10 @@ fn main() {
         .add_systems(Startup, setup)
         .add_plugins(npc::npc::NPCPlugin)
         .add_plugins(ball::ball::BallPlugin)
-        .add_systems(Update, player_movement::move_player)
-        .add_systems(Update, player_movement::move_face)
-        .add_systems(Update, player_movement::move_bat)
+        .add_systems(Update, player::player_movement::move_player)
+        .add_systems(Update, player::player_movement::move_face)
+        .add_systems(Update, player::player_movement::move_bat)
+        .add_systems(Update, player::player_collisions::player_ball_collision)
         .run();
 }
 
@@ -48,19 +49,19 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         texture: asset_server.load("Player.png"),
         transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Player).insert(player_movement::PlayerVelocity::new());
+    }).insert(Player).insert(player::player_movement::PlayerVelocity::new());
 
     commands.spawn(SpriteBundle{
         texture: asset_server.load("Face.png"),
         transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Face).insert(player_movement::PlayerVelocity::new());
+    }).insert(Face).insert(player::player_movement::PlayerVelocity::new());
 
     commands.spawn(SpriteBundle{
         texture: asset_server.load("Bat.png"),
         transform: Transform::with_scale(Transform::from_xyz(-5., 0., 2.), Vec3::splat(0.13)),
         ..default()
-    }).insert(Bat).insert(player_movement::PlayerVelocity::new());
+    }).insert(Bat).insert(player::player_movement::PlayerVelocity::new());
 
     
     // Load Objects

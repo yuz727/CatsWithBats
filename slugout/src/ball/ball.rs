@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::components::*;
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
@@ -24,7 +25,7 @@ fn setup(mut commands: Commands) {
     commands.spawn(SpriteBundle {
         transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
         ..default()
-    })  .insert(BallVelocity {
+    }) .insert(Ball) .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
     });
 }
