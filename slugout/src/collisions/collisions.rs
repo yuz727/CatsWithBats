@@ -1,6 +1,5 @@
-use bevy::{prelude::*};
 use crate::components::*;
-
+use bevy::prelude::*;
 
 const PLAYER_SIZE: f32 = 30.;
 
@@ -12,10 +11,9 @@ struct Hitbox;
 
 pub struct CollisionsPlugin;
 
-impl Plugin for CollisionsPlugin
-{
-    fn build(&self, app: &mut App){
-        app.add_systems(Update, player_ball_collision);
+impl Plugin for CollisionsPlugin {
+    fn build(&self, app: &mut App) {
+        //app.add_systems(Update, player_ball_collision);
     }
 }
 

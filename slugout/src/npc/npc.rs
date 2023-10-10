@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use rand::prelude::*;
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
-pub struct MovementTimer(Timer);
+pub struct NPCTimer(Timer);
 
 #[derive(Component)]
 pub struct NPCVelocity {
@@ -14,6 +14,26 @@ pub struct NPCVelocity {
 #[derive(Component)]
 pub struct NPC;
 
+#[derive(Component)]
+pub enum States {
+    Aggression,
+    Evade,
+    Idle,
+}
+
+#[derive(Component)]
+pub struct Difficulty {
+    difficulty: i32,
+}
+
+impl States {
+    fn to_aggression(&mut self) {
+        *self = match std::mem::replace(self, States::Evade) {
+            States::Idle => States::Evade,
+            v => v,
+        }
+    }
+}
 impl NPCVelocity {
     fn new() -> Self {
         Self {
@@ -22,18 +42,14 @@ impl NPCVelocity {
     }
 }
 
-enum States {
-    Aggression,
-    Evade,
-    Idle,
-}
 pub struct NPCPlugin;
 
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, load_npc);
-        //app.add_systems(Update, approach_player);
-        app.add_systems(Update, approach_ball);
+        app.add_systems(Update, select);
+        app.add_systems(Update, approach_player.after(select));
+        app.add_systems(Update, approach_ball.after(select));
     }
 }
 
@@ -46,22 +62,31 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::from_xyz(0., 0., 1.),
             ..default()
         })
-        .insert(MovementTimer(Timer::from_seconds(
-            rng.gen_range(0.0..5.0),
+        .insert(NPCTimer(Timer::from_seconds(
+            rng.gen_range(0.0..0.5),
             TimerMode::Repeating,
         )))
         .insert(NPC)
-        .insert(NPCVelocity::new());
+        .insert(NPCVelocity::new())
+        .insert(States::Idle)
+        .insert(Difficulty { difficulty: 50 });
 }
 
 pub fn select(
-    mut commands: Commands,
-    mut npcs: Query<&mut Transform, (With<NPC>, Without<Player>, Without<Ball>)>,
+    mut npcs: Query<
+        (&mut Transform, &mut States, &Difficulty, &mut NPCTimer),
+        (With<NPC>, Without<Player>, Without<Ball>),
+    >,
     mut player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>)>,
     mut ball: Query<&mut Transform, (With<Ball>, Without<Player>, Without<NPC>)>,
     time: Res<Time>,
 ) {
-    let npc_transform = npcs.single_mut();
+    let (npc_transform, mut state, difficulty, mut timer) = npcs.single_mut();
     let player_transform = player.single_mut();
     let ball_transform = ball.single_mut();
+    let npc_player_distance =
+        Vec3::distance(npc_transform.translation, player_transform.translation);
+    let npc_ball_distance = Vec3::distance(npc_transform.translation, ball_transform.translation);
+    let mut rand = thread_rng();
+    state.to_aggression();
 }
