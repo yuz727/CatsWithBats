@@ -16,7 +16,8 @@ pub fn approach_player(
     time: Res<Time>,
 ) {
     let (mut npc_transform, mut velocity, state) = npcs.single_mut();
-    if matches!(state, States::Aggression) {
+    if matches!(state, States::AggressionPlayer) {
+        info!("Chasing Player");
         let player_transform = player.single_mut();
 
         let mut deltav = Vec2::splat(0.);
@@ -64,7 +65,8 @@ pub fn approach_ball(
     time: Res<Time>,
 ) {
     let (mut npc_transform, mut velocity, state) = npcs.single_mut();
-    if matches!(state, States::Evade) {
+    if matches!(state, States::AggressionBall) {
+        info!("Chasing Ball");
         let ball_transform = ball.single_mut();
         npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
         let mut deltav = Vec2::splat(0.);
@@ -79,6 +81,55 @@ pub fn approach_ball(
         }
         if npc_transform.translation.y > ball_transform.translation.y {
             deltav.y -= 10.;
+        }
+
+        let deltat = time.delta_seconds();
+        let acc = ACCEL_RATE * deltat;
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+        let change = velocity.velocity * deltat;
+
+        npc_transform.translation.x = (npc_transform.translation.x + change.x).clamp(
+            -(1280. / 2.) + PLAYER_SIZE / 2.,
+            1280. / 2. - PLAYER_SIZE / 2.,
+        );
+        npc_transform.translation.y = (npc_transform.translation.y + change.y).clamp(
+            -(720. / 2.) + PLAYER_SIZE / 2.,
+            720. / 2. - PLAYER_SIZE / 2.,
+        );
+    }
+}
+
+pub fn evade_ball(
+    mut npcs: Query<
+        (&mut Transform, &mut NPCVelocity, &States),
+        (With<NPC>, Without<Ball>, Without<Player>),
+    >,
+    mut ball: Query<&mut Transform, (With<Ball>, Without<NPC>, Without<Player>)>,
+    time: Res<Time>,
+) {
+    let (mut npc_transform, mut velocity, state) = npcs.single_mut();
+    if matches!(state, States::Evade) {
+        info!("Running Away from Ball");
+        let ball_transform = ball.single_mut();
+        npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
+        let mut deltav = Vec2::splat(0.);
+        if npc_transform.translation.x < ball_transform.translation.x {
+            deltav.x -= 10.;
+        }
+        if npc_transform.translation.x > ball_transform.translation.x {
+            deltav.x += 10.;
+        }
+        if npc_transform.translation.y < ball_transform.translation.y {
+            deltav.y -= 10.;
+        }
+        if npc_transform.translation.y > ball_transform.translation.y {
+            deltav.y += 10.;
         }
 
         let deltat = time.delta_seconds();
