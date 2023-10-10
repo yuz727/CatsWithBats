@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*};
 use crate::components::*;
 
 
@@ -39,25 +39,39 @@ impl Plugin for CollisionsPlugin
 pub fn player_ball_collision(
     mut player_collidings: Query<&mut Colliding, (With<Player>, Without<Ball>)>,
     player_transforms: Query<&Transform, (With<Player>, Without<Ball>)>,
-    mut balls:   Query<(&Transform, &mut Colliding), (With<Ball>, Without<Player>)>,
+    mut balls:   Query<(&Transform, &mut Colliding, &mut BallVelocity), (With<Ball>, Without<Player>)>,
 ){
     let pt = player_transforms.single();
     let mut pc = player_collidings.single_mut();
 
 
     // For every ball
-    for (transform,mut colliding) in balls.iter_mut(){
+    for (transform, mut colliding, velocity ) in balls.iter_mut(){
 
+        let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
         // Check for a collision with a player
-        if bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE)).is_some(){
+        if collision.is_some(){
             // Collision
             colliding.currently_colliding = true;
             pc.currently_colliding = true;
+            bounce_ball(velocity, collision)
         }else{
             // No Collision
             colliding.currently_colliding = false;
             pc.currently_colliding = false;
         }
+
+    }
+}
+
+fn bounce_ball(mut ball_velocity: Mut<'_, BallVelocity>, collision: Option<bevy::sprite::collide_aabb::Collision>){
+    if collision == Some(bevy::sprite::collide_aabb::Collision::Left) || collision == Some(bevy::sprite::collide_aabb::Collision::Right){
+        ball_velocity.velocity.x = -ball_velocity.velocity.x;
+    }else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) || collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+        ball_velocity.velocity.y = -ball_velocity.velocity.y;
+    }else if collision == Some(bevy::sprite::collide_aabb::Collision::Inside){
+        ball_velocity.velocity.x = -ball_velocity.velocity.x;
+        ball_velocity.velocity.y = -ball_velocity.velocity.y;
     }
 }
 
