@@ -19,6 +19,11 @@ pub struct Background;
 pub struct Ball;
 
 #[derive(Component)]
+pub struct BallVelocity {
+    pub velocity: Vec3,
+}
+
+#[derive(Component)]
 pub struct Colliding {
     pub currently_colliding: bool,
 }

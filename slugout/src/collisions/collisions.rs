@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*};
 use crate::components::*;
 
 
@@ -35,29 +35,3 @@ impl Plugin for CollisionsPlugin
         })
         .insert(Hitbox);
 }*/
-
-pub fn player_ball_collision(
-    mut player_collidings: Query<&mut Colliding, (With<Player>, Without<Ball>)>,
-    player_transforms: Query<&Transform, (With<Player>, Without<Ball>)>,
-    mut balls:   Query<(&Transform, &mut Colliding), (With<Ball>, Without<Player>)>,
-){
-    let pt = player_transforms.single();
-    let mut pc = player_collidings.single_mut();
-
-
-    // For every ball
-    for (transform,mut colliding) in balls.iter_mut(){
-
-        // Check for a collision with a player
-        if bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE)).is_some(){
-            // Collision
-            colliding.currently_colliding = true;
-            pc.currently_colliding = true;
-        }else{
-            // No Collision
-            colliding.currently_colliding = false;
-            pc.currently_colliding = false;
-        }
-    }
-}
-
