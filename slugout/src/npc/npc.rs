@@ -16,6 +16,9 @@ pub struct NPCVelocity {
 pub struct NPC;
 
 #[derive(Component)]
+pub struct Face;
+
+#[derive(Component)]
 pub enum States {
     Aggression,
     Evade,
@@ -88,11 +91,12 @@ impl Plugin for NPCPlugin {
 
 pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut rng = thread_rng();
+   
     // Spawn npc Sprite for testing
     commands
         .spawn(SpriteBundle {
-            texture: asset_server.load("crystal_small.png"),
-            transform: Transform::from_xyz(0., 0., 1.),
+            texture: asset_server.load("Player4.png"),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(
@@ -103,6 +107,29 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPCVelocity::new())
         .insert(States::Idle)
         .insert(Difficulty { difficulty: 50 });
+
+    //spawn face sprite not working yet
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("Face.png"),
+    //         transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.13)),
+    //         ..default()
+    //     })
+    //     .insert(Face)
+    //     .insert(NPCVelocity::new());
+
+    //spawn bat sprite
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("Bat.png"),
+    //         transform: Transform::with_scale(Transform::from_xyz(-5., 0., 2.), Vec3::splat(0.13)),
+    //         ..default()
+    //     })
+    //     .insert(Bat)
+    //     .insert(NPCVelocity::new());
+
+    
+   
 }
 
 // Select next move
