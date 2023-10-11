@@ -5,7 +5,7 @@ const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
 const PLAYER_SPEED: f32 = 300.;
 // 1px/frame^2 @60Hz == 3600px/s^2
-const ACCEL_RATE: f32 = 3600.;
+const ACCEL_RATE: f32 = 14400.;
 
 #[derive(Component)]
 pub struct PlayerVelocity {
@@ -29,16 +29,16 @@ pub fn move_player(
 
     let mut deltav = Vec2::splat(0.);
     if input.pressed(KeyCode::A) {
-        deltav.x -= 10.;
+        deltav.x -= 200.;
     }
     if input.pressed(KeyCode::D) {
-        deltav.x += 10.;
+        deltav.x += 200.;
     }
     if input.pressed(KeyCode::W) {
-        deltav.y += 10.;
+        deltav.y += 200.;
     }
     if input.pressed(KeyCode::S) {
-        deltav.y -= 10.;
+        deltav.y -= 200.;
     }
 
     let deltat = time.delta_seconds();
@@ -75,16 +75,16 @@ pub fn move_face(
 
     let mut deltav = Vec2::splat(0.);
     if input.pressed(KeyCode::A) {
-        deltav.x -= 10.;
+        deltav.x -= 200.;
     }
     if input.pressed(KeyCode::D) {
-        deltav.x += 10.;
+        deltav.x += 200.;
     }
     if input.pressed(KeyCode::W) {
-        deltav.y += 10.;
+        deltav.y += 200.;
     }
     if input.pressed(KeyCode::S) {
-        deltav.y -= 10.;
+        deltav.y -= 200.;
     }
 
     let deltat = time.delta_seconds();
@@ -120,16 +120,16 @@ pub fn move_bat(
 
     let mut deltav = Vec2::splat(0.);
     if input.pressed(KeyCode::A) {
-        deltav.x -= 10.;
+        deltav.x -= 200.;
     }
     if input.pressed(KeyCode::D) {
-        deltav.x += 10.;
+        deltav.x += 200.;
     }
     if input.pressed(KeyCode::W) {
-        deltav.y += 10.;
+        deltav.y += 200.;
     }
     if input.pressed(KeyCode::S) {
-        deltav.y -= 10.;
+        deltav.y -= 200.;
     }
 
     let deltat = time.delta_seconds();
