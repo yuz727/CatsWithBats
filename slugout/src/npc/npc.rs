@@ -16,7 +16,7 @@ pub struct NPCVelocity {
 pub struct NPC;
 
 #[derive(Component)]
-pub struct Face;
+pub struct NPCBat;
 
 #[derive(Component)]
 pub enum States {
@@ -91,7 +91,6 @@ impl Plugin for NPCPlugin {
 
 pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut rng = thread_rng();
-   
     // Spawn npc Sprite for testing
     commands
         .spawn(SpriteBundle {
@@ -108,28 +107,14 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(States::Idle)
         .insert(Difficulty { difficulty: 50 });
 
-    //spawn face sprite not working yet
-    // commands
-    //     .spawn(SpriteBundle {
-    //         texture: asset_server.load("Face.png"),
-    //         transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.13)),
-    //         ..default()
-    //     })
-    //     .insert(Face)
-    //     .insert(NPCVelocity::new());
-
     //spawn bat sprite
-    // commands
-    //     .spawn(SpriteBundle {
-    //         texture: asset_server.load("Bat.png"),
-    //         transform: Transform::with_scale(Transform::from_xyz(-5., 0., 2.), Vec3::splat(0.13)),
-    //         ..default()
-    //     })
-    //     .insert(Bat)
-    //     .insert(NPCVelocity::new());
-
-    
-   
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Bat.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 1.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCBat);
 }
 
 // Select next move
@@ -143,105 +128,57 @@ pub fn select(
     time: Res<Time>,
 ) {
     // NPC, Ball, Player Position
-    let (npc_transform, mut state, difficulty, mut timer) = npcs.single_mut();
-    let player_transform = player.single_mut();
-    let ball_transform = ball.single_mut();
+    for (npc_transform, mut state, difficulty, mut timer) in npcs.iter_mut() {
+        let player_transform = player.single_mut();
+        let ball_transform = ball.single_mut();
 
-    let npc_player_distance =
-        Vec3::distance(npc_transform.translation, player_transform.translation);
-    let npc_ball_distance = 
-        Vec3::distance(npc_transform.translation, ball_transform.translation);
-        
-    let mut rand = thread_rng();
+        let npc_player_distance =
+            Vec3::distance(npc_transform.translation, player_transform.translation);
+        let npc_ball_distance =
+            Vec3::distance(npc_transform.translation, ball_transform.translation);
 
-    // If timer is up, roll next state
-    timer.tick(time.delta());
-    if timer.just_finished() {
-        // This will be the chance to go to the aggressive state selections
-        state.to_idle();
-        let mut state_flag = -1;
+        let mut rand = thread_rng();
 
-        // Calculate proportion of probability equal to aggresion
-        let agg_factor = difficulty.difficulty as f32 / 100.0;
+        // If timer is up, roll next state
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            // This will be the chance to go to the aggressive state selections
+            state.to_idle();
+            let mut state_flag = -1;
 
-        // Normalize the probabilities (aggression type)/(difficulty amount)
-        let agg_prob = npc_player_distance + npc_ball_distance;
-        let agg_prob_player = 1.0 - (npc_player_distance / agg_prob);
-        let agg_prob_ball = 1.0 - (npc_ball_distance / agg_prob);
+            // Calculate proportion of probability equal to aggresion
+            let agg_factor = difficulty.difficulty as f32 / 100.0;
 
-        // Scale aggression probabilities based on difficulty
-        let agg_prob_player = agg_prob_player * agg_factor;
-        let agg_prob_ball = agg_prob_ball * agg_factor;
+            // Normalize the probabilities (aggression type)/(difficulty amount)
+            let agg_prob = npc_player_distance + npc_ball_distance;
+            let agg_prob_player = 1.0 - (npc_player_distance / agg_prob);
+            let agg_prob_ball = 1.0 - (npc_ball_distance / agg_prob);
 
-        // % probability of aggression
-        let agg_prob = agg_prob_ball + agg_prob_player;
+            // Scale aggression probabilities based on difficulty
+            let agg_prob_player = agg_prob_player * agg_factor;
+            let agg_prob_ball = agg_prob_ball * agg_factor;
 
-        let selection = rand.gen_range(0.0..1.0);
+            // % probability of aggression
+            let agg_prob = agg_prob_ball + agg_prob_player;
 
-        if selection <= agg_prob {
-            state.to_aggression();
-            state_flag = 0;
-        } else {
-            state.to_evade();
-            state_flag = 1;
-        }
-        // Select go to ball or player
-        if state_flag == 0 {
-            if agg_prob_ball > agg_prob_player {
-                state.to_aggression_ball();
+            let selection = rand.gen_range(0.0..1.0);
+
+            if selection <= agg_prob {
+                state.to_aggression();
+                state_flag = 0;
             } else {
-                state.to_aggression_player();
+                state.to_evade();
+                state_flag = 1;
             }
+            // Select go to ball or player
+            if state_flag == 0 {
+                if agg_prob_ball > agg_prob_player {
+                    state.to_aggression_ball();
+                } else {
+                    state.to_aggression_player();
+                }
+            }
+            timer.reset();
         }
-        timer.reset();
     }
 }
-
-
-// OLD FUNCTION
-// pub fn select(
-//     mut npcs: Query<
-//         (&mut Transform, &mut States, &Difficulty, &mut NPCTimer),
-//         (With<NPC>, Without<Player>, Without<Ball>),
-//     >,
-//     mut player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>)>,
-//     mut ball: Query<&mut Transform, (With<Ball>, Without<Player>, Without<NPC>)>,
-//     time: Res<Time>,
-// ) {
-//     // NPC, Ball, Player Position
-//     let (npc_transform, mut state, difficulty, mut timer) = npcs.single_mut();
-//     let player_transform = player.single_mut();
-//     let ball_transform = ball.single_mut();
-//     let npc_player_distance =
-//         Vec3::distance(npc_transform.translation, player_transform.translation);
-//     let npc_ball_distance = Vec3::distance(npc_transform.translation, ball_transform.translation);
-//     let mut rand = thread_rng();
-
-//     // If timer is up, roll next state
-//     timer.tick(time.delta());
-//     if timer.just_finished() {
-//         // This will be the chance to go to the aggressive state selections
-//         // TODO: Have some kind of formula for calculating the chance.
-//         state.to_Idle();
-//         let mut state_flag = -1;
-//         let aggression_threshold = 7.5;
-//         let selection = rand.gen_range(0.0..10.0);
-//         if (0.5 <= selection) && !(selection > aggression_threshold) {
-//             state.to_aggression();
-//             state_flag = 0;
-//         } else if aggression_threshold <= selection {
-//             state.to_evade();
-//             state_flag = 1;
-//         }
-//         // Select go to ball or player
-//         if state_flag == 0 {
-//             let aggression_selection = rand.gen_range(0..10);
-//             if aggression_selection < 5 {
-//                 state.to_aggression_ball();
-//             } else {
-//                 state.to_aggression_player();
-//             }
-//         }
-//         timer.reset();
-//     }
-// }
