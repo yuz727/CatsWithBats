@@ -22,7 +22,7 @@ pub fn approach_player(
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::AggressionPlayer) {
             let mut bat_transform = bat.single_mut();
-            info!("Chasing Player");
+            //info!("Chasing Player");
             //debug!("Chasing Player");
             let player_transform = player.single_mut();
 
@@ -79,7 +79,7 @@ pub fn approach_ball(
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::AggressionBall) {
             let mut bat_transform = bat.single_mut();
-            info!("Chasing Ball");
+            //info!("Chasing Ball");
             let ball_transform = ball.single_mut();
             npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
             let mut deltav = Vec2::splat(0.);
@@ -134,7 +134,7 @@ pub fn evade_ball(
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Evade) {
             let mut bat_transform = bat.single_mut();
-            info!("Running Away from Ball");
+            //info!("Running Away from Ball");
             let ball_transform = ball.single_mut();
             npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
             let mut deltav = Vec2::splat(0.);

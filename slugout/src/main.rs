@@ -30,8 +30,8 @@ fn main() {
         .add_plugins(ball::ball::BallPlugin)
         //.add_plugins(collisions::collisions::CollisionsPlugin)
         .add_systems(Update, player::player_movement::move_player)
-        // .add_systems(Update, player::player_movement::move_face)
-        // .add_systems(Update, player::player_movement::move_bat)
+        .add_systems(Update, player::player_movement::move_face)
+        .add_systems(Update, player::player_movement::move_bat)
         .run();
 }
 
