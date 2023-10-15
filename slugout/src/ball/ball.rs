@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
-const BALL_SIZE: f32 = 1.;
+const BALL_SIZE: f32 = 10.;
 const PLAYER_SIZE: f32 = 30.;
 
 pub struct BallPlugin;
@@ -50,15 +50,32 @@ fn bounce(
         );
 
         // Check for collision with player
-        let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE,
+             PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+        let recliner = bevy::sprite::collide_aabb::collide(Vec3::new(120., 160., 1.), 
+        Vec2::new(158.,
+            178.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+        let tv_stand = bevy::sprite::collide_aabb::collide(Vec3::new(-300., -150., 1.), 
+        Vec2::new(160.,
+            160.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+        let side_table = bevy::sprite::collide_aabb::collide(Vec3::new(280., 20., 1.), 
+        Vec2::new(125.,
+            113.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
         // Check for a collision with a player
-        if collision == Some(bevy::sprite::collide_aabb::Collision::Left) || collision == Some(bevy::sprite::collide_aabb::Collision::Right){
+        if collision == Some(bevy::sprite::collide_aabb::Collision::Left) || collision == Some(bevy::sprite::collide_aabb::
+            Collision::Right){
             // Collision with left or right side
             // Adjust colliding variables accordingly
             colliding.currently_colliding = true;
             pc.currently_colliding = true;
             ball.velocity.x = -ball.velocity.x;
-        }else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) || collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+            //info!("111111111111111111111");
+        }else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) || collision == Some(bevy::sprite::collide_aabb::
+            Collision::Bottom){
             // Collision with top or bottom side
             // Adjust colliding variables accordingly
             colliding.currently_colliding = true;
@@ -71,12 +88,54 @@ fn bounce(
             pc.currently_colliding = true;
             ball.velocity.x = -ball.velocity.x;
             ball.velocity.y = -ball.velocity.y;
+            //info!("222222222222222");
         }else{
             // No Collision
             // Adjust colliding variables accordingly
             colliding.currently_colliding = false;
             pc.currently_colliding = false;
         }
+
+        //other collisions//////////////////////////////////////////////////////
+        //let rec = true;
+ 
+        if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) || recliner == Some(bevy::sprite::collide_aabb::
+            Collision::Right){
+            ball.velocity.x = -ball.velocity.x;
+            //info!("33333333333333");
+        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) || recliner == Some(bevy::sprite::collide_aabb::
+            Collision::Bottom){
+            ball.velocity.y = -ball.velocity.y;
+        }
+        // else if recliner == Some(bevy::sprite::collide_aabb::Collision::Inside){
+        //     ball.velocity.x = -ball.velocity.x;
+        //     ball.velocity.y = -ball.velocity.y;
+        // }
+
+        if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) || tv_stand == Some(bevy::sprite::collide_aabb::
+            Collision::Right){
+            ball.velocity.x = -ball.velocity.x;
+            //info!("444444444444444");
+        }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) || tv_stand == Some(bevy::sprite::collide_aabb::
+            Collision::Bottom){
+            ball.velocity.y = -ball.velocity.y;
+        }
+        // else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Inside){
+        //     ball.velocity.x = -ball.velocity.x;
+        //     ball.velocity.y = -ball.velocity.y;
+        // }
+
+        if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) || side_table == Some(bevy::sprite::collide_aabb::
+            Collision::Right){
+            ball.velocity.x = -ball.velocity.x;
+        }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) || side_table == Some(bevy::sprite::collide_aabb::
+            Collision::Bottom){
+            ball.velocity.y = -ball.velocity.y;
+        }
+        // else if side_table == Some(bevy::sprite::collide_aabb::Collision::Inside){
+        //     ball.velocity.x = -ball.velocity.x;
+        //     ball.velocity.y = -ball.velocity.y;
+        // }
 
         // Move ball
         transform.translation.x = new_translation_x;
@@ -85,6 +144,7 @@ fn bounce(
         // Bounce when hitting the screen edges
         if transform.translation.x.abs() == WIN_W / 2.0 - BALL_SIZE / 2. {
             ball.velocity.x = -ball.velocity.x;
+            //info!("55555555555555");
         }
         if transform.translation.y.abs() == WIN_H / 2.0 - BALL_SIZE / 2.{
             ball.velocity.y = -ball.velocity.y;
