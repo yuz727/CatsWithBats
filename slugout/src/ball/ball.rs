@@ -97,12 +97,10 @@ fn bounce(
         }
 
         //other collisions//////////////////////////////////////////////////////
-        //let rec = true;
  
         if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) || recliner == Some(bevy::sprite::collide_aabb::
             Collision::Right){
             ball.velocity.x = -ball.velocity.x;
-            //info!("33333333333333");
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) || recliner == Some(bevy::sprite::collide_aabb::
             Collision::Bottom){
             ball.velocity.y = -ball.velocity.y;
@@ -120,10 +118,6 @@ fn bounce(
             Collision::Bottom){
             ball.velocity.y = -ball.velocity.y;
         }
-        // else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Inside){
-        //     ball.velocity.x = -ball.velocity.x;
-        //     ball.velocity.y = -ball.velocity.y;
-        // }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) || side_table == Some(bevy::sprite::collide_aabb::
             Collision::Right){
@@ -132,10 +126,6 @@ fn bounce(
             Collision::Bottom){
             ball.velocity.y = -ball.velocity.y;
         }
-        // else if side_table == Some(bevy::sprite::collide_aabb::Collision::Inside){
-        //     ball.velocity.x = -ball.velocity.x;
-        //     ball.velocity.y = -ball.velocity.y;
-        // }
 
         // Move ball
         transform.translation.x = new_translation_x;
@@ -144,7 +134,6 @@ fn bounce(
         // Bounce when hitting the screen edges
         if transform.translation.x.abs() == WIN_W / 2.0 - BALL_SIZE / 2. {
             ball.velocity.x = -ball.velocity.x;
-            //info!("55555555555555");
         }
         if transform.translation.y.abs() == WIN_H / 2.0 - BALL_SIZE / 2.{
             ball.velocity.y = -ball.velocity.y;
