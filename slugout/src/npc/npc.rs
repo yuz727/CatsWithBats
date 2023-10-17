@@ -3,6 +3,7 @@ use crate::npc::npc_events::*;
 use bevy::prelude::*;
 use rand::prelude::*;
 
+const PLAYER_SIZE: f32 = 30.;
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
 pub struct NPCTimer(Timer);
@@ -10,6 +11,8 @@ pub struct NPCTimer(Timer);
 #[derive(Component)]
 pub struct NPCVelocity {
     pub velocity: Vec2,
+    pub xlock: i32,
+    pub ylock: i32,
 }
 
 #[derive(Component)]
@@ -69,23 +72,50 @@ impl States {
         }
     }
 }
+
 impl NPCVelocity {
     fn new() -> Self {
         Self {
             velocity: Vec2::splat(0.),
+            xlock: 0,
+            ylock: 0,
         }
+    }
+
+    pub fn lock_x(&mut self) {
+        self.xlock = 1;
+    }
+    pub fn lock_y(&mut self) {
+        self.ylock = 1;
+    }
+    pub fn unlock_x(&mut self) {
+        self.xlock = 0;
+    }
+    pub fn unlock_y(&mut self) {
+        self.ylock = 0;
     }
 }
 
+// impl From<Vec3> for DetectionRadius {
+//     fn from(pos: Vec3) -> Self {
+//         Self {
+//             top: pos.y + PLAYER_SIZE / 2.,
+//             bottom: pos.y - PLAYER_SIZE / 2.,
+//             left: pos.x - PLAYER_SIZE / 2.,
+//             right: pos.x + PLAYER_SIZE / 2.,
+//         }
+//     }
+// }
 pub struct NPCPlugin;
 
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, load_npc);
         app.add_systems(Update, select);
+        app.add_systems(Update, AvoidCollision);
         app.add_systems(Update, approach_player.after(select));
         app.add_systems(Update, approach_ball.after(select));
-        app.add_systems(Update, evade_ball);
+        app.add_systems(Update, evade_ball.after(select));
     }
 }
 
