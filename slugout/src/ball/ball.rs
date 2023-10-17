@@ -5,6 +5,7 @@ const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 const BALL_SIZE: f32 = 10.;
 const PLAYER_SIZE: f32 = 30.;
+const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 
 pub struct BallPlugin;
 
@@ -12,6 +13,7 @@ impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce);
+        app.add_systems(Update, swing);
     }
 }
 
@@ -140,3 +142,47 @@ fn bounce(
         }
     }
 }
+
+// bat swing function (except bat doesnt swing yet it just hits ball no matter where player is)
+fn swing(
+    mut commands: Commands,
+    input_state: Res<Input<KeyCode>>,
+    input_mouse: Res<Input<MouseButton>>,
+    mut query: Query<(&mut Ball, &mut BallVelocity)>,
+) {
+    static mut MOUSE_BUTTON_PRESSED: bool = false;
+
+    if input_mouse.just_pressed(MouseButton::Left) {
+        // Mouse button was just pressed
+        unsafe {
+            MOUSE_BUTTON_PRESSED = true;
+        }
+    } else if input_mouse.just_released(MouseButton::Left) {
+        // Mouse button was just released
+        unsafe {
+            MOUSE_BUTTON_PRESSED = false;
+        }
+    }
+
+    if unsafe { MOUSE_BUTTON_PRESSED } {
+        for (mut _ball, mut ball_velocity) in query.iter_mut() {
+            // Initialize the ball's velocity
+            ball_velocity.velocity = Vec3::new(0.0, 0.0, 0.0);
+
+            // hit based on game pong functionality, until i can get the cursor library approved
+            if input_state.pressed(KeyCode::W) {
+                ball_velocity.velocity.y = HIT_POWER.y; //ball moves up
+            }
+            if input_state.pressed(KeyCode::S) {
+                ball_velocity.velocity.y = -HIT_POWER.y; //down
+            }
+            if input_state.pressed(KeyCode::A) {
+                ball_velocity.velocity.x = -HIT_POWER.x; //left
+            }
+            if input_state.pressed(KeyCode::D) {
+                ball_velocity.velocity.x = HIT_POWER.x; //right
+            }
+        }
+    }
+}
+
