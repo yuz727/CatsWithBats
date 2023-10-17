@@ -49,7 +49,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Player)
@@ -59,7 +59,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Face.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 2.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Face)
@@ -68,7 +68,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 2.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Bat)
@@ -78,10 +78,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("SideTable.png"),
-            transform: Transform::with_rotation(
-                Transform::with_scale(Transform::from_xyz(280., 20., 1.), Vec3::splat(0.18)),
-                Quat::from_rotation_z(5.5),
-            ),
+            transform: //Transform::with_rotation(
+                Transform::with_scale(Transform::from_xyz(120., 170., 1.), Vec3::splat(0.18)),
+                //Quat::from_rotation_z(5.5),
+            //),
             ..default()
         })
         .insert(Object);
@@ -90,8 +90,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(SpriteBundle {
             texture: asset_server.load("TVStand.png"),
             transform: Transform::with_rotation(
-                Transform::with_scale(Transform::from_xyz(-300., -150., 1.), Vec3::splat(0.18)),
-                Quat::from_rotation_z(4.),
+                Transform::with_scale(Transform::from_xyz(0., -250., 1.), Vec3::splat(0.18)),
+                Quat::from_rotation_z(4.72),
             ),
             ..default()
         })
@@ -100,10 +100,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Recliner.png"),
-            transform: Transform::with_rotation(
-                Transform::with_scale(Transform::from_xyz(120., 160., 1.), Vec3::splat(0.18)),
-                Quat::from_rotation_z(0.7),
-            ),
+            transform: //Transform::with_rotation(
+                Transform::with_scale(Transform::from_xyz(-60., 210., 1.), Vec3::splat(0.18)),
+                //Quat::from_rotation_z(0.7),
+            //),
             ..default()
         })
         .insert(Object);

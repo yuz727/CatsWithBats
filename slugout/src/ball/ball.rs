@@ -53,15 +53,15 @@ fn bounce(
         let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE,
              PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let recliner = bevy::sprite::collide_aabb::collide(Vec3::new(120., 160., 1.), 
+        let recliner = bevy::sprite::collide_aabb::collide(Vec3::new(-60., 210., 1.), 
         Vec2::new(158.,
             178.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let tv_stand = bevy::sprite::collide_aabb::collide(Vec3::new(-300., -150., 1.), 
+        let tv_stand = bevy::sprite::collide_aabb::collide(Vec3::new(0., -250., 1.), 
         Vec2::new(160.,
             160.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let side_table = bevy::sprite::collide_aabb::collide(Vec3::new(280., 20., 1.), 
+        let side_table = bevy::sprite::collide_aabb::collide(Vec3::new(120., 170., 1.), 
         Vec2::new(125.,
             113.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
