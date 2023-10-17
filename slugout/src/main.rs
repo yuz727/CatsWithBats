@@ -30,8 +30,6 @@ fn main() {
         .add_plugins(ball::ball::BallPlugin)
         //.add_plugins(collisions::collisions::CollisionsPlugin)
         .add_systems(Update, player::player_movement::move_player)
-        .add_systems(Update, player::player_movement::move_face)
-        .add_systems(Update, player::player_movement::move_bat)
         .run();
 }
 
@@ -62,8 +60,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(Face)
-        .insert(player::player_movement::PlayerVelocity::new());
+        .insert(Face);
 
     commands
         .spawn(SpriteBundle {
@@ -71,8 +68,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(Bat)
-        .insert(player::player_movement::PlayerVelocity::new());
+        .insert(Bat);
 
     // Load Objects
     commands
