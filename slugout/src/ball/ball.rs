@@ -143,25 +143,42 @@ fn bounce(
     }
 }
 
-// bat swing function (except bat doesnt swing yet it just hits ball no matter where player is)
+// bat swing function (hits ball no matter where player is, as long as mouse is clicked)
 fn swing(
     mut commands: Commands,
     input_state: Res<Input<KeyCode>>,
     input_mouse: Res<Input<MouseButton>>,
     mut query: Query<(&mut Ball, &mut BallVelocity)>,
+    mut query_bat: Query<(&Bat, &mut Transform)>,
 ) {
     static mut MOUSE_BUTTON_PRESSED: bool = false;
+    static mut BAT_TRANSFORMED: bool = false;
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
         unsafe {
             MOUSE_BUTTON_PRESSED = true;
+            BAT_TRANSFORMED = false;
+
         }
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
         unsafe {
             MOUSE_BUTTON_PRESSED = false;
+            BAT_TRANSFORMED = true;
         }
+    }
+
+    // Animation for swinging the bat
+    for (bat, mut bat_transform) in query_bat.iter_mut() {
+        if unsafe { MOUSE_BUTTON_PRESSED } {
+        // Left mouse button is pressed, set the bat to horizontal
+            bat_transform.scale.y = -0.13;
+            //if mouse released:
+        } else if unsafe { BAT_TRANSFORMED } {
+                bat_transform.scale.y = 0.13;
+        }
+    
     }
 
     if unsafe { MOUSE_BUTTON_PRESSED } {
