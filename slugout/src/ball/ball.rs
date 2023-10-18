@@ -198,6 +198,12 @@ fn swing(
             }
             if input_state.pressed(KeyCode::D) {
                 ball_velocity.velocity.x = HIT_POWER.x; //right
+            } else if !input_state.pressed(KeyCode::W)
+                && !input_state.pressed(KeyCode::S)
+                && !input_state.pressed(KeyCode::A)
+                && !input_state.pressed(KeyCode::D) { 
+                
+                ball_velocity.velocity.y = HIT_POWER.y;
             }
         }
     }
