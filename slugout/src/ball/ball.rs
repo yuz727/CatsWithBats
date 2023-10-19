@@ -41,31 +41,37 @@ fn bounce(
     for (mut transform, mut colliding, mut ball) in query.iter_mut() {
 
         // Find the new translation for the x and y for the ball
-        let new_translation_x = (transform.translation.x + (ball.velocity.x * time.delta_seconds())).clamp(
+        let mut new_translation_x = (transform.translation.x + (ball.velocity.x * time.delta_seconds())).clamp(
             -(1280. / 2.) + BALL_SIZE / 2.,
             1280. / 2. - BALL_SIZE / 2.,
         );
 
-        let new_translation_y = (transform.translation.y + (ball.velocity.y * time.delta_seconds())).clamp(
+        let mut new_translation_y = (transform.translation.y + (ball.velocity.y * time.delta_seconds())).clamp(
             -(720. / 2.) + BALL_SIZE / 2.,
             720. / 2. - BALL_SIZE / 2.,
         );
 
+        let new_translation = Vec3::new(new_translation_x, new_translation_y, transform.translation.z);
+
         // Check for collision with player
+
         let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE,
-             PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+             PLAYER_SIZE), new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let recliner = bevy::sprite::collide_aabb::collide(Vec3::new(-60., 210., 1.), 
-        Vec2::new(158.,
-            178.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        let recliner_size = Vec2::new(120., 178.);
+        let recliner_translation = Vec3::new(-60., 210., 1.);
+        let recliner = bevy::sprite::collide_aabb::collide(recliner_translation, 
+        recliner_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let tv_stand = bevy::sprite::collide_aabb::collide(Vec3::new(0., -250., 1.), 
-        Vec2::new(160.,
-            160.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        let tv_size = Vec2::new(160.,
+            90.);
+        let tv_translation = Vec3::new(0., -250., 1.);
+        let tv_stand = bevy::sprite::collide_aabb::collide(tv_translation, 
+        tv_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let side_table = bevy::sprite::collide_aabb::collide(Vec3::new(120., 170., 1.), 
-        Vec2::new(125.,
-            113.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        let table_size = Vec2::new(113.,113.);
+        let table_translation = Vec3::new(120., 170., 1.);
+        let side_table = bevy::sprite::collide_aabb::collide(table_translation, table_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
         // Check for a collision with a player
         if collision == Some(bevy::sprite::collide_aabb::Collision::Left) || collision == Some(bevy::sprite::collide_aabb::
@@ -100,33 +106,50 @@ fn bounce(
 
         //other collisions//////////////////////////////////////////////////////
  
-        if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) || recliner == Some(bevy::sprite::collide_aabb::
-            Collision::Right){
+        if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
             ball.velocity.x = -ball.velocity.x;
-        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) || recliner == Some(bevy::sprite::collide_aabb::
-            Collision::Bottom){
+            new_translation_x = recliner_translation.x - recliner_size.x/2. - 1.;
+        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left){
+            ball.velocity.x = -ball.velocity.x;
+            new_translation_x = recliner_translation.x + recliner_size.x/2. + 1.;
+        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top){
             ball.velocity.y = -ball.velocity.y;
-        }
-        // else if recliner == Some(bevy::sprite::collide_aabb::Collision::Inside){
-        //     ball.velocity.x = -ball.velocity.x;
-        //     ball.velocity.y = -ball.velocity.y;
-        // }
+            new_translation_y = recliner_translation.y - recliner_size.y/2. - 1.;
+        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+                ball.velocity.y = -ball.velocity.y;
+                new_translation_y = recliner_translation.y + recliner_size.y/2. + 1.;
+        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Inside){
+             print!("INSIDE");
+         }
 
-        if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) || tv_stand == Some(bevy::sprite::collide_aabb::
-            Collision::Right){
+        if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left){
             ball.velocity.x = -ball.velocity.x;
             //info!("444444444444444");
-        }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) || tv_stand == Some(bevy::sprite::collide_aabb::
-            Collision::Bottom){
+            new_translation_x = tv_translation.x + tv_size.x/2. + 1.;
+        }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right){
+                ball.velocity.x = -ball.velocity.x;
+                new_translation_x = tv_translation.x - tv_size.x/2. - 1.;
+        }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top){
             ball.velocity.y = -ball.velocity.y;
+            new_translation_y = tv_translation.y - tv_size.y/2. - 1.;
+        }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+            ball.velocity.y = -ball.velocity.y;
+            new_translation_y = tv_translation.y + tv_size.y/2. + 1.;
+
         }
 
-        if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) || side_table == Some(bevy::sprite::collide_aabb::
-            Collision::Right){
+        if side_table == Some(bevy::sprite::collide_aabb::Collision::Left){
             ball.velocity.x = -ball.velocity.x;
-        }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) || side_table == Some(bevy::sprite::collide_aabb::
-            Collision::Bottom){
+            new_translation_x = table_translation.x + table_size.x/2. + 1.;
+        }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+            ball.velocity.x = -ball.velocity.x;
+            new_translation_x = table_translation.x - table_size.x/2. - 1.;
+        }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top){
             ball.velocity.y = -ball.velocity.y;
+            new_translation_y = table_translation.y - table_size.y/2. - 1.;
+        }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+            ball.velocity.y = -ball.velocity.y;
+            new_translation_y = table_translation.y + table_size.y/2. + 1.;
         }
 
         // Move ball

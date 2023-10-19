@@ -112,7 +112,7 @@ impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, load_npc);
         app.add_systems(Update, select);
-        app.add_systems(Update, AvoidCollision);
+        app.add_systems(Update, avoid_collision);
         app.add_systems(Update, approach_player.after(select));
         app.add_systems(Update, approach_ball.after(select));
         app.add_systems(Update, evade_ball.after(select));

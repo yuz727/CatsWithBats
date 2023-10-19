@@ -197,7 +197,7 @@ pub fn evade_ball(
     }
 }
 
-pub fn AvoidCollision(
+pub fn avoid_collision(
     mut npcs: Query<
         (&Transform, &mut NPCVelocity),
         (

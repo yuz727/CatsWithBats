@@ -2,7 +2,6 @@ use crate::components::*;
 use bevy::{prelude::*, window::PresentMode};
 
 mod ball;
-mod collisions;
 mod components;
 mod credits;
 mod npc;
@@ -74,10 +73,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("SideTable.png"),
-            transform: //Transform::with_rotation(
+            transform:
                 Transform::with_scale(Transform::from_xyz(120., 170., 1.), Vec3::splat(0.18)),
-                //Quat::from_rotation_z(5.5),
-            //),
             ..default()
         })
         .insert(Object);
@@ -96,11 +93,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Recliner.png"),
-            transform: //Transform::with_rotation(
+            transform:
                 Transform::with_scale(Transform::from_xyz(-60., 210., 1.), Vec3::splat(0.18)),
-                //Quat::from_rotation_z(0.7),
-            //),
             ..default()
         })
-        .insert(Object);
+        .insert(Object); 
 }
