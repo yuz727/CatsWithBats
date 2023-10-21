@@ -4,7 +4,6 @@ use bevy::prelude::*;
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 const BALL_SIZE: f32 = 10.;
-const PLAYER_SIZE: f32 = 30.;
 const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 
 pub struct BallPlugin;
@@ -14,6 +13,7 @@ impl Plugin for BallPlugin {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce);
         app.add_systems(Update, swing);
+        app.add_systems(Update, friction);
     }
 }
 
@@ -31,12 +31,10 @@ fn setup(mut commands: Commands) {
 //bounce the ball
 fn bounce(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Colliding, &mut crate::components::BallVelocity), (With<Ball>, Without<Player>)>,
-    mut player_colliding: Query<&mut Colliding, (With<Player>, Without<Ball>)>,
-    player_transform: Query<&Transform, (With<Player>, Without<Ball>)>,
+    mut query: Query<(&mut Transform, &mut crate::components::BallVelocity), (With<Ball>, Without<Player>)>,
 ) {
  
-    for (mut transform, mut colliding, mut ball) in query.iter_mut() {
+    for (mut transform, mut ball) in query.iter_mut() {
 
         // Find the new translation for the x and y for the ball
         let mut new_translation_x = (transform.translation.x + (ball.velocity.x * time.delta_seconds())).clamp(
@@ -126,6 +124,21 @@ fn bounce(
         }
         if transform.translation.y.abs() == WIN_H / 2.0 - BALL_SIZE / 2.{
             ball.velocity.y = -ball.velocity.y;
+        }
+    }
+}
+
+fn friction(
+    query: Query<(&Transform, &mut BallVelocity), With<Ball>>,
+    rug: Query<&Transform, With<Rug>>,
+){
+    let rug_transform = rug.single();
+    let rug_size = Vec2::new(1000., 800.);
+
+    for (ball_transform, mut ball_velocity) in query.iter(){
+        let rug_collision = bevy::sprite::collide_aabb::collide(rug_transform.translation, rug_size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+
         }
     }
 }
