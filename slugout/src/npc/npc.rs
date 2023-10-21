@@ -125,7 +125,7 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player4.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(

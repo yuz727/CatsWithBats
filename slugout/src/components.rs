@@ -13,6 +13,9 @@ pub struct Face;
 pub struct Object;
 
 #[derive(Component)]
+pub struct Rug;
+
+#[derive(Component)]
 pub struct Background;
 
 #[derive(Component)]
