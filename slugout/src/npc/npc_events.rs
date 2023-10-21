@@ -1,4 +1,4 @@
-use bevy::{math::vec2, prelude::*, sprite};
+use bevy::{math::vec2, prelude::*};
 
 use super::npc::{NPCBat, NPCVelocity, States, NPC};
 use crate::components::*;
@@ -29,52 +29,55 @@ pub fn approach_player(
 ) {
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::AggressionPlayer) {
-            let mut bat_transform = bat.single_mut();
-            //info!("Chasing Player");
-            //debug!("Chasing Player");
-            let player_transform = player.single_mut();
+            for mut bat_transform in bat.iter_mut() {
+                //info!("Chasing Player");
+                //debug!("Chasing Player");
+                for player_transform in player.iter_mut() {
+                    let mut deltav = Vec2::splat(0.);
+                    if npc_transform.translation.x < player_transform.translation.x {
+                        deltav.x += 10.;
+                    }
+                    if npc_transform.translation.x > player_transform.translation.x {
+                        deltav.x -= 10.;
+                    }
+                    if npc_transform.translation.y < player_transform.translation.y {
+                        deltav.y += 10.;
+                    }
+                    if npc_transform.translation.y > player_transform.translation.y {
+                        deltav.y -= 10.;
+                    }
 
-            let mut deltav = Vec2::splat(0.);
-            if npc_transform.translation.x < player_transform.translation.x {
-                deltav.x += 10.;
-            }
-            if npc_transform.translation.x > player_transform.translation.x {
-                deltav.x -= 10.;
-            }
-            if npc_transform.translation.y < player_transform.translation.y {
-                deltav.y += 10.;
-            }
-            if npc_transform.translation.y > player_transform.translation.y {
-                deltav.y -= 10.;
-            }
+                    let deltat = time.delta_seconds();
+                    let acc = ACCEL_RATE * deltat;
+                    velocity.velocity = if deltav.length() > 0. {
+                        (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                            .clamp_length_max(PLAYER_SPEED)
+                    } else if velocity.velocity.length() > acc {
+                        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                    } else {
+                        Vec2::splat(0.)
+                    };
+                    let change = velocity.velocity * deltat;
 
-            let deltat = time.delta_seconds();
-            let acc = ACCEL_RATE * deltat;
-            velocity.velocity = if deltav.length() > 0. {
-                (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                    .clamp_length_max(PLAYER_SPEED)
-            } else if velocity.velocity.length() > acc {
-                velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-            } else {
-                Vec2::splat(0.)
-            };
-            let change = velocity.velocity * deltat;
+                    if velocity.xlock == 0 {
+                        npc_transform.translation.x = (npc_transform.translation.x + change.x)
+                            .clamp(
+                                -(1280. / 2.) + PLAYER_SIZE / 2.,
+                                1280. / 2. - PLAYER_SIZE / 2.,
+                            );
+                    }
+                    if velocity.ylock == 0 {
+                        npc_transform.translation.y = (npc_transform.translation.y + change.y)
+                            .clamp(
+                                -(720. / 2.) + PLAYER_SIZE / 2.,
+                                720. / 2. - PLAYER_SIZE / 2.,
+                            );
+                    }
 
-            if velocity.xlock == 0 {
-                npc_transform.translation.x = (npc_transform.translation.x + change.x).clamp(
-                    -(1280. / 2.) + PLAYER_SIZE / 2.,
-                    1280. / 2. - PLAYER_SIZE / 2.,
-                );
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
+                }
             }
-            if velocity.ylock == 0 {
-                npc_transform.translation.y = (npc_transform.translation.y + change.y).clamp(
-                    -(720. / 2.) + PLAYER_SIZE / 2.,
-                    720. / 2. - PLAYER_SIZE / 2.,
-                );
-            }
-
-            bat_transform.translation.x = npc_transform.translation.x - 5.;
-            bat_transform.translation.y = npc_transform.translation.y;
         }
     }
 }
@@ -90,50 +93,54 @@ pub fn approach_ball(
 ) {
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::AggressionBall) {
-            let mut bat_transform = bat.single_mut();
-            //info!("Chasing Ball");
-            let ball_transform = ball.single_mut();
-            npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
-            let mut deltav = Vec2::splat(0.);
-            if npc_transform.translation.x < ball_transform.translation.x {
-                deltav.x += 10.;
-            }
-            if npc_transform.translation.x > ball_transform.translation.x {
-                deltav.x -= 10.;
-            }
-            if npc_transform.translation.y < ball_transform.translation.y {
-                deltav.y += 10.;
-            }
-            if npc_transform.translation.y > ball_transform.translation.y {
-                deltav.y -= 10.;
-            }
+            for mut bat_transform in bat.iter_mut() {
+                //info!("Chasing Ball");
+                for ball_transform in ball.iter_mut() {
+                    npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
+                    let mut deltav = Vec2::splat(0.);
+                    if npc_transform.translation.x < ball_transform.translation.x {
+                        deltav.x += 10.;
+                    }
+                    if npc_transform.translation.x > ball_transform.translation.x {
+                        deltav.x -= 10.;
+                    }
+                    if npc_transform.translation.y < ball_transform.translation.y {
+                        deltav.y += 10.;
+                    }
+                    if npc_transform.translation.y > ball_transform.translation.y {
+                        deltav.y -= 10.;
+                    }
 
-            let deltat = time.delta_seconds();
-            let acc = ACCEL_RATE * deltat;
-            velocity.velocity = if deltav.length() > 0. {
-                (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                    .clamp_length_max(PLAYER_SPEED)
-            } else if velocity.velocity.length() > acc {
-                velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-            } else {
-                Vec2::splat(0.)
-            };
-            let change = velocity.velocity * deltat;
-            if velocity.xlock == 0 {
-                npc_transform.translation.x = (npc_transform.translation.x + change.x).clamp(
-                    -(1280. / 2.) + PLAYER_SIZE / 2.,
-                    1280. / 2. - PLAYER_SIZE / 2.,
-                );
-            }
-            if velocity.ylock == 0 {
-                npc_transform.translation.y = (npc_transform.translation.y + change.y).clamp(
-                    -(720. / 2.) + PLAYER_SIZE / 2.,
-                    720. / 2. - PLAYER_SIZE / 2.,
-                );
-            }
+                    let deltat = time.delta_seconds();
+                    let acc = ACCEL_RATE * deltat;
+                    velocity.velocity = if deltav.length() > 0. {
+                        (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                            .clamp_length_max(PLAYER_SPEED)
+                    } else if velocity.velocity.length() > acc {
+                        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                    } else {
+                        Vec2::splat(0.)
+                    };
+                    let change = velocity.velocity * deltat;
+                    if velocity.xlock == 0 {
+                        npc_transform.translation.x = (npc_transform.translation.x + change.x)
+                            .clamp(
+                                -(1280. / 2.) + PLAYER_SIZE / 2.,
+                                1280. / 2. - PLAYER_SIZE / 2.,
+                            );
+                    }
+                    if velocity.ylock == 0 {
+                        npc_transform.translation.y = (npc_transform.translation.y + change.y)
+                            .clamp(
+                                -(720. / 2.) + PLAYER_SIZE / 2.,
+                                720. / 2. - PLAYER_SIZE / 2.,
+                            );
+                    }
 
-            bat_transform.translation.x = npc_transform.translation.x - 5.;
-            bat_transform.translation.y = npc_transform.translation.y;
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
+                }
+            }
         }
     }
 }
@@ -149,50 +156,54 @@ pub fn evade_ball(
 ) {
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Evade) {
-            let mut bat_transform = bat.single_mut();
-            //info!("Running Away from Ball");
-            let ball_transform = ball.single_mut();
-            //npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
-            let mut deltav = Vec2::splat(0.);
-            if npc_transform.translation.x < ball_transform.translation.x {
-                deltav.x -= 10.;
-            }
-            if npc_transform.translation.x > ball_transform.translation.x {
-                deltav.x += 10.;
-            }
-            if npc_transform.translation.y < ball_transform.translation.y {
-                deltav.y -= 10.;
-            }
-            if npc_transform.translation.y > ball_transform.translation.y {
-                deltav.y += 10.;
-            }
+            for mut bat_transform in bat.iter_mut() {
+                //info!("Running Away from Ball");
+                for ball_transform in ball.iter_mut() {
+                    //npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
+                    let mut deltav = Vec2::splat(0.);
+                    if npc_transform.translation.x < ball_transform.translation.x {
+                        deltav.x -= 10.;
+                    }
+                    if npc_transform.translation.x > ball_transform.translation.x {
+                        deltav.x += 10.;
+                    }
+                    if npc_transform.translation.y < ball_transform.translation.y {
+                        deltav.y -= 10.;
+                    }
+                    if npc_transform.translation.y > ball_transform.translation.y {
+                        deltav.y += 10.;
+                    }
 
-            let deltat = time.delta_seconds();
-            let acc = ACCEL_RATE * deltat;
-            velocity.velocity = if deltav.length() > 0. {
-                (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                    .clamp_length_max(PLAYER_SPEED)
-            } else if velocity.velocity.length() > acc {
-                velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-            } else {
-                Vec2::splat(0.)
-            };
-            let change = velocity.velocity * deltat;
+                    let deltat = time.delta_seconds();
+                    let acc = ACCEL_RATE * deltat;
+                    velocity.velocity = if deltav.length() > 0. {
+                        (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                            .clamp_length_max(PLAYER_SPEED)
+                    } else if velocity.velocity.length() > acc {
+                        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                    } else {
+                        Vec2::splat(0.)
+                    };
+                    let change = velocity.velocity * deltat;
 
-            if velocity.xlock == 0 {
-                npc_transform.translation.x = (npc_transform.translation.x + change.x).clamp(
-                    -(1280. / 2.) + PLAYER_SIZE / 2.,
-                    1280. / 2. - PLAYER_SIZE / 2.,
-                );
+                    if velocity.xlock == 0 {
+                        npc_transform.translation.x = (npc_transform.translation.x + change.x)
+                            .clamp(
+                                -(1280. / 2.) + PLAYER_SIZE / 2.,
+                                1280. / 2. - PLAYER_SIZE / 2.,
+                            );
+                    }
+                    if velocity.ylock == 0 {
+                        npc_transform.translation.y = (npc_transform.translation.y + change.y)
+                            .clamp(
+                                -(720. / 2.) + PLAYER_SIZE / 2.,
+                                720. / 2. - PLAYER_SIZE / 2.,
+                            );
+                    }
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
+                }
             }
-            if velocity.ylock == 0 {
-                npc_transform.translation.y = (npc_transform.translation.y + change.y).clamp(
-                    -(720. / 2.) + PLAYER_SIZE / 2.,
-                    720. / 2. - PLAYER_SIZE / 2.,
-                );
-            }
-            bat_transform.translation.x = npc_transform.translation.x - 5.;
-            bat_transform.translation.y = npc_transform.translation.y;
         }
     }
 }
