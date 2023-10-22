@@ -1,12 +1,18 @@
 use crate::components::*;
 use crate::npc::npc_events::*;
 use bevy::prelude::*;
+use bevy::time::Stopwatch;
 use rand::prelude::*;
 
 const PLAYER_SIZE: f32 = 30.;
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
 pub struct NPCTimer(Timer);
+
+#[derive(Component)]
+struct SwingAnimation {
+    time: Stopwatch,
+}
 
 #[derive(Component)]
 pub struct NPCVelocity {
@@ -116,6 +122,7 @@ impl Plugin for NPCPlugin {
         app.add_systems(Update, approach_player.after(select));
         app.add_systems(Update, approach_ball.after(select));
         app.add_systems(Update, evade_ball.after(select));
+        app.add_systems(Update, bat_swing.after(select));
     }
 }
 
@@ -206,6 +213,9 @@ pub fn select(
                         } else {
                             state.to_aggression_player();
                         }
+                    }
+                    if npc_ball_distance < 100. {
+                        state.to_idle();
                     }
                     timer.reset();
                 }
