@@ -13,13 +13,17 @@ pub struct Face;
 pub struct Object;
 
 #[derive(Component)]
-pub struct Rug;
+pub struct Rug{
+    pub friction: f32,
+}
 
 #[derive(Component)]
 pub struct Background;
 
 #[derive(Component)]
-pub struct Ball;
+pub struct Ball{
+    pub radius: f32,
+}
 
 #[derive(Component)]
 pub struct BallVelocity {
@@ -37,4 +41,9 @@ impl Colliding{
             currently_colliding: false,
         }
     }
+}
+
+#[derive(Component)]
+pub struct Density{
+    pub density: f32,
 }

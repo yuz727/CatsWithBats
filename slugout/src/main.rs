@@ -107,5 +107,5 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Rug); 
+        .insert(Rug{friction: 1.4,}); 
 }
