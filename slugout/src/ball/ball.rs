@@ -21,31 +21,57 @@ impl Plugin for BallPlugin {
 }
 
 //ball Creation
-fn setup(mut commands: Commands) {
-
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
-        ..default()
-    }) .insert(Ball{radius: 2.,}) .insert(crate::components::BallVelocity {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(crate::components::BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
-    }).insert(Colliding::new()
-    ).insert(Density{density: 2.,});
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
 
-    commands.spawn(SpriteBundle {
-        transform: Transform::from_xyz(5.0, 5.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
-        ..default()
-    }) .insert(Ball{radius: 2.,}) .insert(crate::components::BallVelocity {
-        velocity: Vec3::new(300.0, 100.0, 2.0),
-    }).insert(Colliding::new()
-    ).insert(Density{density: 2.,});
 
+    // 2ND ball
+    // commands.spawn(SpriteBundle {
+    //     texture: asset_server.load("yarnball.png"),
+    //     transform: Transform::from_xyz(5., 5., 2.).with_scale(Vec3::splat(0.03)),
+    //     ..Default::default()
+    // })
+    // .insert(Ball {
+    //     radius: 0.03 / 2.0,
+    // })
+    // .insert(crate::components::BallVelocity {
+    //     velocity: Vec3::new(300.0, 100.0, 2.0),
+    // })
+    // .insert(Colliding::new())
+    // .insert(Density {
+    //     density: 2.,
+    // });
+
+    //3RD ball
     commands.spawn(SpriteBundle {
-        transform: Transform::from_xyz(-400.0, -100.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
-        ..default()
-    }) .insert(Ball{radius: 2.,}) .insert(crate::components::BallVelocity {
-        velocity: Vec3::new(-500.0, 3.0, 2.0),
-    }).insert(Colliding::new()
-    ).insert(Density{density: 2.,});
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(-400., -100., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(crate::components::BallVelocity {
+        velocity: Vec3::new(-500., 3., 2.),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
 }
 
 //bounce the ball
