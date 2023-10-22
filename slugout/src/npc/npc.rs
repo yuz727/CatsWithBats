@@ -159,56 +159,57 @@ pub fn select(
 ) {
     // NPC, Ball, Player Position
     for (npc_transform, mut state, difficulty, mut timer) in npcs.iter_mut() {
-        let player_transform = player.single_mut();
-        let ball_transform = ball.single_mut();
+        for player_transform in player.iter_mut() {
+            for ball_transform in ball.iter_mut() {
+                let npc_player_distance =
+                    Vec3::distance(npc_transform.translation, player_transform.translation);
+                let npc_ball_distance =
+                    Vec3::distance(npc_transform.translation, ball_transform.translation);
 
-        let npc_player_distance =
-            Vec3::distance(npc_transform.translation, player_transform.translation);
-        let npc_ball_distance =
-            Vec3::distance(npc_transform.translation, ball_transform.translation);
+                let mut rand = thread_rng();
 
-        let mut rand = thread_rng();
+                // If timer is up, roll next state
+                timer.tick(time.delta());
+                if timer.just_finished() {
+                    // This will be the chance to go to the aggressive state selections
+                    state.to_idle();
+                    let mut state_flag = -1;
 
-        // If timer is up, roll next state
-        timer.tick(time.delta());
-        if timer.just_finished() {
-            // This will be the chance to go to the aggressive state selections
-            state.to_idle();
-            let mut state_flag = -1;
+                    // Calculate proportion of probability equal to aggresion
+                    let agg_factor = difficulty.difficulty as f32 / 100.0;
 
-            // Calculate proportion of probability equal to aggresion
-            let agg_factor = difficulty.difficulty as f32 / 100.0;
+                    // Normalize the probabilities (aggression type)/(difficulty amount)
+                    let agg_prob = npc_player_distance + npc_ball_distance;
+                    let agg_prob_player = 1.0 - (npc_player_distance / agg_prob);
+                    let agg_prob_ball = 1.0 - (npc_ball_distance / agg_prob);
 
-            // Normalize the probabilities (aggression type)/(difficulty amount)
-            let agg_prob = npc_player_distance + npc_ball_distance;
-            let agg_prob_player = 1.0 - (npc_player_distance / agg_prob);
-            let agg_prob_ball = 1.0 - (npc_ball_distance / agg_prob);
+                    // Scale aggression probabilities based on difficulty
+                    let agg_prob_player = agg_prob_player * agg_factor;
+                    let agg_prob_ball = agg_prob_ball * agg_factor;
 
-            // Scale aggression probabilities based on difficulty
-            let agg_prob_player = agg_prob_player * agg_factor;
-            let agg_prob_ball = agg_prob_ball * agg_factor;
+                    // % probability of aggression
+                    let agg_prob = agg_prob_ball + agg_prob_player;
 
-            // % probability of aggression
-            let agg_prob = agg_prob_ball + agg_prob_player;
+                    let selection = rand.gen_range(0.0..1.0);
 
-            let selection = rand.gen_range(0.0..1.0);
-
-            if selection <= agg_prob {
-                state.to_aggression();
-                state_flag = 0;
-            } else {
-                state.to_evade();
-                state_flag = 1;
-            }
-            // Select go to ball or player
-            if state_flag == 0 {
-                if agg_prob_ball > agg_prob_player {
-                    state.to_aggression_ball();
-                } else {
-                    state.to_aggression_player();
+                    if selection <= agg_prob {
+                        state.to_aggression();
+                        state_flag = 0;
+                    } else {
+                        state.to_evade();
+                        state_flag = 1;
+                    }
+                    // Select go to ball or player
+                    if state_flag == 0 {
+                        if agg_prob_ball > agg_prob_player {
+                            state.to_aggression_ball();
+                        } else {
+                            state.to_aggression_player();
+                        }
+                    }
+                    timer.reset();
                 }
             }
-            timer.reset();
         }
     }
 }
