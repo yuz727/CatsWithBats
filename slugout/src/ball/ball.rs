@@ -51,19 +51,20 @@ fn bounce(
 
         // Check for collision with player
 
-        let recliner_size = Vec2::new(120., 130.);
+        let recliner_size = Vec2::new(109., 184.);
         let recliner_translation = Vec3::new(-60., 210., 1.);
         let recliner = bevy::sprite::collide_aabb::collide(recliner_translation, 
         recliner_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let tv_size = Vec2::new(170., 100.);
+        let tv_size = Vec2::new(164., 103.);
         let tv_translation = Vec3::new(0., -250., 1.);
         let tv_stand = bevy::sprite::collide_aabb::collide(tv_translation, 
         tv_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-        let table_size = Vec2::new(113.,113.);
+        let table_size = Vec2::new(103.,107.);
         let table_translation = Vec3::new(120., 170., 1.);
-        let side_table = bevy::sprite::collide_aabb::collide(table_translation, table_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        let side_table = bevy::sprite::collide_aabb::collide(table_translation, table_size, 
+            new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
 
         //other collisions//////////////////////////////////////////////////////
@@ -86,7 +87,6 @@ fn bounce(
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left){
             ball.velocity.x = -ball.velocity.x;
-            //info!("444444444444444");
             new_translation_x = tv_translation.x + tv_size.x/2. + 1.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right){
                 ball.velocity.x = -ball.velocity.x;
