@@ -41,7 +41,7 @@ pub fn move_player(
     recliner_size, transform.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE));
 
     let tv_size = Vec2::new(164., 103.);
-    let tv_translation = Vec3::new(0., -250., 1.);
+    let tv_translation = Vec3::new(0., -245., 1.);
     let tv_stand = bevy::sprite::collide_aabb::collide(tv_translation, 
     tv_size, transform.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE));
 
