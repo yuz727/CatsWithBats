@@ -7,7 +7,7 @@ const BALL_SIZE: f32 = 10.;
 const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 const BASE_FRICTION: f32 = 0.4;
 const G: f32 = 9.81;
-const MIN_BALL_VELOCITY: f32 = 9.;
+const MIN_BALL_VELOCITY: f32 = 30.;
 
 pub struct BallPlugin;
 
