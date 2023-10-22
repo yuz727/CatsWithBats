@@ -30,6 +30,22 @@ fn setup(mut commands: Commands) {
         velocity: Vec3::new(300.0, 300.0, 2.0),
     }).insert(Colliding::new()
     ).insert(Density{density: 2.,});
+
+    commands.spawn(SpriteBundle {
+        transform: Transform::from_xyz(5.0, 5.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
+        ..default()
+    }) .insert(Ball{radius: 2.,}) .insert(crate::components::BallVelocity {
+        velocity: Vec3::new(300.0, 100.0, 2.0),
+    }).insert(Colliding::new()
+    ).insert(Density{density: 2.,});
+
+    commands.spawn(SpriteBundle {
+        transform: Transform::from_xyz(-400.0, -100.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
+        ..default()
+    }) .insert(Ball{radius: 2.,}) .insert(crate::components::BallVelocity {
+        velocity: Vec3::new(-10.0, 0.0, 2.0),
+    }).insert(Colliding::new()
+    ).insert(Density{density: 2.,});
 }
 
 //bounce the ball
