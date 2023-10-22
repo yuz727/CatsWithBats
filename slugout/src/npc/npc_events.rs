@@ -16,6 +16,7 @@ const SIDETABLE_WIDTH: f32 = 125.;
 const SIDETABLE_HEIGHT: f32 = 113.;
 const TVSTAND_WIDTH: f32 = 160.;
 const TVSTAND_HEIGHT: f32 = 160.;
+const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 
 // Just go the the player straight
 pub fn approach_player(
@@ -258,6 +259,48 @@ pub fn avoid_collision(
             }
             velocity.unlock_x();
             velocity.unlock_y();
+        }
+    }
+}
+
+pub fn bat_swing(
+    mut npcs: Query<
+        (&NPCVelocity, &States),
+        (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
+    >,
+    mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>)>,
+    mut ball: Query<
+        &mut BallVelocity,
+        (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>),
+    >,
+) {
+    for (npc_velocity, state) in npcs.iter_mut() {
+        if matches!(state, States::Idle) {
+            info!("Swing");
+            // bat swing animation
+            let mut bat_transform = bat.single_mut();
+            bat_transform.scale.y = -0.13;
+
+            bat_transform.scale.y = 0.13;
+
+            for mut ball_velocity in ball.iter_mut() {
+                // Initialize the ball's velocity
+                ball_velocity.velocity = Vec3::new(0.0, 0.0, 0.0);
+
+                // hit based on game pong functionality, until i can get the cursor library approved
+                if npc_velocity.velocity.y > 0. {
+                    ball_velocity.velocity.y = HIT_POWER.y; //ball moves up
+                }
+                if npc_velocity.velocity.y < 0. {
+                    ball_velocity.velocity.y = -HIT_POWER.y; //down
+                }
+                if npc_velocity.velocity.x < 0. {
+                    ball_velocity.velocity.x = -HIT_POWER.x; //left
+                }
+                if npc_velocity.velocity.x > 0. {
+                    ball_velocity.velocity.x = HIT_POWER.x; //right
+                }
+            }
         }
     }
 }
