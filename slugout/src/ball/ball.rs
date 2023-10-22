@@ -43,7 +43,7 @@ fn setup(mut commands: Commands) {
         transform: Transform::from_xyz(-400.0, -100.0, 2.0).with_scale(Vec3::new(10.0, 10.0,2.0)),
         ..default()
     }) .insert(Ball{radius: 2.,}) .insert(crate::components::BallVelocity {
-        velocity: Vec3::new(-10.0, 0.0, 2.0),
+        velocity: Vec3::new(-500.0, 3.0, 2.0),
     }).insert(Colliding::new()
     ).insert(Density{density: 2.,});
 }
