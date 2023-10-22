@@ -71,47 +71,45 @@ fn bounce(
  
         if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
             ball.velocity.x = -ball.velocity.x;
-            new_translation_x = recliner_translation.x - recliner_size.x/2. - 1.;
+            new_translation_x = recliner_translation.x - recliner_size.x/2. - 5.;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left){
             ball.velocity.x = -ball.velocity.x;
-            new_translation_x = recliner_translation.x + recliner_size.x/2. + 1.;
+            new_translation_x = recliner_translation.x + recliner_size.x/2. + 5.;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top){
             ball.velocity.y = -ball.velocity.y;
-            new_translation_y = recliner_translation.y - recliner_size.y/2. - 1.;
+            new_translation_y = recliner_translation.y - recliner_size.y/2. - 5.;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom){
                 ball.velocity.y = -ball.velocity.y;
-                new_translation_y = recliner_translation.y + recliner_size.y/2. + 1.;
-        }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Inside){
-             print!("INSIDE");
-         }
+                new_translation_y = recliner_translation.y + recliner_size.y/2. + 5.;
+        }
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left){
             ball.velocity.x = -ball.velocity.x;
-            new_translation_x = tv_translation.x + tv_size.x/2. + 1.;
+            new_translation_x = tv_translation.x + tv_size.x/2. + 5.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right){
                 ball.velocity.x = -ball.velocity.x;
-                new_translation_x = tv_translation.x - tv_size.x/2. - 1.;
+                new_translation_x = tv_translation.x - tv_size.x/2. - 5.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top){
             ball.velocity.y = -ball.velocity.y;
-            new_translation_y = tv_translation.y - tv_size.y/2. - 1.;
+            new_translation_y = tv_translation.y - tv_size.y/2. - 5.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom){
             ball.velocity.y = -ball.velocity.y;
-            new_translation_y = tv_translation.y + tv_size.y/2. + 1.;
+            new_translation_y = tv_translation.y + tv_size.y/2. + 5.;
 
         }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left){
             ball.velocity.x = -ball.velocity.x;
-            new_translation_x = table_translation.x + table_size.x/2. + 1.;
+            new_translation_x = table_translation.x + table_size.x/2. + 5.;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball.velocity.x = -ball.velocity.x;
-            new_translation_x = table_translation.x - table_size.x/2. - 1.;
+            new_translation_x = table_translation.x - table_size.x/2. - 5.;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top){
             ball.velocity.y = -ball.velocity.y;
-            new_translation_y = table_translation.y - table_size.y/2. - 1.;
+            new_translation_y = table_translation.y - table_size.y/2. - 5.;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom){
             ball.velocity.y = -ball.velocity.y;
-            new_translation_y = table_translation.y + table_size.y/2. + 1.;
+            new_translation_y = table_translation.y + table_size.y/2. + 5.;
         }
 
         // Move ball
