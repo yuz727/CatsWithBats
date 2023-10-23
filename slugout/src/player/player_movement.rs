@@ -5,7 +5,7 @@ const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
 const PLAYER_SPEED: f32 = 300.;
 // 1px/frame^2 @60Hz == 3600px/s^2
-const ACCEL_RATE: f32 = 14400.;
+const ACCEL_RATE: f32 = 18000.;
 
 #[derive(Component)]
 pub struct PlayerVelocity {
@@ -37,33 +37,45 @@ pub fn move_player(
     /////////////////////////////////////////////////////////////// with objects
     let recliner_size = Vec2::new(109., 184.);
     let recliner_translation = Vec3::new(-60., 210., 1.);
-    let recliner = bevy::sprite::collide_aabb::collide(recliner_translation, 
-    recliner_size, transform.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE));
+    let recliner = bevy::sprite::collide_aabb::collide(
+        recliner_translation,
+        recliner_size,
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
 
     let tv_size = Vec2::new(164., 103.);
     let tv_translation = Vec3::new(0., -245., 1.);
-    let tv_stand = bevy::sprite::collide_aabb::collide(tv_translation, 
-    tv_size, transform.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE));
+    let tv_stand = bevy::sprite::collide_aabb::collide(
+        tv_translation,
+        tv_size,
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
 
-    let table_size = Vec2::new(103.,107.);
+    let table_size = Vec2::new(103., 107.);
     let table_translation = Vec3::new(120., 170., 1.);
-    let side_table = bevy::sprite::collide_aabb::collide(table_translation, table_size,
-        transform.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE));
+    let side_table = bevy::sprite::collide_aabb::collide(
+        table_translation,
+        table_size,
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
 
     /////////////////////////////////////////////////////////////////////
 
     let mut deltav = Vec2::splat(0.);
     if input.pressed(KeyCode::A) {
-        deltav.x -= 200.;
+        deltav.x -= 1000.;
     }
     if input.pressed(KeyCode::D) {
-        deltav.x += 200.;
+        deltav.x += 1000.;
     }
     if input.pressed(KeyCode::W) {
-        deltav.y += 200.;
+        deltav.y += 1000.;
     }
     if input.pressed(KeyCode::S) {
-        deltav.y -= 200.;
+        deltav.y -= 1000.;
     }
 
     let deltat = time.delta_seconds();
@@ -78,35 +90,34 @@ pub fn move_player(
         Vec2::splat(0.)
     };
     velocity.velocity = velocity.velocity * deltat;
-
     /////////////////////
-    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
+    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
         velocity.velocity.x = -1.;
-    }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left){
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
         velocity.velocity.x = 1.;
-    }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top){
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
         velocity.velocity.y = -1.;
-    }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
         velocity.velocity.y = 1.;
     }
 
-    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left){
+    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
         velocity.velocity.x = 1.;
-    }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right){
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
         velocity.velocity.x = -1.;
-    }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top){
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
         velocity.velocity.y = -1.;
-    }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
         velocity.velocity.y = 1.;
     }
 
-    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left){
+    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
         velocity.velocity.x = 1.;
-    }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
         velocity.velocity.x = -1.;
-    }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top){
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
         velocity.velocity.y = -1.;
-    }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
         velocity.velocity.y = 1.;
     }
     ///////////////////////////

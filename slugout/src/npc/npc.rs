@@ -160,14 +160,14 @@ pub fn select(
         (&mut Transform, &mut States, &Difficulty, &mut NPCTimer),
         (With<NPC>, Without<Player>, Without<Ball>),
     >,
-    mut player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>)>,
-    mut ball: Query<&mut Transform, (With<Ball>, Without<Player>, Without<NPC>)>,
+    player: Query<&Transform, (With<Player>, Without<NPC>, Without<Ball>)>,
+    ball: Query<&Transform, (With<Ball>, Without<Player>, Without<NPC>)>,
     time: Res<Time>,
 ) {
     // NPC, Ball, Player Position
     for (npc_transform, mut state, difficulty, mut timer) in npcs.iter_mut() {
-        for player_transform in player.iter_mut() {
-            for ball_transform in ball.iter_mut() {
+        for player_transform in player.iter() {
+            for ball_transform in ball.iter() {
                 let npc_player_distance =
                     Vec3::distance(npc_transform.translation, player_transform.translation);
                 let npc_ball_distance =
