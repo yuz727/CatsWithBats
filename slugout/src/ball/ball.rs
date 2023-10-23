@@ -250,69 +250,87 @@ fn friction(
     }
 }
 
-// bat swing function (hits ball no matter where player is, as long as mouse is clicked)
+/* 
+    bat swing function, now on RELEASE of mouse button (based on cursor) 
+        doesn't exactly move towards cursor bc it depends on the current ball velocity and position
+    still hits both yarnballs 
+    (DOES NOT ACCOUNT FOR COLLISIONS)
+ */
+
 fn swing(
     mut commands: Commands,
-    input_state: Res<Input<KeyCode>>,
     input_mouse: Res<Input<MouseButton>>,
     mut query: Query<(&mut Ball, &mut BallVelocity)>,
     mut query_bat: Query<(&Bat, &mut Transform)>,
+    cursor_events: ResMut<Events<CursorMoved>>,
 ) {
     static mut MOUSE_BUTTON_PRESSED: bool = false;
     static mut BAT_TRANSFORMED: bool = false;
+    static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
+    let mut MOUSE_POSITION: Vec2 = Vec2::default();
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
         unsafe {
             MOUSE_BUTTON_PRESSED = true;
             BAT_TRANSFORMED = false;
-
+            MOUSE_BUTTON_JUST_RELEASED = false;
+            println!("Mouse button pressed");
         }
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
         unsafe {
-            MOUSE_BUTTON_PRESSED = false;
-            BAT_TRANSFORMED = true;
+            if MOUSE_BUTTON_PRESSED {
+                MOUSE_BUTTON_PRESSED = false;
+                BAT_TRANSFORMED = true;
+                MOUSE_BUTTON_JUST_RELEASED = true;
+                println!("Mouse button released");
+            }
         }
     }
 
-    // Animation for swinging the bat
+    let mut cursor_event_reader = cursor_events.get_reader();
+    for event in cursor_event_reader.iter(&cursor_events) {
+        // Update the mouse position
+        MOUSE_POSITION = event.position;
+        println!("Mouse position changed");
+    }
+
     for (bat, mut bat_transform) in query_bat.iter_mut() {
         if unsafe { MOUSE_BUTTON_PRESSED } {
-        // Left mouse button is pressed, set the bat to horizontal
+            // Left mouse button is pressed, set the bat to horizontal
             bat_transform.scale.y = -0.13;
-            //if mouse released:
         } else if unsafe { BAT_TRANSFORMED } {
-                bat_transform.scale.y = 0.13;
+            bat_transform.scale.y = 0.13;
         }
-    
     }
 
-    if unsafe { MOUSE_BUTTON_PRESSED } {
-        for (mut _ball, mut ball_velocity) in query.iter_mut() {
-            // Initialize the ball's velocity
-            ball_velocity.velocity = Vec3::new(0.0, 0.0, 0.0);
+    if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+        for (mut ball, mut ball_velocity) in query.iter_mut() {
+            // let ball_position = ball_velocity.velocity.truncate();
+            // println!("Ball position: {:?}", ball_position);
+            
+            let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
+            println!("Direction: {:?}", direction);
 
-            // hit based on game pong functionality, until i can get the cursor library approved
-            if input_state.pressed(KeyCode::W) {
-                ball_velocity.velocity.y = HIT_POWER.y; //ball moves up
-            }
-            if input_state.pressed(KeyCode::S) {
-                ball_velocity.velocity.y = -HIT_POWER.y; //down
-            }
-            if input_state.pressed(KeyCode::A) {
-                ball_velocity.velocity.x = -HIT_POWER.x; //left
-            }
-            if input_state.pressed(KeyCode::D) {
-                ball_velocity.velocity.x = HIT_POWER.x; //right
-            } else if !input_state.pressed(KeyCode::W)
-                && !input_state.pressed(KeyCode::S)
-                && !input_state.pressed(KeyCode::A)
-                && !input_state.pressed(KeyCode::D) { 
-                
-                ball_velocity.velocity.y = HIT_POWER.y;
-            }
+
+            // Normalize the direction and set the ball's velocity
+            let normalized_direction = direction.normalize_or_zero();
+            println!("Normalized direction: {:?}", normalized_direction);
+
+            ball_velocity.velocity = Vec3::new(
+                normalized_direction.x * HIT_POWER.x,
+                normalized_direction.y * HIT_POWER.y,
+                0.0,
+            );
+            println!("Ball velocity: {:?}", ball_velocity.velocity);
+
+        }
+
+        // Reset the flags for the next interaction
+        unsafe {
+            MOUSE_BUTTON_JUST_RELEASED = false;
+            BAT_TRANSFORMED = false;
         }
     }
 }
-
