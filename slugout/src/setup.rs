@@ -189,12 +189,12 @@ fn setup_menu_action(
                 SetupButtonAction::Singleplayer => 
                 {
                     setup_state.set(SetupState::Disabled);
-                    game_state.set(GameState::Menu);
+                    game_state.set(GameState::Game);
                 } //for right now singleplayer closes the game
                 SetupButtonAction::Multiplayer => 
                 {
                     setup_state.set(SetupState::Disabled);
-                    game_state.set(GameState::Lobby);
+                    game_state.set(GameState::Game);
                 }
                 SetupButtonAction::Back => 
                 {

@@ -1,8 +1,13 @@
-use crate::components::*;
-use crate::npc::npc_events::*;
+// use crate::components::*;
+
+use crate::npc_events::*;
 use bevy::prelude::*;
 use bevy::time::Stopwatch;
 use rand::prelude::*;
+
+use super::components::Player;
+use super::components::Ball;
+
 
 const PLAYER_SIZE: f32 = 30.;
 // Timer for movement

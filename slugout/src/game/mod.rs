@@ -1,36 +1,36 @@
-use crate::components::*;
 use bevy::{prelude::*, window::PresentMode};
+
+use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
+
 mod ball;
 mod components;
-mod credits;
 mod npc;
-mod player;
+mod player_movement;
+
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
 const TITLE: &str = "Slugout";
 
 pub struct GamePlugin; 
 
-imp Plugin for GamePlugin { 
+impl Plugin for GamePlugin { 
     fn build(&self, app: &mut App) {
-        .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
+        // .insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
         app.add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: TITLE.into(),
-                resolution: (WIN_W, WIN_H).into(),
-                present_mode: PresentMode::Fifo,
+                primary_window: Some(Window {
+                    title: TITLE.into(),
+                    resolution: (WIN_W, WIN_H).into(),
+                    present_mode: PresentMode::Fifo,
+                    ..default()
+                }),
                 ..default()
-            }),
-            ..default()
-
-            .add_systems(Startup, setup)
-            .add_plugins(npc::npc::NPCPlugin)
-            .add_plugins(ball::ball::BallPlugin)
-            .add_systems(Update, player::player_movement::move_player)
-        }))
-   
+            })
+        )
+        .add_systems(Startup, setup)
+        .add_plugins(npc::NPCPlugin)
+        .add_plugins(ball::BallPlugin)
+        .add_systems(Update, player_movement::move_player);
     }
-
 }
 
 
@@ -52,7 +52,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Player)
-        .insert(player::player_movement::PlayerVelocity::new())
+        .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
 
     commands

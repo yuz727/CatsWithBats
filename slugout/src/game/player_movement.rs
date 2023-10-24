@@ -1,5 +1,7 @@
-use crate::components::*;
+// use crate::components::*;
 use bevy::prelude::*;
+
+use super::components::{Player, Face, Bat};
 
 const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
