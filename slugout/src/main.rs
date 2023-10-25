@@ -10,7 +10,7 @@ const TITLE: &str = "Slugout";
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-enum GameState {
+pub enum GameState {
     #[default]
     Menu,
     Setup,

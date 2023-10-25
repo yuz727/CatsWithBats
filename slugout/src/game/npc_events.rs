@@ -1,7 +1,6 @@
 use bevy::{math::vec2, prelude::*};
 
-use super::npc::{NPCBat, NPCVelocity, States, NPC};
-use crate::components::*;
+use super::{npc::{NPCBat, NPCVelocity, States, NPC}, components::{Player, Ball, Object, BallVelocity}};
 
 const NPC_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
@@ -268,7 +267,7 @@ pub fn bat_swing(
     >,
     mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>)>,
     mut ball: Query<
-        &mut BallVelocity,
+    &mut BallVelocity,
         (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>),
     >,
 ) {

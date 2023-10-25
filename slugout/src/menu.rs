@@ -1,34 +1,6 @@
 use bevy::{app::AppExit, prelude::*};
 
 use super::{despawn_screen, GameState, TEXT_COLOR};
-
-pub struct MenuPlugin;
-
-impl Plugin for MenuPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            // At start, the menu is not enabled. This will be changed in `menu_setup` when
-            // entering the `GameState::Menu` state.
-            // Current screen in the menu is handled by an independent state from `GameState`
-            .add_state::<MenuState>()
-            .add_systems(OnEnter(GameState::Menu), menu_setup)
-            // Systems to handle the main menu screen
-            .add_systems(OnEnter(MenuState::Main), main_menu_setup)
-            .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
-            // Systems to handle the settings menu screen
-            .add_systems(OnEnter(MenuState::Settings), settings_menu_setup)
-            .add_systems(
-                OnExit(MenuState::Settings),
-                despawn_screen::<OnSettingsMenuScreen>,
-            )
-            // Common systems to all screens that handles buttons behavior
-            .add_systems(
-                Update,
-                (menu_action, button_system).run_if(in_state(GameState::Menu)),
-            );
-    }
-}
-
 // Tag component used to tag entities added on the main menu screen
 #[derive(Component)]
 struct OnMainMenuScreen;
@@ -76,6 +48,33 @@ enum MenuButtonAction {
     BackToSettings,
     Quit,
 }
+pub struct MenuPlugin;
+
+impl Plugin for MenuPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            // At start, the menu is not enabled. This will be changed in `menu_setup` when
+            // entering the `GameState::Menu` state.
+            // Current screen in the menu is handled by an independent state from `GameState`
+            .add_state::<MenuState>()
+            .add_systems(OnEnter(GameState::Menu), menu_setup)
+            // Systems to handle the main menu screen
+            .add_systems(OnEnter(MenuState::Main), main_menu_setup)
+            .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
+            // Systems to handle the settings menu screen
+            .add_systems(OnEnter(MenuState::Settings), settings_menu_setup)
+            .add_systems(
+                OnExit(MenuState::Settings),
+                despawn_screen::<OnSettingsMenuScreen>,
+            )
+            // Common systems to all screens that handles buttons behavior
+            .add_systems(
+                Update,
+                (menu_action, button_system).run_if(in_state(GameState::Menu)),
+            );
+    }
+}
+
 
 // This system handles changing all buttons color based on mouse interaction
 fn button_system(

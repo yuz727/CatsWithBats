@@ -5,6 +5,7 @@ use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
 mod ball;
 mod components;
 mod npc;
+mod npc_events;
 mod player_movement;
 
 const WIN_W: f32 = 1280.0;
