@@ -1,5 +1,13 @@
-use crate::components::*;
 use bevy::prelude::*;
+use crate::GameState;
+
+use super::components::BallVelocity;
+use super::components::Ball;
+use super::components::Bat;
+use super::components::Colliding;
+use super::components::Density;
+use super::components::Player;
+use super::components::Rug;
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
@@ -14,9 +22,9 @@ pub struct BallPlugin;
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
-        app.add_systems(Update, bounce);
-        app.add_systems(Update, swing);
-        app.add_systems(Update, friction);
+        app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
     }
 }
 
@@ -30,7 +38,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     .insert(Ball {
         radius: 0.03 / 2.0,
     })
-    .insert(crate::components::BallVelocity {
+    .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
     })
     .insert(Colliding::new())
@@ -65,7 +73,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     .insert(Ball {
         radius: 0.03 / 2.0,
     })
-    .insert(crate::components::BallVelocity {
+    .insert(BallVelocity {
         velocity: Vec3::new(-500., 3., 2.),
     })
     .insert(Colliding::new())
@@ -77,7 +85,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 //bounce the ball
 fn bounce(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut crate::components::BallVelocity), (With<Ball>, Without<Player>)>,
+    mut query: Query<(&mut Transform, &mut BallVelocity), (With<Ball>, Without<Player>)>,
 ) {
  
     for (mut transform, mut ball) in query.iter_mut() {
