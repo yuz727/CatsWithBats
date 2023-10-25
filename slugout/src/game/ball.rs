@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::GameState;
+
 use super::components::BallVelocity;
 use super::components::Ball;
 use super::components::Bat;
@@ -20,9 +22,9 @@ pub struct BallPlugin;
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
-        app.add_systems(Update, bounce);
-        app.add_systems(Update, swing);
-        app.add_systems(Update, friction);
+        app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
     }
 }
 

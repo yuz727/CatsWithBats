@@ -1,5 +1,6 @@
 // use crate::components::*;
 
+use crate::GameState;
 use crate::game::npc_events::*;
 use bevy::prelude::*;
 use bevy::time::Stopwatch;
@@ -121,12 +122,12 @@ pub struct NPCPlugin;
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, load_npc);
-        app.add_systems(Update, select);
-        app.add_systems(Update, avoid_collision);
-        app.add_systems(Update, approach_player.after(select));
-        app.add_systems(Update, approach_ball.after(select));
-        app.add_systems(Update, evade_ball.after(select));
-        app.add_systems(Update, bat_swing.after(select));
+        app.add_systems(Update, select.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, approach_player.after(select).run_if(in_state(GameState::Game)));
+        app.add_systems(Update, approach_ball.after(select).run_if(in_state(GameState::Game)));
+        app.add_systems(Update, evade_ball.after(select).run_if(in_state(GameState::Game)));
+        app.add_systems(Update, bat_swing.after(select).run_if(in_state(GameState::Game)));
     }
 }
 

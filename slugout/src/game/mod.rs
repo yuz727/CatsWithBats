@@ -1,5 +1,7 @@
 use bevy::{prelude::*, window::PresentMode};
 
+use crate::GameState;
+
 use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
 
 mod ball;
@@ -30,7 +32,7 @@ impl Plugin for GamePlugin {
         .add_systems(Startup, setup)
         .add_plugins(npc::NPCPlugin)
         .add_plugins(ball::BallPlugin)
-        .add_systems(Update, player_movement::move_player);
+        .add_systems(Update, player_movement::move_player.run_if(in_state(GameState::Game)));
     }
 }
 
