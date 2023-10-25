@@ -3,6 +3,7 @@ use bevy::{prelude::*, window::PresentMode};
 mod game;
 mod menu;
 mod setup;
+mod multiplayer;
 
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
@@ -25,6 +26,7 @@ fn main() {
         .add_plugins(game::GamePlugin)
         .add_plugins(menu::MenuPlugin)
         .add_plugins(setup::SetupPlugin)
+        .add_plugins(multiplayer::MultiplayerPlugin)
         .run();
 }
 
