@@ -40,21 +40,21 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 
     // 2ND ball
-    // commands.spawn(SpriteBundle {
-    //     texture: asset_server.load("yarnball.png"),
-    //     transform: Transform::from_xyz(5., 5., 2.).with_scale(Vec3::splat(0.03)),
-    //     ..Default::default()
-    // })
-    // .insert(Ball {
-    //     radius: 0.03 / 2.0,
-    // })
-    // .insert(crate::components::BallVelocity {
-    //     velocity: Vec3::new(300.0, 100.0, 2.0),
-    // })
-    // .insert(Colliding::new())
-    // .insert(Density {
-    //     density: 2.,
-    // });
+     commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(500., 5., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(crate::components::BallVelocity {
+        velocity: Vec3::new(300.0, 100.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
 
     //3RD ball
     commands.spawn(SpriteBundle {
@@ -293,7 +293,7 @@ fn swing(
     for event in cursor_event_reader.iter(&cursor_events) {
         // Update the mouse position
         MOUSE_POSITION = event.position;
-        println!("Mouse position changed");
+        //println!("Mouse position changed");
     }
 
     for (bat, mut bat_transform) in query_bat.iter_mut() {
