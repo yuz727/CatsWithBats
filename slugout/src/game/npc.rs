@@ -121,7 +121,7 @@ pub struct NPCPlugin;
 
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_npc.run_if(in_state(GameState::Game)));
+        app.add_systems(OnEnter(GameState::Game), load_npc);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
         app.add_systems(Update, approach_player.after(select).run_if(in_state(GameState::Game)));

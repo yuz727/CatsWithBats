@@ -5,7 +5,7 @@ use crate::GameState;
 use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
 
 mod ball;
-mod components;
+pub mod components;
 mod npc;
 mod npc_events;
 mod player_movement;
@@ -29,7 +29,7 @@ impl Plugin for GamePlugin {
                 ..default()
             })
         )
-        .add_systems(Startup, setup)
+        .add_systems(OnEnter(GameState::Game), setup)
         .add_plugins(npc::NPCPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(Update, player_movement::move_player.run_if(in_state(GameState::Game).or_else(in_state(GameState::Multiplayer))));
@@ -38,14 +38,6 @@ impl Plugin for GamePlugin {
 
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("background1_small.png"),
-            transform: Transform::from_xyz(0., 0., 0.),
-            ..default()
-        })
-        .insert(Background);
 
     // Load Player
     commands
