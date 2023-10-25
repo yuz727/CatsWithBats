@@ -28,6 +28,9 @@ pub struct NPC;
 pub struct NPCBat;
 
 #[derive(Component)]
+pub struct NPCFace;
+
+#[derive(Component)]
 pub enum States {
     Aggression,
     Evade,
@@ -142,16 +145,25 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Idle)
-        .insert(Difficulty { difficulty: 50 });
+        .insert(Difficulty { difficulty: 75 });
 
     //spawn bat sprite
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 1.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(NPCBat);
+        .insert(NPCBat)
+        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)));
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Face.png"),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 5.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCFace);
 }
 
 // Select next move
