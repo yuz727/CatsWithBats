@@ -29,7 +29,7 @@ impl Plugin for GamePlugin {
                 ..default()
             })
         )
-        .add_systems(OnEnter(GameState::Game), setup)
+        .add_systems(Startup, setup)
         .add_plugins(npc::NPCPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(Update, player_movement::move_player.run_if(in_state(GameState::Game)));
@@ -43,7 +43,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., -3.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Player)
@@ -53,7 +53,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Face.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 4.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., -4.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Face);
@@ -61,7 +61,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 4.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., -4.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Bat);
@@ -71,7 +71,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(SpriteBundle {
             texture: asset_server.load("SideTable.png"),
             transform:
-                Transform::with_scale(Transform::from_xyz(120., 170., 2.), Vec3::splat(0.18)),
+                Transform::with_scale(Transform::from_xyz(120., 170., -2.), Vec3::splat(0.18)),
             ..default()
         })
         .insert(Object);
@@ -80,7 +80,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(SpriteBundle {
             texture: asset_server.load("TVStand.png"),
             transform: Transform::with_rotation(
-                Transform::with_scale(Transform::from_xyz(0., -250., 2.), Vec3::splat(0.18)),
+                Transform::with_scale(Transform::from_xyz(0., -250., -2.), Vec3::splat(0.18)),
                 Quat::from_rotation_z(4.72),
             ),
             ..default()
@@ -91,7 +91,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(SpriteBundle {
             texture: asset_server.load("Recliner.png"),
             transform:
-                Transform::with_scale(Transform::from_xyz(-60., 210., 2.), Vec3::splat(0.18)),
+                Transform::with_scale(Transform::from_xyz(-60., 210., -2.), Vec3::splat(0.18)),
             ..default()
         })
         .insert(Object); 
@@ -99,7 +99,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(SpriteBundle {
             texture: asset_server.load("Rug.png"),
             transform: Transform::with_rotation(
-                Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.6)),
+                Transform::with_scale(Transform::from_xyz(0., 0., -1.), Vec3::splat(0.6)),
                 Quat::from_rotation_z(1.56),
             ),
             ..default()

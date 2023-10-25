@@ -1,12 +1,16 @@
 use bevy::{app::AppExit, prelude::*, window::ReceivedCharacter};
-
+use std::thread;
 use super::{despawn_screen, GameState, TEXT_COLOR};
 
 pub struct MultiplayerPlugin;
 
+mod server;
+mod client;
+
 #[derive(Component)]
 enum MultiplayerButtonAction {
     HostGame,
+    JoinGame,
     Multiplayer,
     Back,
 }
@@ -95,6 +99,7 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     height: Val::Percent(100.0),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Row,
                     ..default()
                 },
                 ..default()
@@ -110,6 +115,8 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             width: Val::Px(250.0),
                             height: Val::Px(40.0),
                             margin: UiRect::all(Val::Px(20.0)),
+                            justify_content: JustifyContent::Center,
+                            flex_direction: FlexDirection::Column,
                             ..default()
                         },
                         background_color: Color::NONE.into(),
@@ -117,10 +124,24 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     }
                 )
                 .with_children(|parent| {
+                    parent.spawn(
+                        TextBundle::from_section(
+                            "Want to join a game? Type in the host's ip address: ",
+                            TextStyle {
+                                font_size: 30.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
+                    );
                     parent.spawn(TextBundle::from_section(
                             String::new().to_string(),
                             TextStyle {
-                                font_size: 12.0,
+                                font_size: 30.0,
                                 color: TEXT_COLOR,
                                 ..default()
                             },
@@ -132,7 +153,23 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         }),
                     )
                     .insert(InputText(String::new()));
-                });
+                
+                parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            MultiplayerButtonAction::HostGame,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Join Game",
+                                button_text_style.clone(),
+                            ));
+                        });
+                    });
         })
         .with_children(|parent| {
             parent
@@ -149,9 +186,9 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     // Display the game name
                     parent.spawn(
                         TextBundle::from_section(
-                            "Cats With Bats",
+                            "Want to host a game? Press the button below.",
                             TextStyle {
-                                font_size: 80.0,
+                                font_size: 30.0,
                                 color: TEXT_COLOR,
                                 ..default()
                             },
@@ -214,7 +251,19 @@ fn multiplayer_menu_action(
     for (interaction, multiplayer_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
             match multiplayer_button_action {
-                MultiplayerButtonAction::HostGame => app_exit_events.send(AppExit), //for right now HostGame closes the game
+                MultiplayerButtonAction::HostGame => {
+                    let server_thread = thread::spawn(|| {
+                    let _ = server::create_server();
+                    });
+                    
+                    let client_thread = thread::spawn(|| {
+                        let _ = client::create_client();
+                    });
+                
+                    server_thread.join().unwrap();
+                    client_thread.join().unwrap();
+                } //for right now HostGame closes the game
+                MultiplayerButtonAction::JoinGame => app_exit_events.send(AppExit),
                 MultiplayerButtonAction::Multiplayer => 
                 {
                     multiplayer_state.set(MultiplayerState::Disabled);
