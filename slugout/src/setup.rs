@@ -194,7 +194,7 @@ fn setup_menu_action(
                 SetupButtonAction::Multiplayer => 
                 {
                     setup_state.set(SetupState::Disabled);
-                    game_state.set(GameState::Game);
+                    game_state.set(GameState::Multiplayer);
                 }
                 SetupButtonAction::Back => 
                 {

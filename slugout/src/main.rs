@@ -14,7 +14,8 @@ pub enum GameState {
     #[default]
     Menu,
     Setup,
-    Game
+    Game,
+    Multiplayer
 }
 
 fn main() {
