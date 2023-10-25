@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 use crate::GameState;
 
-use crate::game::components::*;
-
 use super::components::BallVelocity;
 use super::components::Ball;
 use super::components::Bat;
@@ -58,7 +56,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     .insert(Ball {
         radius: 0.03 / 2.0,
     })
-    .insert(crate::game::components::BallVelocity {
+    .insert(crate::components::BallVelocity {
         velocity: Vec3::new(300.0, 100.0, 2.0),
     })
     .insert(Colliding::new())
