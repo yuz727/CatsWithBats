@@ -1,13 +1,13 @@
 // use crate::components::*;
 
-use crate::GameState;
 use crate::game::npc_events::*;
+use crate::GameState;
 use bevy::prelude::*;
 use bevy::time::Stopwatch;
 use rand::prelude::*;
 
-use super::components::Player;
 use super::components::Ball;
+use super::components::Player;
 
 const PLAYER_SIZE: f32 = 30.;
 // Timer for movement
@@ -127,10 +127,26 @@ impl Plugin for NPCPlugin {
         app.add_systems(OnEnter(GameState::Game), load_npc);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, approach_player.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, approach_ball.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, evade_ball.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, bat_swing.after(select).run_if(in_state(GameState::Game)));
+        app.add_systems(
+            Update,
+            approach_player
+                .after(select)
+                .run_if(in_state(GameState::Game)),
+        );
+        app.add_systems(
+            Update,
+            approach_ball
+                .after(select)
+                .run_if(in_state(GameState::Game)),
+        );
+        app.add_systems(
+            Update,
+            evade_ball.after(select).run_if(in_state(GameState::Game)),
+        );
+        app.add_systems(
+            Update,
+            bat_swing.after(select).run_if(in_state(GameState::Game)),
+        );
     }
 }
 
