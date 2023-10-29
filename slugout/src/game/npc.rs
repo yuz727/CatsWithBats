@@ -127,12 +127,6 @@ impl Plugin for NPCPlugin {
         app.add_systems(OnEnter(GameState::Game), load_npc);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
-<<<<<<< HEAD
-        app.add_systems(Update, approach_player.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, approach_ball.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, evade_ball.after(select).run_if(in_state(GameState::Game)));
-        //app.add_systems(Update, bat_swing.after(select).run_if(in_state(GameState::Game)));
-=======
         app.add_systems(
             Update,
             approach_player
@@ -153,7 +147,6 @@ impl Plugin for NPCPlugin {
             Update,
             bat_swing.after(select).run_if(in_state(GameState::Game)),
         );
->>>>>>> d8078cac510e89f8fc01c40371a4c48ffdc1f7e7
     }
 }
 

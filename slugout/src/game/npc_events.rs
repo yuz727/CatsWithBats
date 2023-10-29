@@ -345,10 +345,6 @@ pub fn bat_swing(
 ) {
     for (npc_velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Idle) {
-<<<<<<< HEAD
-            //info!("Swing");
-=======
->>>>>>> d8078cac510e89f8fc01c40371a4c48ffdc1f7e7
             // bat swing animation
             let (mut bat_transform, mut timer) = bat.single_mut();
 
