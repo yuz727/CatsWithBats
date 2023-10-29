@@ -1,5 +1,8 @@
+use bevy::ecs::system::Combine;
 use bevy::prelude::*;
+use bevy::transform::commands;
 use crate::GameState;
+use bevy::window::PrimaryWindow;
 
 use super::components::BallVelocity;
 use super::components::Ball;
@@ -16,6 +19,9 @@ const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 const BASE_FRICTION: f32 = 0.4;
 const G: f32 = 9.81;
 const MIN_BALL_VELOCITY: f32 = 30.;
+const PLAYER_SIZE: f32 = 30.;
+
+static mut MOUSE_BUTTON_JUST_RELEASED: bool = false; 
 
 pub struct BallPlugin;
 
@@ -23,7 +29,7 @@ impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
+        //app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
     }
 }
@@ -86,6 +92,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn bounce(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity), (With<Ball>, Without<Player>)>,
+    player_transform: Query<&Transform, (With<Player>, Without<Ball>)>,
+    mut commands: Commands, asset_server: Res<AssetServer>,
+    cursor_events: ResMut<Events<CursorMoved>>,
+    input_mouse: Res<Input<MouseButton>>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
  
     for (mut transform, mut ball) in query.iter_mut() {
@@ -104,6 +115,11 @@ fn bounce(
         let new_translation = Vec3::new(new_translation_x, new_translation_y, transform.translation.z);
 
         // Check for collision with player
+        let pt = player_transform.single();
+        let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE,
+            PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+
 
         let recliner_size = Vec2::new(109., 184.);
         let recliner_translation = Vec3::new(-60., 210., 1.);
@@ -122,7 +138,13 @@ fn bounce(
 
 
         //other collisions//////////////////////////////////////////////////////
- 
+            
+        if collision == Some(bevy::sprite::collide_aabb::Collision::Right) || collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+            || collision == Some(bevy::sprite::collide_aabb::Collision::Top)|| collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+            || collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+               print!("hit\n");
+        }
+
         if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
             ball.velocity.x = -ball.velocity.x;
             new_translation_x = recliner_translation.x - recliner_size.x/2. - BALL_SIZE/2.;
@@ -177,6 +199,50 @@ fn bounce(
         if transform.translation.y.abs() == WIN_H / 2.0 - BALL_SIZE / 2.{
             ball.velocity.y = -ball.velocity.y;
         }
+        ///////////////////////////swing//////////////////////////////////
+        
+        let mut MOUSE_POSITION: Vec2 = Vec2::new(0.,0.);
+        if let Some(position) = q_windows.single().cursor_position() {
+            MOUSE_POSITION = position;/////////////////////////////// this position is of different coordinate system, causing not work
+        } 
+        
+        if input_mouse.just_pressed(MouseButton::Left) {
+            //print!("00000000000\n");
+        }
+        else if input_mouse.just_released(MouseButton::Left){
+            ///////////create left and right hit box 
+            let right = bevy::sprite::collide_aabb::collide(Vec3::new(pt.translation.x+20.,pt.translation.y,pt.translation.z),
+             Vec2::new(PLAYER_SIZE*19., PLAYER_SIZE*19.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+            let left = bevy::sprite::collide_aabb::collide(Vec3::new(pt.translation.x-20.,pt.translation.y,pt.translation.z),
+             Vec2::new(PLAYER_SIZE*19., PLAYER_SIZE*19.), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+             //print!("9999999999\n");
+             print!("{}\n",MOUSE_POSITION);
+             print!("{}\n",pt.translation);
+
+            if ( MOUSE_POSITION [0]> pt.translation.x){                     ////////////not working
+                if left == Some(bevy::sprite::collide_aabb::Collision::Right){
+                    print!("1111111\n");
+                }else if left == Some(bevy::sprite::collide_aabb::Collision::Left){
+                    print!("22222222\n");
+                }else if left == Some(bevy::sprite::collide_aabb::Collision::Top){
+                    print!("3333333333\n");
+                }else if left == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+                    print!("4444444444444\n");
+                }
+            }else if ( MOUSE_POSITION [0]>= pt.translation.x) {             ////////////not working
+                if right == Some(bevy::sprite::collide_aabb::Collision::Right){
+                    print!("55555555\n");
+                }else if right == Some(bevy::sprite::collide_aabb::Collision::Left){
+                    print!("666666666\n");
+                }else if right == Some(bevy::sprite::collide_aabb::Collision::Top){
+                    print!("7777777777\n");
+                }else if right == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+                    print!("8888888888\n");
+                }
+            }
+        }
+        ////////////////////end of swing//////////////////////////////////////////////
     }
 }
 
@@ -192,7 +258,10 @@ fn friction(
     for (ball_transform, mut ball_velocity, ball_density, ball) in query.iter_mut(){
         // If the ball is on the rug, slow it down using the rugs coefficient of friction
         let rug_collision = bevy::sprite::collide_aabb::collide(rug_transform.translation, rug_size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
-        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (rug_collision == Some(
+            bevy::sprite::collide_aabb::Collision::Left)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+             || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || 
+             (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
     
             let mut newvx = 0.;
             let mut newvy = 0.;
@@ -265,7 +334,7 @@ fn friction(
     (DOES NOT ACCOUNT FOR COLLISIONS)
  */
 
-fn swing(
+ fn swing(
     mut commands: Commands,
     input_mouse: Res<Input<MouseButton>>,
     mut query: Query<(&mut Ball, &mut BallVelocity)>,
@@ -342,3 +411,4 @@ fn swing(
         }
     }
 }
+
