@@ -130,7 +130,7 @@ impl Plugin for NPCPlugin {
         app.add_systems(Update, approach_player.after(select).run_if(in_state(GameState::Game)));
         app.add_systems(Update, approach_ball.after(select).run_if(in_state(GameState::Game)));
         app.add_systems(Update, evade_ball.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, bat_swing.after(select).run_if(in_state(GameState::Game)));
+        //app.add_systems(Update, bat_swing.after(select).run_if(in_state(GameState::Game)));
     }
 }
 

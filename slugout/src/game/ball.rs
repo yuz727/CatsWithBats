@@ -1,4 +1,6 @@
+use bevy::ecs::system::Combine;
 use bevy::prelude::*;
+use bevy::transform::commands;
 use crate::GameState;
 
 use super::components::BallVelocity;
@@ -16,6 +18,7 @@ const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 const BASE_FRICTION: f32 = 0.4;
 const G: f32 = 9.81;
 const MIN_BALL_VELOCITY: f32 = 30.;
+const PLAYER_SIZE: f32 = 30.;
 
 pub struct BallPlugin;
 
@@ -86,6 +89,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn bounce(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity), (With<Ball>, Without<Player>)>,
+    player_transform: Query<&Transform, (With<Player>, Without<Ball>)>,
+    mut commands: Commands, asset_server: Res<AssetServer>
 ) {
  
     for (mut transform, mut ball) in query.iter_mut() {
@@ -104,6 +109,11 @@ fn bounce(
         let new_translation = Vec3::new(new_translation_x, new_translation_y, transform.translation.z);
 
         // Check for collision with player
+        let pt = player_transform.single();
+        let collision = bevy::sprite::collide_aabb::collide(pt.translation, Vec2::new(PLAYER_SIZE,
+            PLAYER_SIZE), transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+
 
         let recliner_size = Vec2::new(109., 184.);
         let recliner_translation = Vec3::new(-60., 210., 1.);
@@ -122,7 +132,13 @@ fn bounce(
 
 
         //other collisions//////////////////////////////////////////////////////
- 
+            
+        if collision == Some(bevy::sprite::collide_aabb::Collision::Right) || collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+            || collision == Some(bevy::sprite::collide_aabb::Collision::Top)|| collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+            || collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+               print!("hit");
+        }
+
         if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
             ball.velocity.x = -ball.velocity.x;
             new_translation_x = recliner_translation.x - recliner_size.x/2. - BALL_SIZE/2.;
@@ -192,7 +208,10 @@ fn friction(
     for (ball_transform, mut ball_velocity, ball_density, ball) in query.iter_mut(){
         // If the ball is on the rug, slow it down using the rugs coefficient of friction
         let rug_collision = bevy::sprite::collide_aabb::collide(rug_transform.translation, rug_size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
-        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (rug_collision == Some(
+            bevy::sprite::collide_aabb::Collision::Left)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+             || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || 
+             (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
     
             let mut newvx = 0.;
             let mut newvy = 0.;

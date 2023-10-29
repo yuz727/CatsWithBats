@@ -273,7 +273,7 @@ pub fn bat_swing(
 ) {
     for (npc_velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Idle) {
-            info!("Swing");
+            //info!("Swing");
             // bat swing animation
             let mut bat_transform = bat.single_mut();
             bat_transform.scale.y = -0.13;
