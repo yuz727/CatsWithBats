@@ -43,7 +43,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 10.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Player)
@@ -53,7 +53,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Face.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 4.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Face);
@@ -61,7 +61,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 4.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 20.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Bat);
