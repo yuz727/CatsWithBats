@@ -26,7 +26,7 @@ pub struct BallPlugin;
 
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup);
+        app.add_systems(OnEnter(GameState::Game), setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
