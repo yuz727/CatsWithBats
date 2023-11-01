@@ -161,7 +161,7 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 background_color: NORMAL_BUTTON.into(),
                                 ..default()
                             },
-                            MultiplayerButtonAction::HostGame,
+                            MultiplayerButtonAction::JoinGame,
                         ))
                         .with_children(|parent| {
                             parent.spawn(TextBundle::from_section(
@@ -263,7 +263,15 @@ fn multiplayer_menu_action(
                     server_thread.join().unwrap();
                     client_thread.join().unwrap();
                 } //for right now HostGame closes the game
-                MultiplayerButtonAction::JoinGame => app_exit_events.send(AppExit),
+                MultiplayerButtonAction::JoinGame => 
+                {
+                    let client_thread = thread::spawn(|| {
+                        let _ = client::create_client();
+                    });
+                    client_thread.join().unwrap();
+                    multiplayer_state.set(MultiplayerState::Disabled);
+                    game_state.set(GameState::Multiplayer);
+                }
                 MultiplayerButtonAction::Multiplayer => 
                 {
                     multiplayer_state.set(MultiplayerState::Disabled);

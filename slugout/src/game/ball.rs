@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::{prelude::*, window::PresentMode};
 
 use crate::GameState;
+use bevy::window::CursorMoved;
 
 use super::components::BallVelocity;
 use super::components::Ball;
@@ -11,6 +12,7 @@ use super::components::Density;
 use super::components::Player;
 use super::components::Rug;
 use crate::game::components::Hitbox;
+use super::components::Aim;
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
@@ -29,6 +31,8 @@ impl Plugin for BallPlugin {
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
+
     }
 }
 
@@ -468,4 +472,19 @@ fn swing(
     }
 
 
+}
+
+fn aim_follows_cursor(
+    mut query_aim: Query<&mut Transform, With<Aim>>,
+    cursor_events: Res<Events<CursorMoved>>,
+) {
+    let mut cursor_event_reader = cursor_events.get_reader();
+
+    for event in cursor_event_reader.iter(&cursor_events) {
+        // Update the aim's position to follow the cursor
+        for mut aim_transform in query_aim.iter_mut() {
+            aim_transform.translation.x = event.position.x - WIN_W / 2.0; 
+            aim_transform.translation.y = -(event.position.y - WIN_H / 2.0 + 40.0); 
+        }
+    }
 }
