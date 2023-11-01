@@ -141,7 +141,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
         sprite: Sprite {
             color: Color::rgba(240., 140., 100., 0.2),
-            custom_size: Some(Vec2::new(30., 52.)),
+            custom_size: Some(Vec2::new(300., 300.)),
             ..default()
         },
         transform: Transform::from_xyz(0., 0., 2.),
@@ -149,7 +149,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     })
     .insert(Hitbox {
-        size: Vec2::new(30., 52.), //30 52
+        size: Vec2::new(300., 300.), //30 52
     });
 }
 
@@ -409,24 +409,24 @@ fn swing(
         println!("Cursor is inside window {:?}", mouse_position);
 
     //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
-        for (mut ball, mut ball_velocity, mut balltransform) in query.iter_mut() {
+        for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
             
-            let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, balltransform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+            let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
             if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
                 ball_velocity.velocity = Vec3::splat(0.);
-                let mut change_x = ((mouse_position.x - WIN_W) - hitbox_transform.translation.x).abs();
-                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - hitbox_transform.translation.y).abs();
+                let mut change_x = ((mouse_position.x - WIN_W) - ball_transform.translation.x).abs();
+                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - ball_transform.translation.y).abs();
                 let mut new_velocity = Vec3::new(change_x, change_y, 0.);
                 new_velocity = new_velocity.normalize_or_zero();
 
-                if (mouse_position.x - WIN_W) > hitbox_transform.translation.x{
+                if (mouse_position.x - WIN_W) > ball_transform.translation.x{
                     new_velocity.x = new_velocity.x;
                 }else{
                     new_velocity.x = -1. * new_velocity.x;
                 }
 
-                if ((2. * WIN_H - mouse_position.y) - WIN_H) > hitbox_transform.translation.y{
+                if ((2. * WIN_H - mouse_position.y) - WIN_H) > ball_transform.translation.y{
                     new_velocity.y = new_velocity.y;
                 }else{
                     new_velocity.y = -1. * new_velocity.y;
