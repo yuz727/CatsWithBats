@@ -141,7 +141,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
         sprite: Sprite {
             color: Color::rgba(240., 140., 100., 0.2),
-            custom_size: Some(Vec2::new(300., 300.)),
+            custom_size: Some(Vec2::new(30., 52.)),
             ..default()
         },
         transform: Transform::from_xyz(0., 0., 2.),
@@ -149,7 +149,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     })
     .insert(Hitbox {
-        size: Vec2::new(300., 300.), //30 52
+        size: Vec2::new(30., 52.), //30 52
     });
 }
 
