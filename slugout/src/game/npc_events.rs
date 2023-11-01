@@ -1,6 +1,8 @@
 use bevy::{math::vec2, prelude::*};
 
-use super::{npc::{NPCBat, NPCVelocity, States, NPC}, components::{Player, Ball, Object, BallVelocity}};
+use super::components::*;
+
+use super::npc::{NPCBat, NPCFace, NPCTimer, NPCVelocity, States, NPC};
 
 const NPC_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
@@ -8,13 +10,6 @@ const NPC_SPEED: f32 = 300.;
 // 1px/frame^2 @60Hz == 3600px/s^2
 const NPC_ACCEL_RATE: f32 = 18000.;
 
-// Size Dimension for Objects
-const RECLINER_WIDTH: f32 = 158.;
-const RECLINER_HEIGHT: f32 = 178.;
-const SIDETABLE_WIDTH: f32 = 125.;
-const SIDETABLE_HEIGHT: f32 = 113.;
-const TVSTAND_WIDTH: f32 = 160.;
-const TVSTAND_HEIGHT: f32 = 160.;
 const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 
 // Just go the the player straight
@@ -23,18 +18,36 @@ pub fn approach_player(
         (&mut Transform, &mut NPCVelocity, &States),
         (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
     >,
-    mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>)>,
+    mut bat: Query<
+        &mut Transform,
+        (
+            With<NPCBat>,
+            Without<Player>,
+            Without<NPC>,
+            Without<Ball>,
+            Without<NPCFace>,
+        ),
+    >,
+    mut face: Query<
+        &mut Transform,
+        (
+            With<NPCFace>,
+            Without<Player>,
+            Without<NPC>,
+            Without<Ball>,
+            Without<NPCBat>,
+        ),
+    >,
     player: Query<&Transform, With<Player>>,
     time: Res<Time>,
 ) {
-    let mut velocity_change = 0;
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::AggressionPlayer) {
             for mut bat_transform in bat.iter_mut() {
                 //info!("Chasing Player");
                 //debug!("Chasing Player");
                 for player_transform in player.iter() {
-                    if velocity_change < 1 {
+                    for mut face_transform in face.iter_mut() {
                         let mut deltav = Vec2::splat(0.);
                         if npc_transform.translation.x < player_transform.translation.x {
                             deltav.x += 1000.;
@@ -73,7 +86,8 @@ pub fn approach_player(
 
                         bat_transform.translation.x = npc_transform.translation.x - 5.;
                         bat_transform.translation.y = npc_transform.translation.y;
-                        velocity_change += 1;
+                        face_transform.translation.x = npc_transform.translation.x;
+                        face_transform.translation.y = npc_transform.translation.y;
                     }
                 }
             }
@@ -84,19 +98,43 @@ pub fn approach_player(
 pub fn approach_ball(
     mut npcs: Query<
         (&mut Transform, &mut NPCVelocity, &States),
-        (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
+        (
+            With<NPC>,
+            Without<Ball>,
+            Without<Player>,
+            Without<NPCBat>,
+            Without<NPCFace>,
+        ),
     >,
-    mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>)>,
+    mut bat: Query<
+        &mut Transform,
+        (
+            With<NPCBat>,
+            Without<Player>,
+            Without<NPC>,
+            Without<Ball>,
+            Without<NPCFace>,
+        ),
+    >,
+    mut face: Query<
+        &mut Transform,
+        (
+            With<NPCFace>,
+            Without<Player>,
+            Without<NPC>,
+            Without<Ball>,
+            Without<NPCBat>,
+        ),
+    >,
     ball: Query<&Transform, (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>)>,
     time: Res<Time>,
 ) {
-    let mut velocity_change = 0;
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::AggressionBall) {
             for mut bat_transform in bat.iter_mut() {
                 //info!("Chasing Ball");
                 for ball_transform in ball.iter() {
-                    if velocity_change < 1 {
+                    for mut face_transform in face.iter_mut() {
                         npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
                         let mut deltav = Vec2::splat(0.);
                         if npc_transform.translation.x < ball_transform.translation.x {
@@ -136,6 +174,8 @@ pub fn approach_ball(
 
                         bat_transform.translation.x = npc_transform.translation.x - 5.;
                         bat_transform.translation.y = npc_transform.translation.y;
+                        face_transform.translation.x = npc_transform.translation.x;
+                        face_transform.translation.y = npc_transform.translation.y;
                     }
                 }
             }
@@ -148,7 +188,26 @@ pub fn evade_ball(
         (&mut Transform, &mut NPCVelocity, &States),
         (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
     >,
-    mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>)>,
+    mut bat: Query<
+        &mut Transform,
+        (
+            With<NPCBat>,
+            Without<Player>,
+            Without<NPC>,
+            Without<Ball>,
+            Without<NPCFace>,
+        ),
+    >,
+    mut face: Query<
+        &mut Transform,
+        (
+            With<NPCFace>,
+            Without<Player>,
+            Without<NPC>,
+            Without<Ball>,
+            Without<NPCBat>,
+        ),
+    >,
     ball: Query<&Transform, (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>)>,
     time: Res<Time>,
 ) {
@@ -158,7 +217,7 @@ pub fn evade_ball(
             for mut bat_transform in bat.iter_mut() {
                 //info!("Running Away from Ball");
                 for ball_transform in ball.iter() {
-                    if velocity_change < 1 {
+                    for mut face_transform in face.iter_mut() {
                         //npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
                         let mut deltav = Vec2::splat(0.);
                         if npc_transform.translation.x < ball_transform.translation.x {
@@ -198,7 +257,8 @@ pub fn evade_ball(
                         }
                         bat_transform.translation.x = npc_transform.translation.x - 5.;
                         bat_transform.translation.y = npc_transform.translation.y;
-                        velocity_change += 1;
+                        face_transform.translation.x = npc_transform.translation.x;
+                        face_transform.translation.y = npc_transform.translation.y;
                     }
                 }
             }
@@ -217,46 +277,54 @@ pub fn avoid_collision(
             Without<Object>,
         ),
     >,
-    mut objects: Query<
-        &Transform,
-        (
-            With<Object>,
-            Without<Ball>,
-            Without<Player>,
-            Without<NPCBat>,
-            Without<NPC>,
-        ),
-    >,
 ) {
     let npc_dimensions = vec2(NPC_SIZE, NPC_SIZE);
     // Iterate over combinations of possible objects that NPC can possibly collide with
     for (npc_transform, mut velocity) in npcs.iter_mut() {
-        for obj_transform in objects.iter_mut() {
-            let collision_result = bevy::sprite::collide_aabb::collide(
-                npc_transform.translation,
-                npc_dimensions,
-                obj_transform.translation,
-                // TODO: change detection depending on the obj  ect
-                vec2(TVSTAND_WIDTH, TVSTAND_HEIGHT),
-            );
-            // If it is going to collide on the x-axis, lock x-axis movement
-            if collision_result == Some(bevy::sprite::collide_aabb::Collision::Left)
-                || collision_result == Some(bevy::sprite::collide_aabb::Collision::Right)
-            {
-                velocity.lock_x();
-                velocity.unlock_y();
-                return;
-            // If it is going to collide on the y-axis, lock y-axis movement
-            } else if collision_result == Some(bevy::sprite::collide_aabb::Collision::Top)
-                || collision_result == Some(bevy::sprite::collide_aabb::Collision::Bottom)
-            {
-                velocity.lock_y();
-                velocity.unlock_x();
-                return;
-            }
-            velocity.unlock_x();
+        let recliner_collision = bevy::sprite::collide_aabb::collide(
+            npc_transform.translation,
+            npc_dimensions,
+            Vec3::new(-60., 210., 1.),
+            Vec2::new(109., 184.),
+        );
+        let tv_stand_collision = bevy::sprite::collide_aabb::collide(
+            npc_transform.translation,
+            npc_dimensions,
+            Vec3::new(0., -250., 1.),
+            Vec2::new(164., 103.),
+        );
+        let side_table_collision = bevy::sprite::collide_aabb::collide(
+            npc_transform.translation,
+            npc_dimensions,
+            Vec3::new(120., 170., 1.),
+            Vec2::new(103., 107.),
+        );
+
+        // If it is going to collide on the x-axis, lock x-axis movement
+        if recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+            || recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
+            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
+            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
+        {
+            velocity.lock_x();
             velocity.unlock_y();
+            return;
+        // If it is going to collide on the y-axis, lock y-axis movement
+        } else if recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
+            || recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
+            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
+            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+        {
+            velocity.lock_y();
+            velocity.unlock_x();
+            return;
         }
+        velocity.unlock_x();
+        velocity.unlock_y();
     }
 }
 
@@ -265,21 +333,28 @@ pub fn bat_swing(
         (&NPCVelocity, &States),
         (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
     >,
-    mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>)>,
+    mut bat: Query<
+        (&mut Transform, &mut NPCTimer),
+        (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>),
+    >,
     mut ball: Query<
-    &mut BallVelocity,
+        &mut BallVelocity,
         (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>),
     >,
+    time: Res<Time>,
 ) {
     for (npc_velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Idle) {
-            info!("Swing");
             // bat swing animation
-            let mut bat_transform = bat.single_mut();
-            bat_transform.scale.y = -0.13;
+            let (mut bat_transform, mut timer) = bat.single_mut();
 
+            // Not really working, will fix the animation later
+            timer.tick(time.delta());
+            if timer.just_finished() {
+                bat_transform.scale.y = -0.13;
+                //     bat_transform.scale.y = 0.13;
+            }
             bat_transform.scale.y = 0.13;
-
             for mut ball_velocity in ball.iter_mut() {
                 // Initialize the ball's velocity
                 ball_velocity.velocity = Vec3::new(0.0, 0.0, 0.0);

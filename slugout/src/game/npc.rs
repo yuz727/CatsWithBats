@@ -1,13 +1,13 @@
 // use crate::components::*;
 
-use crate::GameState;
 use crate::game::npc_events::*;
+use crate::GameState;
 use bevy::prelude::*;
 use bevy::time::Stopwatch;
 use rand::prelude::*;
 
-use super::components::Player;
 use super::components::Ball;
+use super::components::Player;
 
 const PLAYER_SIZE: f32 = 30.;
 // Timer for movement
@@ -31,6 +31,9 @@ pub struct NPC;
 
 #[derive(Component)]
 pub struct NPCBat;
+
+#[derive(Component)]
+pub struct NPCFace;
 
 #[derive(Component)]
 pub enum States {
@@ -124,10 +127,26 @@ impl Plugin for NPCPlugin {
         app.add_systems(OnEnter(GameState::Game), load_npc);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, approach_player.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, approach_ball.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, evade_ball.after(select).run_if(in_state(GameState::Game)));
-        app.add_systems(Update, bat_swing.after(select).run_if(in_state(GameState::Game)));
+        app.add_systems(
+            Update,
+            approach_player
+                .after(select)
+                .run_if(in_state(GameState::Game)),
+        );
+        app.add_systems(
+            Update,
+            approach_ball
+                .after(select)
+                .run_if(in_state(GameState::Game)),
+        );
+        app.add_systems(
+            Update,
+            evade_ball.after(select).run_if(in_state(GameState::Game)),
+        );
+        app.add_systems(
+            Update,
+            bat_swing.after(select).run_if(in_state(GameState::Game)),
+        );
     }
 }
 
@@ -147,16 +166,25 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Idle)
-        .insert(Difficulty { difficulty: 50 });
+        .insert(Difficulty { difficulty: 75 });
 
     //spawn bat sprite
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 1.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(NPCBat);
+        .insert(NPCBat)
+        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)));
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Face.png"),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 5.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCFace);
 }
 
 // Select next move

@@ -1,5 +1,8 @@
 use bevy::prelude::*;
+use bevy::{prelude::*, window::PresentMode};
+
 use crate::GameState;
+use bevy::window::CursorMoved;
 
 use super::components::BallVelocity;
 use super::components::Ball;
@@ -8,6 +11,8 @@ use super::components::Colliding;
 use super::components::Density;
 use super::components::Player;
 use super::components::Rug;
+use crate::game::components::Hitbox;
+use super::components::Aim;
 
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
@@ -24,7 +29,10 @@ impl Plugin for BallPlugin {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+        //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
+
     }
 }
 
@@ -48,21 +56,21 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 
     // 2ND ball
-    // commands.spawn(SpriteBundle {
-    //     texture: asset_server.load("yarnball.png"),
-    //     transform: Transform::from_xyz(5., 5., 2.).with_scale(Vec3::splat(0.03)),
-    //     ..Default::default()
-    // })
-    // .insert(Ball {
-    //     radius: 0.03 / 2.0,
-    // })
-    // .insert(crate::components::BallVelocity {
-    //     velocity: Vec3::new(300.0, 100.0, 2.0),
-    // })
-    // .insert(Colliding::new())
-    // .insert(Density {
-    //     density: 2.,
-    // });
+     commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(500., 5., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(super::components::BallVelocity {
+        velocity: Vec3::new(300.0, 100.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
 
     //3RD ball
     commands.spawn(SpriteBundle {
@@ -79,6 +87,69 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     .insert(Colliding::new())
     .insert(Density {
         density: 2.,
+    });
+
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(8., 6., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(BallVelocity {
+        velocity: Vec3::new(300.0, 300.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
+
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(20., 30., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(BallVelocity {
+        velocity: Vec3::new(300.0, 300.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
+
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(400., 400., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(BallVelocity {
+        velocity: Vec3::new(300.0, 300.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
+
+    //Spawn bat hitbox for bat
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            color: Color::rgba(240., 140., 100., 0.2),
+            custom_size: Some(Vec2::new(30., 52.)),
+            ..default()
+        },
+        transform: Transform::from_xyz(0., 0., 2.),
+        visibility: Visibility::Hidden,
+        ..Default::default()
+    })
+    .insert(Hitbox {
+        size: Vec2::new(30., 52.), //30 52
     });
 }
 
@@ -180,6 +251,24 @@ fn bounce(
     }
 }
 
+fn bat_hitbox(
+    mut hitbox: Query<(&mut Visibility, &mut Transform), (With <Hitbox>, Without<Bat>)>,
+    bat: Query<&Transform, (With <Bat>, Without <Hitbox>)>,
+    input_mouse: Res<Input<MouseButton>>,
+
+){
+    let (mut vis_hitbox, mut transform_hitbox) = hitbox.single_mut();
+    let transform_bat = bat.single();
+    if input_mouse.pressed(MouseButton::Left) {
+        // Left button was pressed
+        transform_hitbox.translation = transform_bat.translation;
+        transform_hitbox.translation.x = transform_hitbox.translation.x - 20.;
+        *vis_hitbox = Visibility::Visible;
+    }else{
+        *vis_hitbox = Visibility::Hidden;
+    }
+}
+
 fn friction(
     mut query: Query<(&Transform, &mut BallVelocity, &Density, &Ball), With<Ball>>,
     rug: Query<(&Transform, &Rug), With<Rug>>,
@@ -268,14 +357,17 @@ fn friction(
 fn swing(
     mut commands: Commands,
     input_mouse: Res<Input<MouseButton>>,
-    mut query: Query<(&mut Ball, &mut BallVelocity)>,
-    mut query_bat: Query<(&Bat, &mut Transform)>,
+    mut query: Query<(&mut Ball, &mut BallVelocity, &mut Transform), (With<Ball>, Without<Hitbox>, Without<Bat>)>,
+    mut query_bat: Query<(&Bat, &mut Transform), (With<Bat>, Without<Hitbox>, Without<Ball>)>,
     cursor_events: ResMut<Events<CursorMoved>>,
+    hitbox: Query<(&Transform, &Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>)>,
+    window: Query<&Window>,
 ) {
     static mut MOUSE_BUTTON_PRESSED: bool = false;
     static mut BAT_TRANSFORMED: bool = false;
     static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
     let mut MOUSE_POSITION: Vec2 = Vec2::default();
+    let (hitbox_transform, hitbox) = hitbox.single();
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
@@ -301,7 +393,7 @@ fn swing(
     for event in cursor_event_reader.iter(&cursor_events) {
         // Update the mouse position
         MOUSE_POSITION = event.position;
-        println!("Mouse position changed");
+        //println!("Mouse position changed");
     }
 
     for (bat, mut bat_transform) in query_bat.iter_mut() {
@@ -313,12 +405,45 @@ fn swing(
         }
     }
 
-    if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
-        for (mut ball, mut ball_velocity) in query.iter_mut() {
+    if let Some(mouse_position) = window.single().physical_cursor_position(){
+        //println!("Cursor is inside window {:?}", mouse_position);
+
+    //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+        for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
+            
+            let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+            if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
+                ball_velocity.velocity = Vec3::splat(0.);
+                let mut change_x = ((mouse_position.x - WIN_W) - ball_transform.translation.x).abs();
+                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - ball_transform.translation.y).abs();
+                let mut new_velocity = Vec3::new(change_x, change_y, 0.);
+                new_velocity = new_velocity.normalize_or_zero();
+
+                if (mouse_position.x - WIN_W) > ball_transform.translation.x{
+                    new_velocity.x = new_velocity.x;
+                }else{
+                    new_velocity.x = -1. * new_velocity.x;
+                }
+
+                if ((2. * WIN_H - mouse_position.y) - WIN_H) > ball_transform.translation.y{
+                    new_velocity.y = new_velocity.y;
+                }else{
+                    new_velocity.y = -1. * new_velocity.y;
+                }
+
+                new_velocity.x = new_velocity.x * 400.;
+                new_velocity.y = new_velocity.y * 400.;
+                ball_velocity.velocity = new_velocity;
+            }
+            
+
+
+
             // let ball_position = ball_velocity.velocity.truncate();
             // println!("Ball position: {:?}", ball_position);
             
-            let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
+            /*let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
             println!("Direction: {:?}", direction);
 
 
@@ -331,7 +456,7 @@ fn swing(
                 normalized_direction.y * HIT_POWER.y,
                 0.0,
             );
-            println!("Ball velocity: {:?}", ball_velocity.velocity);
+            println!("Ball velocity: {:?}", ball_velocity.velocity);*/
 
         }
 
@@ -339,6 +464,25 @@ fn swing(
         unsafe {
             MOUSE_BUTTON_JUST_RELEASED = false;
             BAT_TRANSFORMED = false;
+        }
+    //}
+
+    }
+
+
+}
+
+fn aim_follows_cursor(
+    mut query_aim: Query<&mut Transform, With<Aim>>,
+    cursor_events: Res<Events<CursorMoved>>,
+) {
+    let mut cursor_event_reader = cursor_events.get_reader();
+
+    for event in cursor_event_reader.iter(&cursor_events) {
+        // Update the aim's position to follow the cursor
+        for mut aim_transform in query_aim.iter_mut() {
+            aim_transform.translation.x = event.position.x - WIN_W / 2.0; 
+            aim_transform.translation.y = -(event.position.y - WIN_H / 2.0 + 40.0); 
         }
     }
 }
