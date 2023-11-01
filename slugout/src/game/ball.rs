@@ -393,7 +393,7 @@ fn aim_follows_cursor(
         // Update the aim's position to follow the cursor
         for mut aim_transform in query_aim.iter_mut() {
             aim_transform.translation.x = event.position.x - WIN_W / 2.0; 
-            aim_transform.translation.y = -(event.position.y - WIN_H / 2.0 - 4.0); 
+            aim_transform.translation.y = -(event.position.y - WIN_H / 2.0 + 40.0); 
         }
     }
 }
