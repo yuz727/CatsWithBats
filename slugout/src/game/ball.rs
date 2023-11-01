@@ -323,7 +323,7 @@ fn swing(
             MOUSE_BUTTON_PRESSED = true;
             BAT_TRANSFORMED = false;
             MOUSE_BUTTON_JUST_RELEASED = false;
-            println!("Mouse button pressed");
+            //println!("Mouse button pressed");
         }
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
@@ -332,7 +332,7 @@ fn swing(
                 MOUSE_BUTTON_PRESSED = false;
                 BAT_TRANSFORMED = true;
                 MOUSE_BUTTON_JUST_RELEASED = true;
-                println!("Mouse button released");
+                //println!("Mouse button released");
             }
         }
     }
@@ -359,19 +359,19 @@ fn swing(
             // println!("Ball position: {:?}", ball_position);
             
             let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
-            println!("Direction: {:?}", direction);
+            //println!("Direction: {:?}", direction);
 
 
             // Normalize the direction and set the ball's velocity
             let normalized_direction = direction.normalize_or_zero();
-            println!("Normalized direction: {:?}", normalized_direction);
+            //println!("Normalized direction: {:?}", normalized_direction);
 
             ball_velocity.velocity = Vec3::new(
                 normalized_direction.x * HIT_POWER.x,
                 normalized_direction.y * HIT_POWER.y,
                 0.0,
             );
-            println!("Ball velocity: {:?}", ball_velocity.velocity);
+            //println!("Ball velocity: {:?}", ball_velocity.velocity);
 
         }
 
