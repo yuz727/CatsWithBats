@@ -149,7 +149,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     })
     .insert(Hitbox {
-        size: Vec2::new(30., 52.),
+        size: Vec2::new(30., 52.), //30 52
     });
 }
 
@@ -362,14 +362,12 @@ fn swing(
     cursor_events: ResMut<Events<CursorMoved>>,
     hitbox: Query<(&Transform, &Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>)>,
     window: Query<&Window>,
-    player: Query<&Transform, (With<Player>, Without <Ball>, Without <Hitbox>, Without <Bat>)>,
 ) {
     static mut MOUSE_BUTTON_PRESSED: bool = false;
     static mut BAT_TRANSFORMED: bool = false;
     static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
     let mut MOUSE_POSITION: Vec2 = Vec2::default();
     let (hitbox_transform, hitbox) = hitbox.single();
-    let player_transform = player.single();
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
@@ -417,25 +415,25 @@ fn swing(
 
             if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
                 ball_velocity.velocity = Vec3::splat(0.);
-                let mut change_x = ((mouse_position.x - WIN_W) - player_transform.translation.x).abs();
-                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - player_transform.translation.y).abs();
+                let mut change_x = ((mouse_position.x - WIN_W) - hitbox_transform.translation.x).abs();
+                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - hitbox_transform.translation.y).abs();
                 let mut new_velocity = Vec3::new(change_x, change_y, 0.);
                 new_velocity = new_velocity.normalize_or_zero();
 
-                if mouse_position.x > player_transform.translation.x{
+                if (mouse_position.x - WIN_W) > hitbox_transform.translation.x{
                     new_velocity.x = new_velocity.x;
                 }else{
                     new_velocity.x = -1. * new_velocity.x;
                 }
 
-                if mouse_position.y > player_transform.translation.y{
+                if ((2. * WIN_H - mouse_position.y) - WIN_H) > hitbox_transform.translation.y{
                     new_velocity.y = new_velocity.y;
                 }else{
                     new_velocity.y = -1. * new_velocity.y;
                 }
 
-                new_velocity.x = new_velocity.x * 500.;
-                new_velocity.y = new_velocity.y * 500.;
+                new_velocity.x = new_velocity.x * 400.;
+                new_velocity.y = new_velocity.y * 400.;
                 ball_velocity.velocity = new_velocity;
             }
             
