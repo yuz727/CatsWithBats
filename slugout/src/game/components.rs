@@ -53,4 +53,6 @@ pub struct Hitbox{
     pub size: Vec2, 
 }
 
+#[derive(Component)]
+pub struct Aim;
 
