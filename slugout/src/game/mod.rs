@@ -105,4 +105,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Rug{friction: 1.4,}); 
+    commands
+    .spawn(SpriteBundle {
+        texture: asset_server.load("newAim.png"),
+        transform: Transform::with_scale(Transform::from_xyz(-2., 0., 4.), Vec3::splat(0.13)),
+        ..default()
+    })
+    .insert(Aim);
+    commands.insert_resource(Events::<CursorMoved>::default());
 }
