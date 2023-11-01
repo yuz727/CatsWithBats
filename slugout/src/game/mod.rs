@@ -1,6 +1,7 @@
 use bevy::{prelude::*, window::PresentMode};
 
 use crate::GameState;
+use crate::game::components::Aim;
 
 use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
 
@@ -43,7 +44,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 10.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Player)
@@ -53,7 +54,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Face.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 4.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Face);
@@ -61,7 +62,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 4.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 20.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(Bat);
@@ -105,4 +106,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Rug{friction: 1.4,}); 
+    commands
+    .spawn(SpriteBundle {
+        texture: asset_server.load("newAim.png"),
+        transform: Transform::with_scale(Transform::from_xyz(-2., 0., 4.), Vec3::splat(0.13)),
+        ..default()
+    })
+    .insert(Aim);
+    commands.insert_resource(Events::<CursorMoved>::default());
 }

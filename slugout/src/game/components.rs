@@ -47,3 +47,12 @@ impl Colliding{
 pub struct Density{
     pub density: f32,
 }
+
+#[derive(Component)]
+pub struct Hitbox{
+    pub size: Vec2, 
+}
+
+#[derive(Component)]
+pub struct Aim;
+
