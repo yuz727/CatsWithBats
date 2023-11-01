@@ -406,7 +406,7 @@ fn swing(
     }
 
     if let Some(mouse_position) = window.single().physical_cursor_position(){
-        println!("Cursor is inside window {:?}", mouse_position);
+        //println!("Cursor is inside window {:?}", mouse_position);
 
     //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
         for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
