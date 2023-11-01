@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::{prelude::*, window::PresentMode};
+
 use crate::GameState;
 
 use super::components::BallVelocity;
@@ -25,7 +27,7 @@ impl Plugin for BallPlugin {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+        //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
     }
 }
@@ -83,6 +85,53 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         density: 2.,
     });
 
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(8., 6., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(BallVelocity {
+        velocity: Vec3::new(300.0, 300.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
+
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(20., 30., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(BallVelocity {
+        velocity: Vec3::new(300.0, 300.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
+
+    commands.spawn(SpriteBundle {
+        texture: asset_server.load("yarnball.png"),
+        transform: Transform::from_xyz(400., 400., 2.).with_scale(Vec3::splat(0.03)),
+        ..Default::default()
+    })
+    .insert(Ball {
+        radius: 0.03 / 2.0,
+    })
+    .insert(BallVelocity {
+        velocity: Vec3::new(300.0, 300.0, 2.0),
+    })
+    .insert(Colliding::new())
+    .insert(Density {
+        density: 2.,
+    });
 
     //Spawn bat hitbox for bat
     commands.spawn(SpriteBundle {
@@ -304,14 +353,19 @@ fn friction(
 fn swing(
     mut commands: Commands,
     input_mouse: Res<Input<MouseButton>>,
-    mut query: Query<(&mut Ball, &mut BallVelocity)>,
-    mut query_bat: Query<(&Bat, &mut Transform)>,
+    mut query: Query<(&mut Ball, &mut BallVelocity, &mut Transform), (With<Ball>, Without<Hitbox>, Without<Bat>)>,
+    mut query_bat: Query<(&Bat, &mut Transform), (With<Bat>, Without<Hitbox>, Without<Ball>)>,
     cursor_events: ResMut<Events<CursorMoved>>,
+    hitbox: Query<(&Transform, &Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>)>,
+    window: Query<&Window>,
+    player: Query<&Transform, (With<Player>, Without <Ball>, Without <Hitbox>, Without <Bat>)>,
 ) {
     static mut MOUSE_BUTTON_PRESSED: bool = false;
     static mut BAT_TRANSFORMED: bool = false;
     static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
     let mut MOUSE_POSITION: Vec2 = Vec2::default();
+    let (hitbox_transform, hitbox) = hitbox.single();
+    let player_transform = player.single();
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
@@ -349,12 +403,45 @@ fn swing(
         }
     }
 
-    if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
-        for (mut ball, mut ball_velocity) in query.iter_mut() {
+    if let Some(mouse_position) = window.single().physical_cursor_position(){
+        println!("Cursor is inside window {:?}", mouse_position);
+
+    //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+        for (mut ball, mut ball_velocity, mut balltransform) in query.iter_mut() {
+            
+            let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, balltransform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+
+            if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
+                ball_velocity.velocity = Vec3::splat(0.);
+                let mut change_x = ((mouse_position.x - WIN_W) - player_transform.translation.x).abs();
+                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - player_transform.translation.y).abs();
+                let mut new_velocity = Vec3::new(change_x, change_y, 0.);
+                new_velocity = new_velocity.normalize_or_zero();
+
+                if mouse_position.x > player_transform.translation.x{
+                    new_velocity.x = new_velocity.x;
+                }else{
+                    new_velocity.x = -1. * new_velocity.x;
+                }
+
+                if mouse_position.y > player_transform.translation.y{
+                    new_velocity.y = new_velocity.y;
+                }else{
+                    new_velocity.y = -1. * new_velocity.y;
+                }
+
+                new_velocity.x = new_velocity.x * 500.;
+                new_velocity.y = new_velocity.y * 500.;
+                ball_velocity.velocity = new_velocity;
+            }
+            
+
+
+
             // let ball_position = ball_velocity.velocity.truncate();
             // println!("Ball position: {:?}", ball_position);
             
-            let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
+            /*let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
             println!("Direction: {:?}", direction);
 
 
@@ -367,7 +454,7 @@ fn swing(
                 normalized_direction.y * HIT_POWER.y,
                 0.0,
             );
-            println!("Ball velocity: {:?}", ball_velocity.velocity);
+            println!("Ball velocity: {:?}", ball_velocity.velocity);*/
 
         }
 
@@ -376,5 +463,9 @@ fn swing(
             MOUSE_BUTTON_JUST_RELEASED = false;
             BAT_TRANSFORMED = false;
         }
+    //}
+
     }
+
+
 }
