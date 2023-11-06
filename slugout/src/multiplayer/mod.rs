@@ -18,30 +18,41 @@ enum MultiplayerButtonAction {
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 enum MultiplayerState {
     Main,
+    Lobby,
     #[default]
     Disabled,
 }
-
-
+#[derive(Component)]
+enum LobbyButtonAction {
+    Back,
+}
 #[derive(Component)]
 struct SelectedOption;
 
 #[derive(Component)]
 struct InputText(String);
 
-
+pub static mut USER_INPUT: Option<String> = None;
 
 impl Plugin for MultiplayerPlugin {
     fn build(&self, app: &mut App) {
         app
         .add_state::<MultiplayerState>()
         .add_systems(OnEnter(GameState::Multiplayer), multiplayer_setup)
-        .add_systems(OnExit(GameState::Multiplayer), despawn_screen::<OnMultiplayerScreen>)
+        .add_systems(OnEnter(MultiplayerState::Main), multiplayer_setup)
+        .add_systems(OnExit(MultiplayerState::Disabled), despawn_screen::<OnMultiplayerScreen>)
+        .add_systems(OnExit(MultiplayerState::Lobby), despawn_screen::<OnLobbyScreen>)
+        .add_systems(OnEnter(MultiplayerState::Lobby), lobby_setup)
         .add_systems(
             Update,
-            (multiplayer_menu_action, button_system, update_user_input).run_if(in_state(GameState::Multiplayer)),
+            (multiplayer_menu_action, button_system, update_user_input).run_if(in_state(GameState::Multiplayer)).run_if(in_state(MultiplayerState::Disabled)),
           
-        ); 
+        )
+        .add_systems(
+            Update,
+            (lobby_menu_action, button_system).run_if(in_state(GameState::Multiplayer)).run_if(in_state(MultiplayerState::Lobby)),
+          
+        );
     }
 
 }
@@ -49,6 +60,9 @@ impl Plugin for MultiplayerPlugin {
 // Tag component used to tag entities added on the multiplayer  screen
 #[derive(Component)]
 struct OnMultiplayerScreen;
+// Tag component used to tag entities added on the multiplayer  screen
+#[derive(Component)]
+struct OnLobbyScreen;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
@@ -154,7 +168,7 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     )
                     .insert(InputText(String::new()));
                 
-                parent
+                    parent
                         .spawn((
                             ButtonBundle {
                                 style: button_style.clone(),
@@ -256,21 +270,22 @@ fn multiplayer_menu_action(
                     let _ = server::create_server();
                     });
                     
-                    let client_thread = thread::spawn(|| {
+                    /*let client_thread = thread::spawn(|| {
                         let _ = client::create_client();
-                    });
+                    });*/
                 
                     server_thread.join().unwrap();
-                    client_thread.join().unwrap();
-                } //for right now HostGame closes the game
+                    //client_thread.join().unwrap();
+                    multiplayer_state.set(MultiplayerState::Lobby);
+
+                }
                 MultiplayerButtonAction::JoinGame => 
                 {
                     let client_thread = thread::spawn(|| {
                         let _ = client::create_client();
                     });
                     client_thread.join().unwrap();
-                    multiplayer_state.set(MultiplayerState::Disabled);
-                    game_state.set(GameState::Multiplayer);
+                    multiplayer_state.set(MultiplayerState::Lobby);
                 }
                 MultiplayerButtonAction::Multiplayer => 
                 {
@@ -300,6 +315,148 @@ fn update_user_input(mut char_input_events: EventReader<ReceivedCharacter>, keyb
             single_box.sections[0].value.push(event.char);
             user_input.0.push(event.char);
             info!("{}", user_input.0);
+        }
+        // Update the public variable with the user input
+        unsafe {
+            USER_INPUT = Some(user_input.0.clone());
+        }
+    }
+}
+
+fn lobby_setup(mut commands: Commands) {
+    // Common style for all buttons on the screen
+    let button_style = Style {
+        width: Val::Px(250.0),
+        height: Val::Px(65.0),
+        margin: UiRect::all(Val::Px(20.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+    let button_text_style = TextStyle {
+        font_size: 40.0,
+        color: TEXT_COLOR,
+        ..default()
+    };
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                },
+                ..default()
+            },
+            OnLobbyScreen,
+        ))
+        .with_children(|parent| { 
+            parent 
+                .spawn(
+                    NodeBundle { 
+                        style: Style {
+                            width: Val::Px(250.0),
+                            height: Val::Px(40.0),
+                            margin: UiRect::all(Val::Px(20.0)),
+                            justify_content: JustifyContent::Center,
+                            flex_direction: FlexDirection::Column,
+                            ..default()
+                        },
+                        background_color: Color::NONE.into(),
+                        ..default()
+                    }
+                )
+                .with_children(|parent| {
+                    parent.spawn(
+                        TextBundle::from_section(
+                            "Lobby",
+                            TextStyle {
+                                font_size: 60.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
+                    );
+                    // Display the user input
+                    let user_input_text = unsafe {
+                        if let Some(user_input) = &USER_INPUT {
+                            user_input.clone()
+                        } else {
+                            String::new()
+                        }
+                    };
+                    parent.spawn(
+                        TextBundle::from_section(
+                            format!("IP: {}", user_input_text),
+                            TextStyle {
+                                font_size: 30.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        })
+                    );
+                    parent.spawn(
+                        TextBundle::from_section(
+                            format!("Players: -"),
+                            TextStyle {
+                                font_size: 30.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        })
+                    );
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            LobbyButtonAction::Back,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Back",
+                                button_text_style.clone(),
+                            ));
+                        });
+                });
+            });
+}
+
+
+fn lobby_menu_action(
+    interaction_query: Query<
+        (&Interaction, &LobbyButtonAction),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut app_exit_events: EventWriter<AppExit>,
+    mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, lobby_button_action) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            match lobby_button_action {
+                LobbyButtonAction::Back => {
+                    multiplayer_state.set(MultiplayerState::Main);
+                }
+            }
         }
     }
 }
