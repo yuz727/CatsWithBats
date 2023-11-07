@@ -29,7 +29,7 @@ impl Plugin for BallPlugin {
         app.add_systems(Startup, setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
-        //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
         app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
 
@@ -195,45 +195,57 @@ fn bounce(
         //other collisions//////////////////////////////////////////////////////
  
         if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
-            ball.velocity.x = -ball.velocity.x;
+            ball.velocity.x = -ball.velocity.x *0.6;
+            ball.velocity.y = ball.velocity.y*0.6;
             new_translation_x = recliner_translation.x - recliner_size.x/2. - BALL_SIZE/2.;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left){
-            ball.velocity.x = -ball.velocity.x;
+            ball.velocity.x = -ball.velocity.x*0.6;
+            ball.velocity.y = ball.velocity.y*0.6;
             new_translation_x = recliner_translation.x + recliner_size.x/2. + BALL_SIZE/2.;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top){
-            ball.velocity.y = -ball.velocity.y;
+            ball.velocity.y = -ball.velocity.y*0.6;
+            ball.velocity.x = ball.velocity.x*0.6;
             new_translation_y = recliner_translation.y - recliner_size.y/2. - BALL_SIZE/2.;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-                ball.velocity.y = -ball.velocity.y;
-                new_translation_y = recliner_translation.y + recliner_size.y/2. + BALL_SIZE/2.;
+            ball.velocity.y = -ball.velocity.y*0.6;
+            ball.velocity.x = ball.velocity.x*0.6;
+            new_translation_y = recliner_translation.y + recliner_size.y/2. + BALL_SIZE/2.;
         }
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left){
-            ball.velocity.x = -ball.velocity.x;
+            ball.velocity.x = -ball.velocity.x*0.9;
+            ball.velocity.y = ball.velocity.y*0.9;
             new_translation_x = tv_translation.x + tv_size.x/2. + BALL_SIZE/2.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right){
-                ball.velocity.x = -ball.velocity.x;
-                new_translation_x = tv_translation.x - tv_size.x/2. - BALL_SIZE/2.;
+            ball.velocity.x = -ball.velocity.x*0.9;
+            ball.velocity.y = ball.velocity.y*0.9;
+            new_translation_x = tv_translation.x - tv_size.x/2. - BALL_SIZE/2.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top){
-            ball.velocity.y = -ball.velocity.y;
+            ball.velocity.y = -ball.velocity.y*0.9;
+            ball.velocity.x = ball.velocity.x*0.9;
             new_translation_y = tv_translation.y - tv_size.y/2. - BALL_SIZE/2.;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-            ball.velocity.y = -ball.velocity.y;
+            ball.velocity.y = -ball.velocity.y*0.9;
+            ball.velocity.x = ball.velocity.x*0.9;
             new_translation_y = tv_translation.y + tv_size.y/2. + BALL_SIZE/2.;
 
         }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left){
-            ball.velocity.x = -ball.velocity.x;
+            ball.velocity.x = -ball.velocity.x*0.8;
+            ball.velocity.y = ball.velocity.y*0.8;
             new_translation_x = table_translation.x + table_size.x/2. + BALL_SIZE/2.;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-            ball.velocity.x = -ball.velocity.x;
+            ball.velocity.x = -ball.velocity.x*0.8;
+            ball.velocity.y = ball.velocity.y*0.8;
             new_translation_x = table_translation.x - table_size.x/2. - BALL_SIZE/2.;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top){
-            ball.velocity.y = -ball.velocity.y;
+            ball.velocity.y = -ball.velocity.y*0.8;
+            ball.velocity.x = ball.velocity.x*0.8;
             new_translation_y = table_translation.y - table_size.y/2. - BALL_SIZE/2.;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-            ball.velocity.y = -ball.velocity.y;
+            ball.velocity.y = -ball.velocity.y*0.8;
+            ball.velocity.x = ball.velocity.x*0.8;
             new_translation_y = table_translation.y + table_size.y/2. + BALL_SIZE/2.;
         }
 
@@ -280,8 +292,13 @@ fn friction(
 
     for (ball_transform, mut ball_velocity, ball_density, ball) in query.iter_mut(){
         // If the ball is on the rug, slow it down using the rugs coefficient of friction
-        let rug_collision = bevy::sprite::collide_aabb::collide(rug_transform.translation, rug_size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
-        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+        let rug_collision = bevy::sprite::collide_aabb::collide(rug_transform.translation,
+             rug_size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) 
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) 
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) 
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) 
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
     
             let mut newvx = 0.;
             let mut newvy = 0.;
@@ -375,7 +392,7 @@ fn swing(
             MOUSE_BUTTON_PRESSED = true;
             BAT_TRANSFORMED = false;
             MOUSE_BUTTON_JUST_RELEASED = false;
-            println!("Mouse button pressed");
+            //println!("Mouse button pressed");
         }
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
@@ -384,7 +401,7 @@ fn swing(
                 MOUSE_BUTTON_PRESSED = false;
                 BAT_TRANSFORMED = true;
                 MOUSE_BUTTON_JUST_RELEASED = true;
-                println!("Mouse button released");
+                //println!("Mouse button released");
             }
         }
     }
@@ -449,7 +466,7 @@ fn swing(
 
             // Normalize the direction and set the ball's velocity
             let normalized_direction = direction.normalize_or_zero();
-            println!("Normalized direction: {:?}", normalized_direction);
+            //println!("Normalized direction: {:?}", normalized_direction);
 
             ball_velocity.velocity = Vec3::new(
                 normalized_direction.x * HIT_POWER.x,
