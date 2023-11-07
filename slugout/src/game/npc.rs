@@ -109,17 +109,6 @@ impl NPCVelocity {
         self.ylock = 0;
     }
 }
-
-// impl From<Vec3> for DetectionRadius {
-//     fn from(pos: Vec3) -> Self {
-//         Self {
-//             top: pos.y + PLAYER_SIZE / 2.,
-//             bottom: pos.y - PLAYER_SIZE / 2.,
-//             left: pos.x - PLAYER_SIZE / 2.,
-//             right: pos.x + PLAYER_SIZE / 2.,
-//         }
-//     }
-// }
 pub struct NPCPlugin;
 
 impl Plugin for NPCPlugin {
