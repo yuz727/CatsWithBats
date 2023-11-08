@@ -3,21 +3,20 @@
 use crate::game::npc_events::*;
 use crate::GameState;
 use bevy::prelude::*;
-use bevy::time::Stopwatch;
+//use bevy::time::Stopwatch;
 use rand::prelude::*;
 
 use super::components::Ball;
 use super::components::Player;
 
-const PLAYER_SIZE: f32 = 30.;
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
 pub struct NPCTimer(Timer);
 
-#[derive(Component)]
-struct SwingAnimation {
-    time: Stopwatch,
-}
+// #[derive(Component)]
+// struct SwingAnimation {
+//     time: Stopwatch,
+// }
 
 #[derive(Component)]
 pub struct NPCVelocity {
@@ -202,7 +201,7 @@ pub fn select(
                 if timer.just_finished() {
                     // This will be the chance to go to the aggressive state selections
                     state.to_idle();
-                    let mut state_flag = -1;
+                    let state_flag: i32;
 
                     // Calculate proportion of probability equal to aggresion
                     let agg_factor = difficulty.difficulty as f32 / 100.0;
