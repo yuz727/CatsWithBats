@@ -56,3 +56,5 @@ pub struct Hitbox{
 #[derive(Component)]
 pub struct Aim;
 
+#[derive(Component)]
+pub struct Health;

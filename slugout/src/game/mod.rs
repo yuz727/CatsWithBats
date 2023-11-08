@@ -3,7 +3,7 @@ use bevy::{prelude::*, window::PresentMode};
 use crate::GameState;
 use crate::game::components::Aim;
 
-use self::components::{Player, Colliding, Face, Bat, Object, Rug};
+use self::components::{Player, Colliding, Face, Bat, Object, Rug, Health};
 
 mod ball;
 pub mod components;
@@ -114,4 +114,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     })
     .insert(Aim);
     commands.insert_resource(Events::<CursorMoved>::default());
+    commands
+    .spawn(SpriteBundle {
+        texture: asset_server.load("FullHealth.png"),
+        transform: Transform::with_scale(Transform::from_xyz(525., 280., 2.), Vec3::splat(0.11)),
+        ..default()
+    })
+    .insert(Health);
 }
