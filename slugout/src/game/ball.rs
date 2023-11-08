@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::{prelude::*, window::PresentMode};
+//use bevy::{prelude::*, window::PresentMode};
 
 use crate::GameState;
 //use bevy::window::CursorMoved;
@@ -382,24 +382,28 @@ fn swing(
 ) {
     let (hitbox_transform, hitbox) = hitbox.single();
 
-    let mut mouse_button_pressed: bool = false;
-    let mut bat_transformed: bool = false;
-    let mut mouse_button_just_released: bool = false;
+    static mut MOUSE_BUTTON_PRESSED: bool = false;
+    static mut BAT_TRANSFORMED: bool = false;
+    static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
     //let mut mouse_position: Vec2;
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
-        mouse_button_pressed = true;
-        bat_transformed = false;
-        mouse_button_just_released = false;
+        unsafe{
+            MOUSE_BUTTON_PRESSED = true;
+            BAT_TRANSFORMED = false;
+            MOUSE_BUTTON_JUST_RELEASED = false;
+        }
             //println!("Mouse button pressed");
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
-        if mouse_button_pressed {
-            mouse_button_pressed = false;
-            bat_transformed = true;
-            mouse_button_just_released = true;
+        unsafe {
+            if MOUSE_BUTTON_PRESSED {
+                MOUSE_BUTTON_PRESSED = false;
+                BAT_TRANSFORMED = true;
+                MOUSE_BUTTON_JUST_RELEASED = true;
                 //println!("Mouse button released");
+            }
         }
     }
 
@@ -411,75 +415,77 @@ fn swing(
     }*/
 
     for (bat, mut bat_transform) in query_bat.iter_mut() {
-        if mouse_button_pressed {
+        if unsafe{ MOUSE_BUTTON_PRESSED } {
             // Left mouse button is pressed, set the bat to horizontal
             bat_transform.scale.y = -0.13;
-        } else if bat_transformed {
+        } else if unsafe{ BAT_TRANSFORMED } {
             bat_transform.scale.y = 0.13;
         }
     }
 
     if let Some(mouse_position) = window.single().physical_cursor_position(){
         //println!("Cursor is inside window {:?}", mouse_position);
+        if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+        //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+            for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
+                
+                let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
 
-    //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
-        for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
-            
-            let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+                if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
+                    ball_velocity.velocity = Vec3::splat(0.);
+                    let change_x = (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
+                    let change_y = ((-(mouse_position.y - WIN_H) / 2. - 40.) - ball_transform.translation.y).abs();
+                    let mut new_velocity = Vec3::new(change_x, change_y, 0.);
+                    new_velocity = new_velocity.normalize_or_zero();
 
-            if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
-                ball_velocity.velocity = Vec3::splat(0.);
-                let change_x = (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
-                let change_y = ((-(mouse_position.y - WIN_H) / 2. - 40.) - ball_transform.translation.y).abs();
-                let mut new_velocity = Vec3::new(change_x, change_y, 0.);
-                new_velocity = new_velocity.normalize_or_zero();
+                    if ((mouse_position.x - WIN_W) / 2.) > ball_transform.translation.x{
+                        new_velocity.x = new_velocity.x;
+                    }else{
+                        new_velocity.x = -1. * new_velocity.x;
+                    }
 
-                if ((mouse_position.x - WIN_W) / 2.) > ball_transform.translation.x{
-                    new_velocity.x = new_velocity.x;
-                }else{
-                    new_velocity.x = -1. * new_velocity.x;
+                    if (-(mouse_position.y - WIN_H) / 2. - 40.) > ball_transform.translation.y{
+                        new_velocity.y = new_velocity.y;
+                    }else{
+                        new_velocity.y = -1. * new_velocity.y;
+                    }
+
+                    new_velocity.x = new_velocity.x * 500.;
+                    new_velocity.y = new_velocity.y * 500.;
+                    ball_velocity.velocity = new_velocity;
                 }
+                
 
-                if (-(mouse_position.y - WIN_H) / 2. - 40.) > ball_transform.translation.y{
-                    new_velocity.y = new_velocity.y;
-                }else{
-                    new_velocity.y = -1. * new_velocity.y;
-                }
 
-                new_velocity.x = new_velocity.x * 500.;
-                new_velocity.y = new_velocity.y * 500.;
-                ball_velocity.velocity = new_velocity;
+
+                // let ball_position = ball_velocity.velocity.truncate();
+                // println!("Ball position: {:?}", ball_position);
+                
+                /*let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
+                println!("Direction: {:?}", direction);
+
+
+                // Normalize the direction and set the ball's velocity
+                let normalized_direction = direction.normalize_or_zero();
+                //println!("Normalized direction: {:?}", normalized_direction);
+
+                ball_velocity.velocity = Vec3::new(
+                    normalized_direction.x * HIT_POWER.x,
+                    normalized_direction.y * HIT_POWER.y,
+                    0.0,
+                );
+                println!("Ball velocity: {:?}", ball_velocity.velocity);*/
+
             }
-            
 
-
-
-            // let ball_position = ball_velocity.velocity.truncate();
-            // println!("Ball position: {:?}", ball_position);
-            
-            /*let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
-            println!("Direction: {:?}", direction);
-
-
-            // Normalize the direction and set the ball's velocity
-            let normalized_direction = direction.normalize_or_zero();
-            //println!("Normalized direction: {:?}", normalized_direction);
-
-            ball_velocity.velocity = Vec3::new(
-                normalized_direction.x * HIT_POWER.x,
-                normalized_direction.y * HIT_POWER.y,
-                0.0,
-            );
-            println!("Ball velocity: {:?}", ball_velocity.velocity);*/
+            // Reset the flags for the next interaction
+            unsafe{
+                MOUSE_BUTTON_JUST_RELEASED = false;
+                BAT_TRANSFORMED = false;
+            }
 
         }
 
-        // Reset the flags for the next interaction
-        /*unsafe {
-            MOUSE_BUTTON_JUST_RELEASED = false;
-            BAT_TRANSFORMED = false;
-        }*/
-    //}
 
     }
 
