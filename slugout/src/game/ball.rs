@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::{prelude::*, window::PresentMode};
 
 use crate::GameState;
-use bevy::window::CursorMoved;
+//use bevy::window::CursorMoved;
 
 use super::components::BallVelocity;
 use super::components::Ball;
@@ -17,10 +17,10 @@ use super::components::Aim;
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 const BALL_SIZE: f32 = 10.;
-const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
+//const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 const BASE_FRICTION: f32 = 0.4;
 const G: f32 = 9.81;
-const MIN_BALL_VELOCITY: f32 = 30.;
+const MIN_BALL_VELOCITY: f32 = 100.;
 
 pub struct BallPlugin;
 
@@ -300,8 +300,8 @@ fn friction(
         || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) 
         || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
     
-            let mut newvx = 0.;
-            let mut newvy = 0.;
+            let newvx;
+            let newvy;
 
             //Caclulate the new ball velocity using v' = v - G * coefficient of friction * deltat
             if ball_velocity.velocity.x < 0.{
@@ -332,8 +332,8 @@ fn friction(
         // If the ball is not on the rug, slow it down using the floors coefficient of friction (BASE_FRICTION)
         }else{
 
-            let mut newvx = 0.;
-            let mut newvy = 0.;
+            let newvx;
+            let newvy;
 
             //Caclulate the new ball velocity using v' = v - G * coefficient of friction * deltat
             if ball_velocity.velocity.x < 0.{
@@ -372,38 +372,34 @@ fn friction(
  */
 
 fn swing(
-    mut commands: Commands,
+    //mut commands: Commands,
     input_mouse: Res<Input<MouseButton>>,
     mut query: Query<(&mut Ball, &mut BallVelocity, &mut Transform), (With<Ball>, Without<Hitbox>, Without<Bat>)>,
     mut query_bat: Query<(&Bat, &mut Transform), (With<Bat>, Without<Hitbox>, Without<Ball>)>,
-    cursor_events: ResMut<Events<CursorMoved>>,
+    //cursor_events: ResMut<Events<CursorMoved>>,
     hitbox: Query<(&Transform, &Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>)>,
     window: Query<&Window>,
 ) {
     let (hitbox_transform, hitbox) = hitbox.single();
 
-    static mut mouse_button_pressed: bool = false;
-    static mut bat_transformed: bool = false;
-    static mut mouse_button_just_released: bool = false;
-    let mut mouse_position: Vec2 = Vec2::default();
+    let mut mouse_button_pressed: bool = false;
+    let mut bat_transformed: bool = false;
+    let mut mouse_button_just_released: bool = false;
+    //let mut mouse_position: Vec2;
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
-        unsafe {
-            mouse_button_pressed = true;
-            bat_transformed = false;
-            mouse_button_just_released = false;
+        mouse_button_pressed = true;
+        bat_transformed = false;
+        mouse_button_just_released = false;
             //println!("Mouse button pressed");
-        }
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
-        unsafe {
-            if mouse_button_pressed {
-                mouse_button_pressed = false;
-                bat_transformed = true;
-                mouse_button_just_released = true;
+        if mouse_button_pressed {
+            mouse_button_pressed = false;
+            bat_transformed = true;
+            mouse_button_just_released = true;
                 //println!("Mouse button released");
-            }
         }
     }
 
@@ -415,10 +411,10 @@ fn swing(
     }*/
 
     for (bat, mut bat_transform) in query_bat.iter_mut() {
-        if unsafe { mouse_button_pressed } {
+        if mouse_button_pressed {
             // Left mouse button is pressed, set the bat to horizontal
             bat_transform.scale.y = -0.13;
-        } else if unsafe { bat_transformed } {
+        } else if bat_transformed {
             bat_transform.scale.y = 0.13;
         }
     }
@@ -433,8 +429,8 @@ fn swing(
 
             if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
                 ball_velocity.velocity = Vec3::splat(0.);
-                let mut change_x = (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
-                let mut change_y = ((-(mouse_position.y - WIN_H) / 2. - 40.) - ball_transform.translation.y).abs();
+                let change_x = (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
+                let change_y = ((-(mouse_position.y - WIN_H) / 2. - 40.) - ball_transform.translation.y).abs();
                 let mut new_velocity = Vec3::new(change_x, change_y, 0.);
                 new_velocity = new_velocity.normalize_or_zero();
 
@@ -450,8 +446,8 @@ fn swing(
                     new_velocity.y = -1. * new_velocity.y;
                 }
 
-                new_velocity.x = new_velocity.x * 400.;
-                new_velocity.y = new_velocity.y * 400.;
+                new_velocity.x = new_velocity.x * 500.;
+                new_velocity.y = new_velocity.y * 500.;
                 ball_velocity.velocity = new_velocity;
             }
             
@@ -492,7 +488,7 @@ fn swing(
 
 fn aim_follows_cursor(
     mut query_aim: Query<&mut Transform, With<Aim>>,
-    cursor_events: Res<Events<CursorMoved>>,
+    //cursor_events: Res<Events<CursorMoved>>,
     window: Query<&Window>,
 ) {
     let mut aim_transform = query_aim.single_mut();

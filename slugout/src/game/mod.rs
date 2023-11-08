@@ -3,7 +3,7 @@ use bevy::{prelude::*, window::PresentMode};
 use crate::GameState;
 use crate::game::components::Aim;
 
-use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
+use self::components::{Player, Colliding, Face, Bat, Object, Rug};
 
 mod ball;
 pub mod components;
