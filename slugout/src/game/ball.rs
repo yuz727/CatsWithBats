@@ -363,44 +363,45 @@ fn swing(
     hitbox: Query<(&Transform, &Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>)>,
     window: Query<&Window>,
 ) {
-    static mut MOUSE_BUTTON_PRESSED: bool = false;
-    static mut BAT_TRANSFORMED: bool = false;
-    static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
-    let mut MOUSE_POSITION: Vec2 = Vec2::default();
     let (hitbox_transform, hitbox) = hitbox.single();
+
+    static mut mouse_button_pressed: bool = false;
+    static mut bat_transformed: bool = false;
+    static mut mouse_button_just_released: bool = false;
+    let mut mouse_position: Vec2 = Vec2::default();
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
         unsafe {
-            MOUSE_BUTTON_PRESSED = true;
-            BAT_TRANSFORMED = false;
-            MOUSE_BUTTON_JUST_RELEASED = false;
-            println!("Mouse button pressed");
+            mouse_button_pressed = true;
+            bat_transformed = false;
+            mouse_button_just_released = false;
+            //println!("Mouse button pressed");
         }
     } else if input_mouse.just_released(MouseButton::Left) {
         // Mouse button was just released
         unsafe {
-            if MOUSE_BUTTON_PRESSED {
-                MOUSE_BUTTON_PRESSED = false;
-                BAT_TRANSFORMED = true;
-                MOUSE_BUTTON_JUST_RELEASED = true;
-                println!("Mouse button released");
+            if mouse_button_pressed {
+                mouse_button_pressed = false;
+                bat_transformed = true;
+                mouse_button_just_released = true;
+                //println!("Mouse button released");
             }
         }
     }
 
-    let mut cursor_event_reader = cursor_events.get_reader();
+    /*let mut cursor_event_reader = cursor_events.get_reader();
     for event in cursor_event_reader.iter(&cursor_events) {
         // Update the mouse position
-        MOUSE_POSITION = event.position;
+        mouse_position = event.position;
         //println!("Mouse position changed");
-    }
+    }*/
 
     for (bat, mut bat_transform) in query_bat.iter_mut() {
-        if unsafe { MOUSE_BUTTON_PRESSED } {
+        if unsafe { mouse_button_pressed } {
             // Left mouse button is pressed, set the bat to horizontal
             bat_transform.scale.y = -0.13;
-        } else if unsafe { BAT_TRANSFORMED } {
+        } else if unsafe { bat_transformed } {
             bat_transform.scale.y = 0.13;
         }
     }
@@ -415,18 +416,18 @@ fn swing(
 
             if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
                 ball_velocity.velocity = Vec3::splat(0.);
-                let mut change_x = ((mouse_position.x - WIN_W) - ball_transform.translation.x).abs();
-                let mut change_y = (((2. * WIN_H - mouse_position.y) - WIN_H) - ball_transform.translation.y).abs();
+                let mut change_x = (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
+                let mut change_y = ((-(mouse_position.y - WIN_H) / 2. - 40.) - ball_transform.translation.y).abs();
                 let mut new_velocity = Vec3::new(change_x, change_y, 0.);
                 new_velocity = new_velocity.normalize_or_zero();
 
-                if (mouse_position.x - WIN_W) > ball_transform.translation.x{
+                if ((mouse_position.x - WIN_W) / 2.) > ball_transform.translation.x{
                     new_velocity.x = new_velocity.x;
                 }else{
                     new_velocity.x = -1. * new_velocity.x;
                 }
 
-                if ((2. * WIN_H - mouse_position.y) - WIN_H) > ball_transform.translation.y{
+                if (-(mouse_position.y - WIN_H) / 2. - 40.) > ball_transform.translation.y{
                     new_velocity.y = new_velocity.y;
                 }else{
                     new_velocity.y = -1. * new_velocity.y;
@@ -461,10 +462,10 @@ fn swing(
         }
 
         // Reset the flags for the next interaction
-        unsafe {
+        /*unsafe {
             MOUSE_BUTTON_JUST_RELEASED = false;
             BAT_TRANSFORMED = false;
-        }
+        }*/
     //}
 
     }
@@ -475,8 +476,10 @@ fn swing(
 fn aim_follows_cursor(
     mut query_aim: Query<&mut Transform, With<Aim>>,
     cursor_events: Res<Events<CursorMoved>>,
+    window: Query<&Window>,
 ) {
-    let mut cursor_event_reader = cursor_events.get_reader();
+    let mut aim_transform = query_aim.single_mut();
+    /*let mut cursor_event_reader = cursor_events.get_reader();
 
     for event in cursor_event_reader.iter(&cursor_events) {
         // Update the aim's position to follow the cursor
@@ -484,5 +487,10 @@ fn aim_follows_cursor(
             aim_transform.translation.x = event.position.x - WIN_W / 2.0; 
             aim_transform.translation.y = -(event.position.y - WIN_H / 2.0 + 40.0); 
         }
+    }*/
+
+    if let Some(mouse_position) = window.single().physical_cursor_position(){
+        aim_transform.translation.x = (mouse_position.x - WIN_W) / 2.;
+        aim_transform.translation.y = -(mouse_position.y - WIN_H) / 2. - 40.;
     }
 }
