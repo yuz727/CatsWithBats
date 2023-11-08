@@ -211,7 +211,6 @@ pub fn evade_ball(
     ball: Query<&Transform, (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>)>,
     time: Res<Time>,
 ) {
-    let mut velocity_change = 0;
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Evade) {
             for mut bat_transform in bat.iter_mut() {

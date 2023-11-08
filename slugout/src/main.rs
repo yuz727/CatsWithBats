@@ -2,8 +2,8 @@ use bevy::{prelude::*, window::PresentMode};
 
 mod game;
 mod menu;
-mod setup;
 mod multiplayer;
+mod setup;
 
 //const WIN_W: f32 = 1280.0;
 //const WIN_H: f32 = 720.0;
@@ -16,7 +16,7 @@ pub enum GameState {
     Menu,
     Setup,
     Game,
-    Multiplayer
+    Multiplayer,
 }
 
 fn main() {
@@ -39,7 +39,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(game::components::Background);
-    }
+}
 
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
 fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
