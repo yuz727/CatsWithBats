@@ -434,7 +434,7 @@ fn swing(
                 if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)) || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)) {
                     ball_velocity.velocity = Vec3::splat(0.);
                     let change_x = (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
-                    let change_y = ((-(mouse_position.y - WIN_H) / 2. - 40.) - ball_transform.translation.y).abs();
+                    let change_y = ((-(mouse_position.y - WIN_H) / 2.) - ball_transform.translation.y).abs();
                     let mut new_velocity = Vec3::new(change_x, change_y, 0.);
                     new_velocity = new_velocity.normalize_or_zero();
 
@@ -444,7 +444,7 @@ fn swing(
                         new_velocity.x = -1. * new_velocity.x;
                     }
 
-                    if (-(mouse_position.y - WIN_H) / 2. - 40.) > ball_transform.translation.y{
+                    if (-(mouse_position.y - WIN_H) / 2. ) > ball_transform.translation.y{
                         new_velocity.y = new_velocity.y;
                     }else{
                         new_velocity.y = -1. * new_velocity.y;
