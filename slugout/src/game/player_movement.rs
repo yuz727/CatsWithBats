@@ -136,6 +136,6 @@ pub fn move_player(
 
     face_transform.translation.x = transform.translation.x;
     face_transform.translation.y = transform.translation.y;
-    bat_transform.translation.x = transform.translation.x - 5.;
-    bat_transform.translation.y = transform.translation.y;
+    //bat_transform.translation.x = transform.translation.x - 5.;
+    //bat_transform.translation.y = transform.translation.y;
 }
