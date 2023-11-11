@@ -14,6 +14,7 @@ use super::components::Rug;
 use crate::game::components::Hitbox;
 use super::components::Aim;
 
+
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 const BALL_SIZE: f32 = 10.;
@@ -140,12 +141,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //Spawn bat hitbox for bat
     commands.spawn(SpriteBundle {
         sprite: Sprite {
-            color: Color::rgba(240., 140., 100., 0.2),
+            color: Color::rgba(240., 140., 100., 0.),
             custom_size: Some(Vec2::new(30., 52.)),
             ..default()
         },
         transform: Transform::from_xyz(0., 0., 2.),
-        visibility: Visibility::Visible,
         ..Default::default()
     })
     .insert(Hitbox {
@@ -264,21 +264,21 @@ fn bounce(
 }
 
 fn bat_hitbox(
-    mut hitbox: Query<(&mut Visibility, &mut Transform), (With <Hitbox>, Without<Bat>)>,
+    mut hitbox: Query<(&mut Sprite, &mut Transform), (With <Hitbox>, Without<Bat>)>,
     bat: Query<&Transform, (With <Bat>, Without <Hitbox>)>,
     input_mouse: Res<Input<MouseButton>>,
 
 ){
-    let (mut vis_hitbox, mut transform_hitbox) = hitbox.single_mut();
+    let (mut color_hitbox, mut transform_hitbox) = hitbox.single_mut();
     let transform_bat = bat.single();
-    //if input_mouse.pressed(MouseButton::Left) {
+    if input_mouse.pressed(MouseButton::Left) {
         // Left button was pressed
         transform_hitbox.translation = transform_bat.translation;
         transform_hitbox.translation.x = transform_hitbox.translation.x - 20.;
-        *vis_hitbox = Visibility::Visible;
-    /*}else{
-        *vis_hitbox = Visibility::Hidden;
-    }*/
+        color_hitbox.color = Color::rgba(240., 140., 100., 0.2);
+    }else{
+        color_hitbox.color = Color::rgba(240., 140., 100., 0.);
+    }
 }
 
 fn friction(
