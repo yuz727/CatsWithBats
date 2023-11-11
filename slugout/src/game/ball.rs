@@ -142,14 +142,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
         sprite: Sprite {
             color: Color::rgba(240., 140., 100., 0.),
-            custom_size: Some(Vec2::new(30., 52.)),
+            custom_size: Some(Vec2::new(45., 75.)),
             ..default()
         },
         transform: Transform::from_xyz(0., 0., 2.),
         ..Default::default()
     })
     .insert(Hitbox {
-        size: Vec2::new(30., 52.), //30 52
+        size: Vec2::new(45., 75.), //30 52
     });
 }
 
@@ -275,8 +275,12 @@ fn bat_hitbox(
         // Left button was pressed
         transform_hitbox.translation = transform_bat.translation;
         transform_hitbox.translation.x = transform_hitbox.translation.x - 20.;
+        transform_hitbox.translation.y = transform_hitbox.translation.y - 5.;
         color_hitbox.color = Color::rgba(240., 140., 100., 0.2);
     }else{
+        transform_hitbox.translation = transform_bat.translation;
+        transform_hitbox.translation.x = transform_hitbox.translation.x - 20.;
+        transform_hitbox.translation.y = transform_hitbox.translation.y - 5.;
         color_hitbox.color = Color::rgba(240., 140., 100., 0.);
     }
 }
@@ -417,9 +421,9 @@ fn swing(
     for (bat, mut bat_transform) in query_bat.iter_mut() {
         if unsafe{ MOUSE_BUTTON_PRESSED } {
             // Left mouse button is pressed, set the bat to horizontal
-            bat_transform.scale.y = -0.13;
+            bat_transform.scale.y = -0.175;
         } else if unsafe{ BAT_TRANSFORMED } {
-            bat_transform.scale.y = 0.13;
+            bat_transform.scale.y = 0.175;
         }
     }
 
