@@ -41,11 +41,11 @@ impl Plugin for BallPlugin {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(SpriteBundle {
         texture: asset_server.load("yarnball.png"),
-        transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::splat(0.03)),
+        transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
         ..Default::default()
     })
     .insert(Ball {
-        radius: 0.03 / 2.0,
+        radius: 0.025,
     })
     .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -59,11 +59,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 2ND ball
      commands.spawn(SpriteBundle {
         texture: asset_server.load("yarnball.png"),
-        transform: Transform::from_xyz(500., 5., 2.).with_scale(Vec3::splat(0.03)),
+        transform: Transform::from_xyz(500., 5., 2.).with_scale(Vec3::new(0.028, 0.028, 0.)),
         ..Default::default()
     })
     .insert(Ball {
-        radius: 0.03 / 2.0,
+        radius: 0.0275,
     })
     .insert(super::components::BallVelocity {
         velocity: Vec3::new(300.0, 100.0, 2.0),
@@ -76,11 +76,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //3RD ball
     commands.spawn(SpriteBundle {
         texture: asset_server.load("yarnball.png"),
-        transform: Transform::from_xyz(-400., -100., 2.).with_scale(Vec3::splat(0.03)),
+        transform: Transform::from_xyz(-400., -100., 2.).with_scale(Vec3::new(0.031, 0.031, 0.)),
         ..Default::default()
     })
     .insert(Ball {
-        radius: 0.03 / 2.0,
+        radius: 0.031,
     })
     .insert(BallVelocity {
         velocity: Vec3::new(-500., 3., 2.),
@@ -92,11 +92,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(SpriteBundle {
         texture: asset_server.load("yarnball.png"),
-        transform: Transform::from_xyz(8., 6., 2.).with_scale(Vec3::splat(0.03)),
+        transform: Transform::from_xyz(8., 6., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
         ..Default::default()
     })
     .insert(Ball {
-        radius: 0.03 / 2.0,
+        radius: 0.034,
     })
     .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -108,11 +108,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(SpriteBundle {
         texture: asset_server.load("yarnball.png"),
-        transform: Transform::from_xyz(20., 30., 2.).with_scale(Vec3::splat(0.03)),
+        transform: Transform::from_xyz(20., 30., 2.).with_scale(Vec3::new(0.038, 0.038, 0.)),
         ..Default::default()
     })
     .insert(Ball {
-        radius: 0.03 / 2.0,
+        radius: 0.038,
     })
     .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -124,11 +124,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(SpriteBundle {
         texture: asset_server.load("yarnball.png"),
-        transform: Transform::from_xyz(400., 400., 2.).with_scale(Vec3::splat(0.03)),
+        transform: Transform::from_xyz(400., 400., 2.).with_scale(Vec3::new(0.042, 0.042, 0.)),
         ..Default::default()
     })
     .insert(Ball {
-        radius: 0.03 / 2.0,
+        radius: 0.042,
     })
     .insert(BallVelocity {
         velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -156,20 +156,22 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 //bounce the ball
 fn bounce(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut BallVelocity), (With<Ball>, Without<Player>)>,
+    mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
 ) {
  
-    for (mut transform, mut ball) in query.iter_mut() {
+    for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
+
+        let ball_radius = ball.radius * 300.;
 
         // Find the new translation for the x and y for the ball
-        let mut new_translation_x = (transform.translation.x + (ball.velocity.x * time.delta_seconds())).clamp(
-            -(1280. / 2.) + BALL_SIZE / 2.,
-            1280. / 2. - BALL_SIZE / 2.,
+        let mut new_translation_x = (transform.translation.x + (ball_velocity.velocity.x * time.delta_seconds())).clamp(
+            -(1280. / 2.) + ball_radius,
+            1280. / 2. - ball_radius,
         );
 
-        let mut new_translation_y = (transform.translation.y + (ball.velocity.y * time.delta_seconds())).clamp(
-            -(720. / 2.) + BALL_SIZE / 2.,
-            720. / 2. - BALL_SIZE / 2.,
+        let mut new_translation_y = (transform.translation.y + (ball_velocity.velocity.y * time.delta_seconds())).clamp(
+            -(720. / 2.) + ball_radius,
+            720. / 2. - ball_radius,
         );
 
         let new_translation = Vec3::new(new_translation_x, new_translation_y, transform.translation.z);
@@ -179,74 +181,74 @@ fn bounce(
         let recliner_size = Vec2::new(109., 184.);
         let recliner_translation = Vec3::new(-60., 210., 1.);
         let recliner = bevy::sprite::collide_aabb::collide(recliner_translation, 
-        recliner_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        recliner_size, new_translation, Vec2::new(ball_radius * 2., ball_radius * 2.));
 
         let tv_size = Vec2::new(164., 103.);
         let tv_translation = Vec3::new(0., -250., 1.);
         let tv_stand = bevy::sprite::collide_aabb::collide(tv_translation, 
-        tv_size, new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+        tv_size, new_translation, Vec2::new(ball_radius * 2., ball_radius * 2.));
 
         let table_size = Vec2::new(103.,107.);
         let table_translation = Vec3::new(120., 170., 1.);
         let side_table = bevy::sprite::collide_aabb::collide(table_translation, table_size, 
-            new_translation, Vec2::new(BALL_SIZE, BALL_SIZE));
+            new_translation, Vec2::new(ball_radius * 2., ball_radius * 2.));
 
 
         //other collisions//////////////////////////////////////////////////////
  
         if recliner == Some(bevy::sprite::collide_aabb::Collision::Right){
-            ball.velocity.x = -ball.velocity.x *0.6;
-            ball.velocity.y = ball.velocity.y*0.6;
-            new_translation_x = recliner_translation.x - recliner_size.x/2. - BALL_SIZE/2.;
+            ball_velocity.velocity.x = -ball_velocity.velocity.x *0.6;
+            ball_velocity.velocity.y = ball_velocity.velocity.y*0.6;
+            new_translation_x = recliner_translation.x - recliner_size.x/2. - ball_radius;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left){
-            ball.velocity.x = -ball.velocity.x*0.6;
-            ball.velocity.y = ball.velocity.y*0.6;
-            new_translation_x = recliner_translation.x + recliner_size.x/2. + BALL_SIZE/2.;
+            ball_velocity.velocity.x = -ball_velocity.velocity.x*0.6;
+            ball_velocity.velocity.y = ball_velocity.velocity.y*0.6;
+            new_translation_x = recliner_translation.x + recliner_size.x/2. + ball_radius;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top){
-            ball.velocity.y = -ball.velocity.y*0.6;
-            ball.velocity.x = ball.velocity.x*0.6;
-            new_translation_y = recliner_translation.y - recliner_size.y/2. - BALL_SIZE/2.;
+            ball_velocity.velocity.y = -ball_velocity.velocity.y*0.6;
+            ball_velocity.velocity.x = ball_velocity.velocity.x*0.6;
+            new_translation_y = recliner_translation.y - recliner_size.y/2. - ball_radius;
         }else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-            ball.velocity.y = -ball.velocity.y*0.6;
-            ball.velocity.x = ball.velocity.x*0.6;
-            new_translation_y = recliner_translation.y + recliner_size.y/2. + BALL_SIZE/2.;
+            ball_velocity.velocity.y = -ball_velocity.velocity.y*0.6;
+            ball_velocity.velocity.x = ball_velocity.velocity.x*0.6;
+            new_translation_y = recliner_translation.y + recliner_size.y/2. + ball_radius;
         }
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left){
-            ball.velocity.x = -ball.velocity.x*0.9;
-            ball.velocity.y = ball.velocity.y*0.9;
-            new_translation_x = tv_translation.x + tv_size.x/2. + BALL_SIZE/2.;
+            ball_velocity.velocity.x = -ball_velocity.velocity.x*0.9;
+            ball_velocity.velocity.y = ball_velocity.velocity.y*0.9;
+            new_translation_x = tv_translation.x + tv_size.x/2. + ball_radius;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right){
-            ball.velocity.x = -ball.velocity.x*0.9;
-            ball.velocity.y = ball.velocity.y*0.9;
-            new_translation_x = tv_translation.x - tv_size.x/2. - BALL_SIZE/2.;
+            ball_velocity.velocity.x = -ball_velocity.velocity.x*0.9;
+            ball_velocity.velocity.y = ball_velocity.velocity.y*0.9;
+            new_translation_x = tv_translation.x - tv_size.x/2. - ball_radius;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top){
-            ball.velocity.y = -ball.velocity.y*0.9;
-            ball.velocity.x = ball.velocity.x*0.9;
-            new_translation_y = tv_translation.y - tv_size.y/2. - BALL_SIZE/2.;
+            ball_velocity.velocity.y = -ball_velocity.velocity.y*0.9;
+            ball_velocity.velocity.x = ball_velocity.velocity.x*0.9;
+            new_translation_y = tv_translation.y - tv_size.y/2. - ball_radius;
         }else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-            ball.velocity.y = -ball.velocity.y*0.9;
-            ball.velocity.x = ball.velocity.x*0.9;
-            new_translation_y = tv_translation.y + tv_size.y/2. + BALL_SIZE/2.;
+            ball_velocity.velocity.y = -ball_velocity.velocity.y*0.9;
+            ball_velocity.velocity.x = ball_velocity.velocity.x*0.9;
+            new_translation_y = tv_translation.y + tv_size.y/2. + ball_radius;
 
         }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left){
-            ball.velocity.x = -ball.velocity.x*0.8;
-            ball.velocity.y = ball.velocity.y*0.8;
-            new_translation_x = table_translation.x + table_size.x/2. + BALL_SIZE/2.;
+            ball_velocity.velocity.x = -ball_velocity.velocity.x*0.8;
+            ball_velocity.velocity.y = ball_velocity.velocity.y*0.8;
+            new_translation_x = table_translation.x + table_size.x/2. + ball_radius;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-            ball.velocity.x = -ball.velocity.x*0.8;
-            ball.velocity.y = ball.velocity.y*0.8;
-            new_translation_x = table_translation.x - table_size.x/2. - BALL_SIZE/2.;
+            ball_velocity.velocity.x = -ball_velocity.velocity.x*0.8;
+            ball_velocity.velocity.y = ball_velocity.velocity.y*0.8;
+            new_translation_x = table_translation.x - table_size.x/2. - ball_radius;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top){
-            ball.velocity.y = -ball.velocity.y*0.8;
-            ball.velocity.x = ball.velocity.x*0.8;
-            new_translation_y = table_translation.y - table_size.y/2. - BALL_SIZE/2.;
+            ball_velocity.velocity.y = -ball_velocity.velocity.y*0.8;
+            ball_velocity.velocity.x = ball_velocity.velocity.x*0.8;
+            new_translation_y = table_translation.y - table_size.y/2. - ball_radius;
         }else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-            ball.velocity.y = -ball.velocity.y*0.8;
-            ball.velocity.x = ball.velocity.x*0.8;
-            new_translation_y = table_translation.y + table_size.y/2. + BALL_SIZE/2.;
+            ball_velocity.velocity.y = -ball_velocity.velocity.y*0.8;
+            ball_velocity.velocity.x = ball_velocity.velocity.x*0.8;
+            new_translation_y = table_translation.y + table_size.y/2. + ball_radius;
         }
 
         // Move ball
@@ -254,11 +256,11 @@ fn bounce(
         transform.translation.y = new_translation_y;
 
         // Bounce when hitting the screen edges
-        if transform.translation.x.abs() == WIN_W / 2.0 - BALL_SIZE / 2. {
-            ball.velocity.x = -ball.velocity.x;
+        if transform.translation.x.abs() == WIN_W / 2.0 - ball_radius {
+            ball_velocity.velocity.x = -ball_velocity.velocity.x;
         }
-        if transform.translation.y.abs() == WIN_H / 2.0 - BALL_SIZE / 2.{
-            ball.velocity.y = -ball.velocity.y;
+        if transform.translation.y.abs() == WIN_H / 2.0 - ball_radius {
+            ball_velocity.velocity.y = -ball_velocity.velocity.y;
         }
     }
 }
