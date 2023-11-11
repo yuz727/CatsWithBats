@@ -14,6 +14,7 @@ use super::components::Rug;
 use crate::game::components::Hitbox;
 use super::components::Aim;
 
+
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 const BALL_SIZE: f32 = 10.;
@@ -140,16 +141,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     //Spawn bat hitbox for bat
     commands.spawn(SpriteBundle {
         sprite: Sprite {
-            color: Color::rgba(240., 140., 100., 0.2),
-            custom_size: Some(Vec2::new(30., 52.)),
+            color: Color::rgba(240., 140., 100., 0.),
+            custom_size: Some(Vec2::new(45., 75.)),
             ..default()
         },
         transform: Transform::from_xyz(0., 0., 2.),
-        visibility: Visibility::Visible,
         ..Default::default()
     })
     .insert(Hitbox {
-        size: Vec2::new(30., 52.), //30 52
+        size: Vec2::new(45., 75.), //30 52
     });
 }
 
@@ -264,21 +264,19 @@ fn bounce(
 }
 
 fn bat_hitbox(
-    mut hitbox: Query<(&mut Visibility, &mut Transform), (With <Hitbox>, Without<Bat>)>,
+    mut hitbox: Query<&mut Sprite, (With <Hitbox>, Without<Bat>)>,
     bat: Query<&Transform, (With <Bat>, Without <Hitbox>)>,
     input_mouse: Res<Input<MouseButton>>,
 
 ){
-    let (mut vis_hitbox, mut transform_hitbox) = hitbox.single_mut();
-    let transform_bat = bat.single();
-    //if input_mouse.pressed(MouseButton::Left) {
+    let mut color_hitbox= hitbox.single_mut();
+
+    if input_mouse.pressed(MouseButton::Left) {
         // Left button was pressed
-        transform_hitbox.translation = transform_bat.translation;
-        transform_hitbox.translation.x = transform_hitbox.translation.x - 20.;
-        *vis_hitbox = Visibility::Visible;
-    /*}else{
-        *vis_hitbox = Visibility::Hidden;
-    }*/
+        color_hitbox.color = Color::rgba(240., 140., 100., 0.2);
+    }else{
+        color_hitbox.color = Color::rgba(240., 140., 100., 0.);
+    }
 }
 
 fn friction(
@@ -374,18 +372,21 @@ fn friction(
 fn swing(
     //mut commands: Commands,
     input_mouse: Res<Input<MouseButton>>,
-    mut query: Query<(&mut Ball, &mut BallVelocity, &mut Transform), (With<Ball>, Without<Hitbox>, Without<Bat>)>,
-    mut query_bat: Query<(&Bat, &mut Transform), (With<Bat>, Without<Hitbox>, Without<Ball>)>,
+    mut query: Query<(&mut Ball, &mut BallVelocity, &mut Transform), (With<Ball>, Without<Hitbox>, Without<Bat>, Without<Player>)>,
+    mut query_bat: Query<&mut Transform, (With<Bat>, Without<Hitbox>, Without<Ball>, Without<Player>)>,
     //cursor_events: ResMut<Events<CursorMoved>>,
-    hitbox: Query<(&Transform, &Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>)>,
+    mut hitbox: Query<(&mut Transform, &mut Hitbox), (With<Hitbox>, Without <Ball>, Without<Ball>, Without<Player>)>,
     window: Query<&Window>,
+    player : Query<& Transform, (With <Player>, Without<Hitbox>, Without<Bat>, Without<Ball>)>,
 ) {
-    let (hitbox_transform, hitbox) = hitbox.single();
+    let (mut hitbox_transform, mut hitbox) = hitbox.single_mut();
 
     static mut MOUSE_BUTTON_PRESSED: bool = false;
     static mut BAT_TRANSFORMED: bool = false;
     static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
     //let mut mouse_position: Vec2;
+    let mut bat_transform  = query_bat.single_mut();
+    let player_transform = player.single();
 
     if input_mouse.just_pressed(MouseButton::Left) {
         // Mouse button was just pressed
@@ -414,18 +415,36 @@ fn swing(
         //println!("Mouse position changed");
     }*/
 
-    for (bat, mut bat_transform) in query_bat.iter_mut() {
+    //for (bat, mut bat_transform) in query_bat.iter_mut() {
         if unsafe{ MOUSE_BUTTON_PRESSED } {
             // Left mouse button is pressed, set the bat to horizontal
-            bat_transform.scale.y = -0.13;
+            bat_transform.scale.y = -0.175;
         } else if unsafe{ BAT_TRANSFORMED } {
-            bat_transform.scale.y = 0.13;
+            bat_transform.scale.y = 0.175;
         }
-    }
+    //}
 
     if let Some(mouse_position) = window.single().physical_cursor_position(){
         //println!("Cursor is inside window {:?}", mouse_position);
         //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+        if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x{
+            bat_transform.translation = player_transform.translation;
+            bat_transform.translation.x = bat_transform.translation.x + 8.;
+            bat_transform.scale.x = -0.175;
+
+            hitbox_transform.translation = bat_transform.translation;
+            hitbox_transform.translation.x = hitbox_transform.translation.x + 20.;
+            hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
+
+        }else{
+            bat_transform.translation = player_transform.translation;
+            bat_transform.translation.x = bat_transform.translation.x - 5.;
+            bat_transform.scale.x = 0.175;
+
+            hitbox_transform.translation = bat_transform.translation;
+            hitbox_transform.translation.x = hitbox_transform.translation.x - 20.;
+            hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
+        }
         if unsafe {MOUSE_BUTTON_JUST_RELEASED} {
             for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
                 
