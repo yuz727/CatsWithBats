@@ -145,7 +145,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         transform: Transform::from_xyz(0., 0., 2.),
-        visibility: Visibility::Hidden,
+        visibility: Visibility::Visible,
         ..Default::default()
     })
     .insert(Hitbox {
@@ -271,14 +271,14 @@ fn bat_hitbox(
 ){
     let (mut vis_hitbox, mut transform_hitbox) = hitbox.single_mut();
     let transform_bat = bat.single();
-    if input_mouse.pressed(MouseButton::Left) {
+    //if input_mouse.pressed(MouseButton::Left) {
         // Left button was pressed
         transform_hitbox.translation = transform_bat.translation;
         transform_hitbox.translation.x = transform_hitbox.translation.x - 20.;
         *vis_hitbox = Visibility::Visible;
-    }else{
+    /*}else{
         *vis_hitbox = Visibility::Hidden;
-    }
+    }*/
 }
 
 fn friction(
@@ -426,7 +426,7 @@ fn swing(
     if let Some(mouse_position) = window.single().physical_cursor_position(){
         //println!("Cursor is inside window {:?}", mouse_position);
         //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
-        //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+        if unsafe {MOUSE_BUTTON_JUST_RELEASED} {
             for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
                 
                 let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(hitbox_transform.translation, hitbox.size, ball_transform.translation, Vec2::new(BALL_SIZE, BALL_SIZE));
@@ -484,7 +484,7 @@ fn swing(
                 BAT_TRANSFORMED = false;
             }
 
-        //}
+        }
 
 
     }
