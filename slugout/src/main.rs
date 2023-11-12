@@ -16,7 +16,9 @@ pub enum GameState {
     Menu,
     Setup,
     Game,
-    Multiplayer
+    Multiplayer,
+    JoinGame,
+    HostGame,
 }
 
 fn main() {

@@ -1,6 +1,7 @@
 use bevy::{app::AppExit, prelude::*, window::ReceivedCharacter};
 use std::thread;
 use super::{despawn_screen, GameState, TEXT_COLOR};
+use std::net::{UdpSocket, SocketAddr};
 
 pub struct MultiplayerPlugin;
 
@@ -22,6 +23,15 @@ enum MultiplayerState {
     #[default]
     Disabled,
 }
+
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum NetworkingState{
+    Host,
+    Join,
+    #[default]
+    Disabled,
+}
+
 #[derive(Component)]
 enum LobbyButtonAction {
     Back,
@@ -29,8 +39,19 @@ enum LobbyButtonAction {
 #[derive(Component)]
 struct SelectedOption;
 
+
+#[derive(Resource)]
+pub struct SocketAddress(pub String);
+
+#[derive(Resource)]
+pub struct ClientSocket(pub Option<UdpSocket>);
+
+#[derive(Resource)]
+pub struct ServerSocket(pub Option<UdpSocket>);
+
+
 #[derive(Component)]
-struct InputText(String);
+struct InputText(pub String);
 
 pub static mut USER_INPUT: Option<String> = None;
 
@@ -38,6 +59,7 @@ impl Plugin for MultiplayerPlugin {
     fn build(&self, app: &mut App) {
         app
         .add_state::<MultiplayerState>()
+        .add_state::<NetworkingState>()
         .add_systems(OnEnter(GameState::Multiplayer), multiplayer_setup)
         .add_systems(OnEnter(MultiplayerState::Main), multiplayer_setup)
         .add_systems(OnExit(MultiplayerState::Disabled), despawn_screen::<OnMultiplayerScreen>)
@@ -52,6 +74,22 @@ impl Plugin for MultiplayerPlugin {
             Update,
             (lobby_menu_action, button_system).run_if(in_state(GameState::Multiplayer)).run_if(in_state(MultiplayerState::Lobby)),
           
+        )
+        .add_systems(
+            OnEnter(NetworkingState::Join),
+            client::create_client
+        )
+        .add_systems(
+            Update,
+            client::update.run_if(in_state(NetworkingState::Join))
+        )
+        .add_systems(
+            OnEnter(NetworkingState::Host),
+                 server::create_server
+        )
+        .add_systems(
+            Update,
+            server::update.run_if(in_state(NetworkingState::Host))
         );
     }
 
@@ -104,7 +142,10 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     };
     
-
+    commands.insert_resource(SocketAddress(String::new()));
+    commands.insert_resource(ServerSocket(None));
+    commands.insert_resource(ClientSocket(None));
+    
     commands
         .spawn((
             NodeBundle {
@@ -261,31 +302,19 @@ fn multiplayer_menu_action(
     mut app_exit_events: EventWriter<AppExit>,
     mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut network_state: ResMut<NextState<NetworkingState>>,
 ) {
     for (interaction, multiplayer_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
             match multiplayer_button_action {
                 MultiplayerButtonAction::HostGame => {
-                    let server_thread = thread::spawn(|| {
-                    let _ = server::create_server();
-                    });
-                    
-                    /*let client_thread = thread::spawn(|| {
-                        let _ = client::create_client();
-                    });*/
-                
-                    server_thread.join().unwrap();
-                    //client_thread.join().unwrap();
                     multiplayer_state.set(MultiplayerState::Lobby);
-
+                    network_state.set(NetworkingState::Host);
                 }
                 MultiplayerButtonAction::JoinGame => 
                 {
-                    let client_thread = thread::spawn(|| {
-                        let _ = client::create_client();
-                    });
-                    client_thread.join().unwrap();
                     multiplayer_state.set(MultiplayerState::Lobby);
+                    network_state.set(NetworkingState::Join);
                 }
                 MultiplayerButtonAction::Multiplayer => 
                 {
@@ -302,7 +331,8 @@ fn multiplayer_menu_action(
     }
 }
 
-fn update_user_input(mut char_input_events: EventReader<ReceivedCharacter>, keyboard: Res<Input<KeyCode>>, mut textbox: Query<(&mut Text, &mut InputText), With<InputText>>,) {
+fn update_user_input(mut char_input_events: EventReader<ReceivedCharacter>, keyboard: Res<Input<KeyCode>>, mut textbox: Query<(&mut Text, &mut InputText), With<InputText>>,
+mut server_address: ResMut<SocketAddress>) {
 
     let (mut single_box, mut user_input) = textbox.single_mut();
     for event in char_input_events.iter() {
@@ -316,10 +346,7 @@ fn update_user_input(mut char_input_events: EventReader<ReceivedCharacter>, keyb
             user_input.0.push(event.char);
             info!("{}", user_input.0);
         }
-        // Update the public variable with the user input
-        unsafe {
-            USER_INPUT = Some(user_input.0.clone());
-        }
+        server_address.0 = single_box.sections[0].value.clone();
     }
 }
 
