@@ -3,10 +3,21 @@ use std::thread;
 use super::{despawn_screen, GameState, TEXT_COLOR};
 use std::net::{UdpSocket, SocketAddr};
 
+
 pub struct MultiplayerPlugin;
 
 mod server;
 mod client;
+
+pub struct Client {
+    pub address: SocketAddr,
+    pub username: String,
+}
+
+#[derive(Resource)]
+pub struct ClientList {
+    pub clients: <Vec<Client>>,
+}
 
 #[derive(Component)]
 enum MultiplayerButtonAction {
@@ -90,7 +101,10 @@ impl Plugin for MultiplayerPlugin {
         .add_systems(
             Update,
             server::update.run_if(in_state(NetworkingState::Host))
-        );
+        )
+        .add_resource(ClientList{
+            clients: new(Vec::new())
+        });
     }
 
 }
@@ -448,6 +462,8 @@ fn lobby_setup(mut commands: Commands) {
                             ..default()
                         })
                     );
+                    
+
                     parent
                         .spawn((
                             ButtonBundle {
