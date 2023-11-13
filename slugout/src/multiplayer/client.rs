@@ -17,7 +17,7 @@ pub fn create_client(
     mut socket: ResMut<super::ClientSocket>,
     mut socket_address: ResMut<super::SocketAddress>,
 ) {
-    socket.0 = Some(UdpSocket::bind("127.0.0.1:8080").expect("Failed to bind to address."));   
+    socket.0 = Some(UdpSocket::bind("0.0.0.0:8080").expect("Failed to bind to address."));   
 }
 
 pub fn update(
@@ -25,13 +25,12 @@ pub fn update(
     mut socket_address: ResMut<super::SocketAddress>,
 )
 {
-    info!("updating");
     let mut buf = [0; 1024];
 
     if client_socket.0.is_none() {
         return;
     }
-    info!("sending stuff");
+
     let socket = client_socket.0.as_mut().unwrap();
     socket.set_nonblocking(true).expect("cannot set nonblocking");
 
@@ -64,7 +63,7 @@ pub fn update(
             move_left = !move_left;
         }
         Err(e) => {
-            eprintln!("Error receiving data: {}", e);
+            //eprintln!("Error receiving data: {}", e);
         }
     }
     

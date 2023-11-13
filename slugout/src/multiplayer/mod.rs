@@ -16,7 +16,7 @@ pub struct Client {
 
 #[derive(Resource)]
 pub struct ClientList {
-    pub clients: <Vec<Client>>,
+    pub clients: Vec<Client>
 }
 
 #[derive(Component)]
@@ -101,10 +101,7 @@ impl Plugin for MultiplayerPlugin {
         .add_systems(
             Update,
             server::update.run_if(in_state(NetworkingState::Host))
-        )
-        .add_resource(ClientList{
-            clients: new(Vec::new())
-        });
+        );
     }
 
 }
@@ -159,6 +156,9 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(SocketAddress(String::new()));
     commands.insert_resource(ServerSocket(None));
     commands.insert_resource(ClientSocket(None));
+    commands.insert_resource(ClientList{
+        clients: Vec::new()
+    });
     
     commands
         .spawn((
