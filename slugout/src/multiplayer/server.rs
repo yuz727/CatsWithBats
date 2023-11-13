@@ -17,7 +17,7 @@ pub fn create_server(
     mut socket: ResMut<super::ServerSocket>
 ) {
     let server_address = "0.0.0.0:8080";
-    socket.0 = Some(UdpSocket::bind("0.0.0.0:8080").expect("Failed to bind to address."));
+    socket.0 = Some(UdpSocket::bind("127.0.0.1:8080").expect("Failed to bind to address."));
     info!("{}", socket.0.is_some());
 }
 
