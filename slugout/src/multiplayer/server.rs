@@ -16,7 +16,6 @@ struct PlayerInfo {
 pub fn create_server(
     mut socket: ResMut<super::ServerSocket>
 ) {
-    let server_address = "0.0.0.0:8080";
     socket.0 = Some(UdpSocket::bind("127.0.0.1:8080").expect("Failed to bind to address."));
     info!("{}", socket.0.is_some());
 }
@@ -36,6 +35,7 @@ pub fn update(
 
     match socket.recv_from(&mut buf) {
         Ok((size, peer)) => {
+            info!("received stuff!");
             let client_msg = str::from_utf8(&buf[0..size]).expect("Bad data.");
 
             if let Ok(player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {

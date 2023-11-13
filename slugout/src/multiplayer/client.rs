@@ -17,7 +17,7 @@ pub fn create_client(
     mut socket: ResMut<super::ClientSocket>,
     mut socket_address: ResMut<super::SocketAddress>,
 ) {
-    socket.0 = Some(UdpSocket::bind("127.0.0.1:8080").expect("Failed to bind to address."));   
+    socket.0 = Some(UdpSocket::bind("0.0.0.0:8080").expect("Failed to bind to address."));   
 }
 
 pub fn update(
@@ -33,6 +33,7 @@ pub fn update(
     }
     info!("sending stuff");
     let socket = client_socket.0.as_mut().unwrap();
+    socket.set_nonblocking(true).expect("cannot set nonblocking");
 
     let mut player_info = PlayerInfo {
         position: (42.0, 24.0),
@@ -52,14 +53,21 @@ pub fn update(
     socket.send_to(message.as_bytes(), socket_address.0.as_str()).expect("Failed to send data.");
 
     let mut response = [0; 1024];
-    let (size, _peer) = socket.recv_from(&mut response).expect("Failed to receive data");
-    let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
 
-    // Toggle the movement direction
-    // ** THIS IS ONLY USED TO EMULATE CHANGE/MOVEMENT **
-    move_left = !move_left;
+    match socket.recv_from(&mut response) {
+        Ok((size, peer)) => {
+            let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
+            println!("Received response: {}", response_str); 
 
-    // Sleep to control the sending frequency
+            // Toggle the movement direction
+            // ** THIS IS ONLY USED TO EMULATE CHANGE/MOVEMENT **
+            move_left = !move_left;
+        }
+        Err(e) => {
+            eprintln!("Error receiving data: {}", e);
+        }
+    }
+    
 
-    println!("Received response: {}", response_str);  
+    // Sleep to control the sending frequency 
 }
