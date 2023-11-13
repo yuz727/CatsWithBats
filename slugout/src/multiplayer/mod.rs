@@ -364,7 +364,10 @@ mut server_address: ResMut<SocketAddress>) {
     }
 }
 
-fn lobby_setup(mut commands: Commands) {
+fn lobby_setup(mut commands: Commands,
+    mut client_list: ResMut<ClientList>
+
+) {
     // Common style for all buttons on the screen
     let button_style = Style {
         width: Val::Px(250.0),
@@ -462,7 +465,22 @@ fn lobby_setup(mut commands: Commands) {
                             ..default()
                         })
                     );
-                    
+                    for (i, client) in client_list.clients.iter().enumerate() {
+                    parent.spawn(
+                        TextBundle::from_section(
+                            client.username.clone(),
+                            TextStyle {
+                                font_size: 20.0,
+                                color: Color::WHITE,
+                                ..default()
+                            },
+                            ).with_style(Style {
+                                margin: UiRect::all(Val::Px(50.0)),
+                                ..default()
+                            })
+                        );
+                           
+                    }
 
                     parent
                         .spawn((

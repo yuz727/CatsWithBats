@@ -23,7 +23,7 @@ pub fn create_server(
     mut socket: ResMut<super::ServerSocket>,
     mut client_list: ResMut<super::ClientList>
 ) {
-    socket.0 = Some(UdpSocket::bind("10.4.76.44:8080").expect("Failed to bind to address."));
+    socket.0 = Some(UdpSocket::bind("10.5.32.62:8080").expect("Failed to bind to address."));
     info!("{}", socket.0.is_some());
 
     // let's say that server was just created now 
