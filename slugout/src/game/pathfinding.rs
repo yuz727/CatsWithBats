@@ -3,6 +3,7 @@ use super::npc::{NPCBat, NPCFace, NPCTimer, NPCVelocity, States, NPC};
 use crate::game::npc_events::*;
 use crate::GameState;
 use bevy::prelude::*;
+use std::cmp::Ordering;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
@@ -13,9 +14,9 @@ struct Vertex {
     cost: i32,
 }
 
-struct Maps {
-    path_map: Vec<Vec<Vec2>>,
-    cost_map: Vec<Vec<i32>>,
+pub struct Maps {
+    pub path_map: Vec<Vec<Vec2>>,
+    pub cost_map: Vec<Vec<i32>>,
 }
 
 // For min-heap implementation
@@ -36,7 +37,7 @@ impl Maps {
     /*  Create a 2-d vector of tiles, each tile has a tile with a cost associated to it, default at max-int
      *  Each tile will be a 4x4 pixel chunk
      */
-    fn load_map_cost(&mut self) {
+    pub fn load_map_cost(&mut self) {
         let mut curr_x = 0.;
         let mut curr_y;
         while curr_x < 1280. {
@@ -55,7 +56,7 @@ impl Maps {
     /*  Create a 2-d vector of tiles, each tile has the actual coordinates associated to it
      *  Each tile will be a 4x4 pixel chunk
      */
-    fn load_map_path(&mut self) {
+    pub fn load_map_path(&mut self) {
         let mut curr_x = 0.;
         let mut curr_y;
         while curr_x < 1280. {
@@ -99,7 +100,7 @@ fn manhattan_distance(a: Vec2, b: Vec2) -> f32 {
     return (a.x - b.x).abs() + (a.y - b.y).abs();
 }
 
-fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
+pub fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
     // Initialise
     let mut worklist = BinaryHeap::new();
     worklist.push(Vertex {

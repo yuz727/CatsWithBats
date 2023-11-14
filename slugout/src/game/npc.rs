@@ -1,6 +1,7 @@
 // use crate::components::*;
 
 use crate::game::npc_events::*;
+use crate::game::pathfinding::*;
 use crate::GameState;
 use bevy::prelude::*;
 //use bevy::time::Stopwatch;
@@ -94,7 +95,6 @@ impl NPCVelocity {
             ylock: 0,
         }
     }
-
     pub fn lock_x(&mut self) {
         self.xlock = 1;
     }
@@ -113,6 +113,8 @@ pub struct NPCPlugin;
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), load_npc);
+        //app.add_systems(Update, select_bully_mode.run_if(in_state(GameState::Game)));
+        app.add_systems(OnEnter(GameState::Game), load_map);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
         app.add_systems(
@@ -173,6 +175,15 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCFace);
+}
+
+pub fn load_map() {
+    let mut maps = Maps {
+        path_map: Vec::new(),
+        cost_map: Vec::new(),
+    };
+    maps.load_map_cost();
+    maps.load_map_path();
 }
 
 // Select next move
