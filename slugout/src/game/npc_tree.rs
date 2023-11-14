@@ -164,10 +164,3 @@ fn swing(npc: &mut Npc, commands: &mut Commands, _: &QuerySet<(Entity, &Ball)>, 
     // Implement swing logic
     NodeStatus::Success
 }
-
-fn main() {
-    App::build()
-        .add_startup_system(setup.system())
-        .add_system(behavior_tree.system())
-        .run();
-}
