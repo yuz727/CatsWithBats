@@ -188,10 +188,10 @@ fn swing(npc: &mut Npc, commands: &mut Commands, ball_query: &QuerySet<(Entity, 
     NodeStatus::Success
 }
 
-fn main() {
-    App::build()
-        .add_startup_system(setup.system())
-        .add_system(behavior_tree.system())
-        .add_plugin(BehaviorTreePlugin)
-        .run();
-}
+// fn main() {
+//     App::build()
+//         .add_startup_system(setup.system())
+//         .add_system(behavior_tree.system())
+//         .add_plugin(BehaviorTreePlugin)
+//         .run();
+// }
