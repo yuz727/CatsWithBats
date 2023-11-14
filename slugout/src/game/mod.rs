@@ -32,7 +32,7 @@ impl Plugin for GamePlugin {
             ..default()
         }))
         .add_systems(Startup, setup)
-        .add_plugins(npc::NPCPlugin)
+        //.add_plugins(npc::NPCPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(
             Update,
@@ -64,7 +64,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 20.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 20.) , Vec3::new(0.175, 0.175, 0.)),
             ..default()
         })
         .insert(Bat);

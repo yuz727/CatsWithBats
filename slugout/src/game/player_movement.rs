@@ -34,7 +34,7 @@ pub fn move_player(
 ) {
     let (mut transform, mut velocity) = player.single_mut();
     let mut face_transform = face.single_mut();
-    let mut bat_transform = bat.single_mut();
+    //let mut bat_transform = bat.single_mut();
 
     /////////////////////////////////////////////////////////////// with objects
     let recliner_size = Vec2::new(109., 184.);
@@ -136,6 +136,6 @@ pub fn move_player(
 
     face_transform.translation.x = transform.translation.x;
     face_transform.translation.y = transform.translation.y;
-    bat_transform.translation.x = transform.translation.x - 5.;
-    bat_transform.translation.y = transform.translation.y;
+    //bat_transform.translation.x = transform.translation.x - 5.;
+    //bat_transform.translation.y = transform.translation.y;
 }
