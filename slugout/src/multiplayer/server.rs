@@ -21,23 +21,27 @@ struct PlayerInfo {
 
 pub fn create_server(
     mut socket: ResMut<super::ServerSocket>,
-    mut client_list: ResMut<super::ClientList>
+    mut client_list: ResMut<super::ClientList>,
+    server_address: Res<super::SocketAddress>,
 ) {
-    socket.0 = Some(UdpSocket::bind("10.5.32.62:8080").expect("Failed to bind to address."));
+    // Use the server address from the resource
+    let server_address_str = &server_address.0;
+    
+    socket.0 = Some(UdpSocket::bind(server_address_str).expect("Failed to bind to address s."));
     info!("{}", socket.0.is_some());
 
     // let's say that server was just created now 
 
-     // Create the first client
-     let first_client = super::Client {
-        address: std::net::SocketAddr::from(([127, 0, 0, 1], 8080)),
-        username: String::from("hostuser"),
+    // Create the host client
+    let host_client = super::Client {
+        address: socket.0.as_ref().unwrap().local_addr().unwrap(),
+        username: String::from("hostuser"), // You might want to replace this with the actual username
     };
 
-    // Add the first client to the client list
-    client_list.clients.push(first_client);
-
+    // Add the host client to the client list
+    client_list.clients.push(host_client);
 }
+
 
 pub fn update(
     mut server_socket: ResMut<super::ServerSocket>,

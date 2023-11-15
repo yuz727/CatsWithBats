@@ -45,6 +45,7 @@ enum NetworkingState{
 
 #[derive(Component)]
 enum LobbyButtonAction {
+    Start,
     Back,
 }
 #[derive(Component)]
@@ -365,8 +366,9 @@ mut server_address: ResMut<SocketAddress>) {
 }
 
 fn lobby_setup(mut commands: Commands,
-    mut client_list: ResMut<ClientList>
-
+    mut client_list: ResMut<ClientList>,
+    mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
+    mut network_state: ResMut<NextState<NetworkingState>>,
 ) {
     // Common style for all buttons on the screen
     let button_style = Style {
@@ -466,21 +468,37 @@ fn lobby_setup(mut commands: Commands,
                         })
                     );
                     for (i, client) in client_list.clients.iter().enumerate() {
-                    parent.spawn(
-                        TextBundle::from_section(
-                            client.username.clone(),
-                            TextStyle {
-                                font_size: 20.0,
-                                color: Color::WHITE,
-                                ..default()
-                            },
-                            ).with_style(Style {
+                        parent.spawn(
+                            TextBundle::from_section(
+                                format!("Player {}: {}", i + 1, client.username),
+                                TextStyle {
+                                    font_size: 20.0,
+                                    color: Color::WHITE,
+                                    ..default()
+                                },
+                            )
+                            .with_style(Style {
                                 margin: UiRect::all(Val::Px(50.0)),
                                 ..default()
-                            })
+                            }),
                         );
-                           
                     }
+
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            LobbyButtonAction::Start,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Start",
+                                button_text_style.clone(),
+                            ));
+                        });
 
                     parent
                         .spawn((
@@ -501,7 +519,6 @@ fn lobby_setup(mut commands: Commands,
             });
 }
 
-
 fn lobby_menu_action(
     interaction_query: Query<
         (&Interaction, &LobbyButtonAction),
@@ -510,10 +527,16 @@ fn lobby_menu_action(
     mut app_exit_events: EventWriter<AppExit>,
     mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut network_state: ResMut<NextState<NetworkingState>>,
 ) {
     for (interaction, lobby_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
             match lobby_button_action {
+                LobbyButtonAction::Start => {
+                    // TODO: Add code for starting the game here
+                    // For now, just print a message
+                    println!("Starting the game!");
+                }
                 LobbyButtonAction::Back => {
                     multiplayer_state.set(MultiplayerState::Main);
                 }
