@@ -1,3 +1,5 @@
+use std::env;
+
 use bevy::{prelude::*, window::PresentMode};
 
 mod game;
@@ -20,6 +22,7 @@ pub enum GameState {
 }
 
 fn main() {
+    env::set_var("RUST_BACKTRACE", "1");
     App::new()
         .add_state::<GameState>()
         .add_systems(Startup, setup)

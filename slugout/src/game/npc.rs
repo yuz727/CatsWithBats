@@ -6,6 +6,7 @@ use crate::GameState;
 use bevy::prelude::*;
 //use bevy::time::Stopwatch;
 use rand::prelude::*;
+use serde_json::Map;
 
 use super::components::Ball;
 use super::components::Player;
@@ -42,6 +43,12 @@ pub enum States {
     Idle,
     AggressionBall,
     AggressionPlayer,
+}
+
+#[derive(Component)]
+pub struct Maps {
+    pub path_map: Vec<Vec<Vec2>>,
+    pub cost_map: Vec<Vec<i32>>,
 }
 
 #[derive(Component)]
@@ -156,7 +163,11 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Idle)
-        .insert(Difficulty { difficulty: 75 });
+        .insert(Difficulty { difficulty: 75 })
+        .insert(Maps {
+            path_map: load_map_path(),
+            cost_map: load_map_cost(),
+        });
 
     //spawn bat sprite
     commands
@@ -177,13 +188,8 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPCFace);
 }
 
-pub fn load_map() {
-    let mut maps = Maps {
-        path_map: Vec::new(),
-        cost_map: Vec::new(),
-    };
-    maps.load_map_cost();
-    maps.load_map_path();
+pub fn load_map(mut npcs: Query<&mut Maps>) {
+    for maps in npcs.iter_mut() {}
 }
 
 // Select next move
