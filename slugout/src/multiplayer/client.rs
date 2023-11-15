@@ -28,7 +28,7 @@ pub fn create_client(
     } else {
         eprintln!("Invalid server address format: {}", server_address_str);
     }
-
+    println!("Connected to server {}", server_address_str);
     // Create the new client
     let new_client = super::Client {
         address: socket.0.as_ref().unwrap().local_addr().unwrap(),
@@ -42,9 +42,8 @@ pub fn create_client(
 
 pub fn update(
     mut client_socket: ResMut<super::ClientSocket>,
-    mut socket_address: ResMut<super::SocketAddress>,
-)
-{
+    socket_address: Res<super::SocketAddress>,
+) {
     let mut buf = [0; 1024];
 
     if client_socket.0.is_none() {
@@ -69,14 +68,16 @@ pub fn update(
 
     let message = serde_json::to_string(&player_info).expect("Failed to serialize");
 
-    socket.send_to(message.as_bytes(), "10.0.0.46:8080").expect("Failed to send data.");
+    // Use the socket address from the resource instead of the hardcoded value
+    let server_address_str = &socket_address.0;
+    socket.send_to(message.as_bytes(), server_address_str).expect("Failed to send data.");
 
     let mut response = [0; 1024];
 
     match socket.recv_from(&mut response) {
         Ok((size, peer)) => {
             let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
-            println!("Received response: {}", response_str); 
+            println!("Received response: {}", response_str);
 
             // Toggle the movement direction
             // ** THIS IS ONLY USED TO EMULATE CHANGE/MOVEMENT **
@@ -86,7 +87,6 @@ pub fn update(
             //eprintln!("Error receiving data: {}", e);
         }
     }
-    
 
-    // Sleep to control the sending frequency 
+    // Sleep to control the sending frequency
 }

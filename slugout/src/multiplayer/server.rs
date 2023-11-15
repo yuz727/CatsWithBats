@@ -31,6 +31,7 @@ pub fn create_server(
     info!("{}", socket.0.is_some());
 
     // let's say that server was just created now 
+    println!("Created server {}", server_address_str);
 
     // Create the host client
     let host_client = super::Client {
