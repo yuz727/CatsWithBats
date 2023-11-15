@@ -1,15 +1,10 @@
-use std::net::{UdpSocket, SocketAddr};
-use std::str;
-use std::thread;
-use serde::{Serialize, Deserialize};
-use serde_json;
-use bevy::{app::AppExit, prelude::*, window::ReceivedCharacter};
-use std::sync::{Arc, Mutex};
-use rand::Rng;
+use bevy::prelude::*;
 use rand::distributions::Alphanumeric;
-
-
-
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::net::UdpSocket;
+use std::str;
 
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
@@ -26,11 +21,11 @@ pub fn create_server(
 ) {
     // Use the server address from the resource
     let server_address_str = &server_address.0;
-    
+
     socket.0 = Some(UdpSocket::bind(server_address_str).expect("Failed to bind to address s."));
     info!("{}", socket.0.is_some());
 
-    // let's say that server was just created now 
+    // let's say that server was just created now
     println!("Created server {}", server_address_str);
 
     // Create the host client
@@ -43,19 +38,19 @@ pub fn create_server(
     client_list.clients.push(host_client);
 }
 
-
 pub fn update(
     mut server_socket: ResMut<super::ServerSocket>,
-    mut client_list: ResMut<super::ClientList>
-)
-{
+    mut client_list: ResMut<super::ClientList>,
+) {
     //info!("{}", server_socket.0.is_some());
     let mut buf = [0; 1024];
     if server_socket.0.is_none() {
         return;
     }
     let socket = server_socket.0.as_mut().unwrap();
-    socket.set_nonblocking(true).expect("cannot set nonblocking");
+    socket
+        .set_nonblocking(true)
+        .expect("cannot set nonblocking");
 
     match socket.recv_from(&mut buf) {
         Ok((size, peer)) => {
@@ -65,12 +60,12 @@ pub fn update(
                 // This is a new client, add it to the list
                 clients.push(super::Client {
                     address: peer,
-                    username: String::from(generate_username(10)), 
+                    username: String::from(generate_username(10)),
                 });
                 println!("New client connected: {}", peer);
             }
 
-            if let Ok(player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {
+            if let Ok(_player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {
                 // Handle player_info and perform game logic here
                 // println!(
                 //     "Received Player Info: Position: {:?}, Health: {}",
@@ -78,10 +73,12 @@ pub fn update(
                 // );
             }
 
-            socket.send_to(client_msg.as_bytes(), peer).expect("Failed to send data");
+            socket
+                .send_to(client_msg.as_bytes(), peer)
+                .expect("Failed to send data");
         }
-        Err(e) => {
-            //eprintln!("Error receiving data: {}", e);
+        Err(_e) => {
+            //eprintln!("Error receiving data: {}", _e);
         }
     }
 }
