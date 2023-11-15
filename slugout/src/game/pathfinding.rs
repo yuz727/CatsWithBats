@@ -1,21 +1,14 @@
-use super::components::*;
-use super::npc::{NPCBat, NPCFace, NPCTimer, NPCVelocity, States, NPC};
-use crate::game::npc_events::*;
-use crate::GameState;
+use crate::game::npc::*;
 use bevy::prelude::*;
-use std::cmp::Reverse;
+use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use std::path;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct Vertex {
     x: usize,
     y: usize,
     cost: i32,
-}
-
-struct Maps {
-    path_map: Vec<Vec<Vec2>>,
-    cost_map: Vec<Vec<i32>>,
 }
 
 // For min-heap implementation
@@ -31,44 +24,44 @@ impl PartialOrd for Vertex {
         Some(self.cmp(other))
     }
 }
-
-impl Maps {
-    /*  Create a 2-d vector of tiles, each tile has a tile with a cost associated to it, default at max-int
-     *  Each tile will be a 4x4 pixel chunk
-     */
-    fn load_map_cost(&mut self) {
-        let mut curr_x = 0.;
-        let mut curr_y;
-        while curr_x < 1280. {
-            curr_y = 0.;
-            let mut row: Vec<i32> = Vec::new();
-            while curr_y < 720. {
-                row.push(std::i32::MAX);
-                row.push(-1);
-                curr_y += 4.;
-            }
-            self.cost_map.push(row);
-            curr_x += 4.;
+/*  Create a 2-d vector of tiles, each tile has a tile with a cost associated to it, default at max-int
+ *  Each tile will be a 4x4 pixel chunk
+ */
+pub fn load_map_cost() -> Vec<Vec<i32>> {
+    let mut cost_map: Vec<Vec<i32>> = Vec::new();
+    let mut curr_x = 0.;
+    let mut curr_y;
+    while curr_x < 1280. {
+        curr_y = 0.;
+        let mut row: Vec<i32> = Vec::new();
+        while curr_y < 720. {
+            row.push(-1);
+            curr_y += 4.;
         }
+        cost_map.push(row);
+        curr_x += 4.;
     }
+    return cost_map;
+}
 
-    /*  Create a 2-d vector of tiles, each tile has the actual coordinates associated to it
-     *  Each tile will be a 4x4 pixel chunk
-     */
-    fn load_map_path(&mut self) {
-        let mut curr_x = 0.;
-        let mut curr_y;
-        while curr_x < 1280. {
-            curr_y = 0.;
-            let mut row: Vec<Vec2> = Vec::new();
-            while curr_y < 720. {
-                row.push(Vec2::new(curr_x, curr_y));
-                curr_y += 4.;
-            }
-            self.path_map.push(row);
-            curr_x += 4.;
+/*  Create a 2-d vector of tiles, each tile has the actual coordinates associated to it
+ *  Each tile will be a 4x4 pixel chunk
+ */
+pub fn load_map_path() -> Vec<Vec<Vec2>> {
+    let mut path_map: Vec<Vec<Vec2>> = Vec::new();
+    let mut curr_x = 0.;
+    let mut curr_y;
+    while curr_x < 1280. {
+        curr_y = 0.;
+        let mut row: Vec<Vec2> = Vec::new();
+        while curr_y < 720. {
+            row.push(Vec2::new(curr_x, curr_y));
+            curr_y += 4.;
         }
+        path_map.push(row);
+        curr_x += 4.;
     }
+    return path_map;
 }
 
 /*  Return a vector for the neighbouring tiles of a given tile
@@ -99,7 +92,7 @@ fn manhattan_distance(a: Vec2, b: Vec2) -> f32 {
     return (a.x - b.x).abs() + (a.y - b.y).abs();
 }
 
-fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
+pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
     // Initialise
     let mut worklist = BinaryHeap::new();
     worklist.push(Vertex {
@@ -107,7 +100,8 @@ fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
         y: start.y as usize,
         cost: 0,
     });
-
+    let goal_x = goal.x - (goal.x % 4.);
+    let goal_y = goal.y - (goal.y % 4.);
     // Initialise data structures needed
     let mut current_path = [[Vec2::new(-1., -1.); 180]; 320];
     let mut current_cost: [[i32; 180]; 320] = [[-1; 180]; 320];
@@ -116,7 +110,7 @@ fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
     while let Some(Vertex { x, y, cost: _ }) = worklist.pop() {
         // the current.x and current.y will be the actual coordinates in ghr game world
         current = Vec2::new(x as f32, y as f32); // Take the first vertex in the min-heaps
-        if (current.x == goal.x) && (current.y == goal.y) {
+        if (current.x == goal_x) && (current.y == goal_y) {
             // Break out of loop when the goal is reached
             break;
         }
@@ -140,9 +134,10 @@ fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
             }
         }
     }
-
+    info!(goal_x);
+    info!(goal_y);
     // No path found, just return a vector containing 0
-    if current.x != goal.x || current.y != goal.y {
+    if current.x != goal_x || current.y != goal_y {
         return vec![Vec2::ZERO];
     }
 
@@ -150,11 +145,18 @@ fn a_star(start: Vec2, goal: Vec2, maps: Maps) -> Vec<Vec2> {
     // Reverse the order so it is start to goal, then return result
     let mut ret: Vec<Vec2> = Vec::new();
     while current.x != start.x || current.y != start.y {
-        ret.push(current);
+        ret.push(coords_conversion_bevy(current));
         current = current_path[current.x as usize / 4][current.y as usize / 4];
     }
 
-    ret.push(start);
+    ret.push(coords_conversion_bevy(start));
     ret.reverse();
     return ret;
+}
+
+pub fn coords_conversion_astar(coord: Vec2) -> Vec2 {
+    return Vec2::new(coord.x + 640., 360. - coord.y);
+}
+fn coords_conversion_bevy(coord: Vec2) -> Vec2 {
+    return Vec2::new(coord.x - 640., 0. - (coord.y - 360.));
 }
