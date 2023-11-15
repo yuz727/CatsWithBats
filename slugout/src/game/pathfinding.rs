@@ -145,11 +145,18 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
     // Reverse the order so it is start to goal, then return result
     let mut ret: Vec<Vec2> = Vec::new();
     while current.x != start.x || current.y != start.y {
-        ret.push(current);
+        ret.push(coords_conversion_bevy(current));
         current = current_path[current.x as usize / 4][current.y as usize / 4];
     }
 
-    ret.push(start);
+    ret.push(coords_conversion_bevy(start));
     ret.reverse();
     return ret;
+}
+
+pub fn coords_conversion_astar(coord: Vec2) -> Vec2 {
+    return Vec2::new(coord.x + 640., 360. - coord.y);
+}
+fn coords_conversion_bevy(coord: Vec2) -> Vec2 {
+    return Vec2::new(coord.x - 640., 0. - (coord.y - 360.));
 }

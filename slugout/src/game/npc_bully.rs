@@ -66,8 +66,8 @@ pub fn approach_player_bully(
             for mut bat_transform in bat.iter_mut() {
                 for mut face_transform in face.iter_mut() {
                     let route_vec = a_star(
-                        npc_transform.translation.truncate().floor(),
-                        player_transform.translation.truncate().floor(),
+                        coords_conversion_astar(npc_transform.translation.truncate().floor()),
+                        coords_conversion_astar(player_transform.translation.truncate().floor()),
                         maps,
                     );
                     let mut deltav = Vec2::splat(0.);
