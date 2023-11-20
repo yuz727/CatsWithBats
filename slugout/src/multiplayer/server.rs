@@ -67,10 +67,10 @@ pub fn update(
 
             if let Ok(_player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {
                 // Handle player_info and perform game logic here
-                // println!(
-                //     "Received Player Info: Position: {:?}, Health: {}",
-                //     player_info.position, player_info.health
-                // );
+                println!(
+                    "Received Player Info: Position: {:?}, Health: {}",
+                    _player_info.position, _player_info.health
+                );
             }
 
             socket

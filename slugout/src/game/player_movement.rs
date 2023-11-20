@@ -296,7 +296,7 @@ pub fn move_player_mult(
     match socket.recv_from(&mut response) {
         Ok((size, _peer)) => {
             let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
-            println!("Received response: {}", response_str);
+            //println!("Received response: {}", response_str);
         }
         Err(_e) => {
             //eprintln!("Error receiving data: {}", e);

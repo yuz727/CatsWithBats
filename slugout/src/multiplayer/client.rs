@@ -4,7 +4,7 @@ use serde_json;
 use std::net::{SocketAddr, UdpSocket};
 use std::str;
 
-use crate::game::components::{Player, Face, Bat};
+use crate::game::components::{Bat, Face, Player};
 
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
