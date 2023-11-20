@@ -1,7 +1,7 @@
 use bevy::{prelude::*, window::PresentMode};
 
 use crate::game::components::Aim;
-use crate::GameState;
+use crate::{GameState, MultiplayerState};
 
 use self::components::{Bat, Colliding, Face, Health, Object, Player, Rug};
 
@@ -31,13 +31,18 @@ impl Plugin for GamePlugin {
             }),
             ..default()
         }))
-        .add_systems(Startup, setup)
+        .add_systems(OnEnter(GameState::Game), setup)
+        .add_systems(OnEnter(MultiplayerState::Game), setup)
         //.add_plugins(npc::NPCPlugin)
         .add_plugins(npc_bully::NPCBullyPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(
             Update,
             player_movement::move_player.run_if(in_state(GameState::Game)),
+        )
+        .add_systems(
+            Update,
+            player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
         );
     }
 }

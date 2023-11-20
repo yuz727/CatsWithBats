@@ -1,8 +1,10 @@
-use std::io::{self, Read, Write};
-use std::net::{TcpListener, TcpStream};
-use std::thread;
-use serde::{Serialize, Deserialize};
-use serde_json; 
+use bevy::prelude::*;
+use rand::distributions::Alphanumeric;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+use serde_json;
+use std::net::UdpSocket;
+use std::str;
 
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
@@ -12,55 +14,86 @@ struct PlayerInfo {
     // Add other relevant fields here
 }
 
-pub fn create_server() -> io::Result<()> {
-    let mut player_count = 1;
-    let receiver_listener = TcpListener::bind("0.0.0.0:8080").expect("Could not bind to port");
-    // Create a vector for new client threads
-    let mut thread_vector: Vec<thread::JoinHandle<()>> = Vec::new();
-    // for every incominng client try to bind them to port
-    for stream in receiver_listener.incoming() {
-        let new_stream = stream.expect("Failed to accept client connection");
+pub fn create_server(
+    mut socket: ResMut<super::ServerSocket>,
+    mut _client_list: ResMut<super::ClientList>,
+    server_address: Res<super::SocketAddress>,
+) {
+    // Use the server address from the resource
+    let server_address_str = &server_address.0;
 
-        println!("Player {} joined.", player_count);
-        player_count += 1;
+    socket.0 = Some(UdpSocket::bind(server_address_str).expect("Failed to bind to address s."));
+    info!("{}", socket.0.is_some());
 
-        let handle = thread::spawn(move || {
-            handle_new_sender(new_stream).unwrap_or_else(|error| eprintln!("{:?}", error))
-        });
+    // let's say that server was just created now
+    println!("Created server {}", server_address_str);
 
-        // put each successive message in vector array
-        thread_vector.push(handle);
-    }
-    
-    for handle in thread_vector {
-        // unwrap message that was sent 
-        handle.join().unwrap();
-    }
+    /*/ Create the host client
+    let host_client = super::Client {
+        address: socket.0.as_ref().unwrap().local_addr().unwrap(),
+        username: String::from("hostuser"), // You might want to replace this with the actual username
+    };
 
-    Ok(())
+    // Add the host client to the client list
+    client_list.clients.push(host_client);*/
 }
 
-fn handle_new_sender(mut stream: TcpStream) -> io::Result<()> {
+pub fn update(
+    mut server_socket: ResMut<super::ServerSocket>,
+    mut client_list: ResMut<super::ClientList>,
+) {
+    //info!("{}", server_socket.0.is_some());
     let mut buf = [0; 1024];
-
-    loop {
-        // read what client sent to buffer
-        let bytes_read = stream.read(&mut buf)?;
-        // return if nothing was sent 
-        if bytes_read == 0 {
-            return Ok(());
-        }
-        // Deserialize the received JSON into PlayerInfo
-        let client_msg = String::from_utf8_lossy(&buf[..bytes_read]);
-        if let Ok(player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {
-            // Handle player_info and perform game logic here
-            println!(
-                "Received Player Info: Position: {:?}, Health: {}",
-                player_info.position, player_info.health
-            );
-        }
-
-        // Echo back the received message (for demonstration)
-        stream.write(&buf[..bytes_read])?;
+    if server_socket.0.is_none() {
+        return;
     }
+    let socket = server_socket.0.as_mut().unwrap();
+    socket
+        .set_nonblocking(true)
+        .expect("cannot set nonblocking");
+
+    match socket.recv_from(&mut buf) {
+        Ok((size, peer)) => {
+            let client_msg = str::from_utf8(&buf[0..size]).expect("Bad data.");
+            let clients = &mut client_list.clients;
+
+            let player_number =
+                if let Some(index) = clients.iter().position(|client| client.address == peer) {
+                    // Existing client, get the player number
+                    index + 1
+                } else {
+                    // This is a new client, add it to the list
+                    clients.push(super::Client {
+                        address: peer,
+                        username: String::from(generate_username(10)),
+                    });
+                    println!("New client connected: {}", peer);
+                    clients.len() // Player number is the length of the client list
+                };
+
+            if let Ok(_player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {
+                // Handle player_info and perform game logic here
+                println!(
+                    "Player {} - Received Player Info: Position: {:?}, Health: {}",
+                    player_number, _player_info.position, _player_info.health
+                );
+            }
+
+            socket
+                .send_to(client_msg.as_bytes(), peer)
+                .expect("Failed to send data");
+        }
+        Err(_e) => {
+            //eprintln!("Error receiving data: {}", _e);
+        }
+    }
+}
+
+pub fn generate_username(length: usize) -> String {
+    let mut rng = rand::thread_rng();
+    std::iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(length)
+        .collect()
 }
