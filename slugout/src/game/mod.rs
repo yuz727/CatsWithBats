@@ -1,14 +1,16 @@
 use bevy::{prelude::*, window::PresentMode};
 
-use crate::{GameState, MultiplayerState};
 use crate::game::components::Aim;
+use crate::{GameState, MultiplayerState};
 
-use self::components::{Background, Player, Colliding, Face, Bat, Object, Rug};
+use self::components::{Bat, Colliding, Face, Health, Object, Player, Rug};
 
 mod ball;
 pub mod components;
 mod npc;
+mod npc_bully;
 mod npc_events;
+mod pathfinding;
 mod player_movement;
 
 const WIN_W: f32 = 1280.0;
@@ -32,7 +34,8 @@ impl Plugin for GamePlugin {
         )
         .add_systems(OnEnter(GameState::Game), setup)
         .add_systems(OnEnter(MultiplayerState::Game), setup)
-        .add_plugins(npc::NPCPlugin)
+        //.add_plugins(npc::NPCPlugin)
+        .add_plugins(npc_bully::NPCBullyPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(Update, player_movement::move_player.run_if(in_state(GameState::Game)))
         .add_systems(Update, player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)));

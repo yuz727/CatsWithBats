@@ -23,6 +23,7 @@ pub struct Background;
 #[derive(Component)]
 pub struct Ball{
     pub radius: f32,
+    pub elasticity: f32,
 }
 
 #[derive(Component)]
@@ -56,3 +57,5 @@ pub struct Hitbox{
 #[derive(Component)]
 pub struct Aim;
 
+#[derive(Component)]
+pub struct Health;

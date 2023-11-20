@@ -1,23 +1,24 @@
 // use crate::components::*;
 
 use crate::game::npc_events::*;
+use crate::game::pathfinding::*;
 use crate::GameState;
 use bevy::prelude::*;
-use bevy::time::Stopwatch;
+//use bevy::time::Stopwatch;
 use rand::prelude::*;
+use serde_json::Map;
 
 use super::components::Ball;
 use super::components::Player;
 
-const PLAYER_SIZE: f32 = 30.;
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
 pub struct NPCTimer(Timer);
 
-#[derive(Component)]
-struct SwingAnimation {
-    time: Stopwatch,
-}
+// #[derive(Component)]
+// struct SwingAnimation {
+//     time: Stopwatch,
+// }
 
 #[derive(Component)]
 pub struct NPCVelocity {
@@ -42,6 +43,12 @@ pub enum States {
     Idle,
     AggressionBall,
     AggressionPlayer,
+}
+
+#[derive(Component)]
+pub struct Maps {
+    pub path_map: Vec<Vec<Vec2>>,
+    pub cost_map: Vec<Vec<i32>>,
 }
 
 #[derive(Component)]
@@ -95,7 +102,6 @@ impl NPCVelocity {
             ylock: 0,
         }
     }
-
     pub fn lock_x(&mut self) {
         self.xlock = 1;
     }
@@ -109,22 +115,13 @@ impl NPCVelocity {
         self.ylock = 0;
     }
 }
-
-// impl From<Vec3> for DetectionRadius {
-//     fn from(pos: Vec3) -> Self {
-//         Self {
-//             top: pos.y + PLAYER_SIZE / 2.,
-//             bottom: pos.y - PLAYER_SIZE / 2.,
-//             left: pos.x - PLAYER_SIZE / 2.,
-//             right: pos.x + PLAYER_SIZE / 2.,
-//         }
-//     }
-// }
 pub struct NPCPlugin;
 
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), load_npc);
+        //app.add_systems(Update, select_bully_mode.run_if(in_state(GameState::Game)));
+        app.add_systems(OnEnter(GameState::Game), load_map);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
         app.add_systems(
@@ -166,7 +163,11 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Idle)
-        .insert(Difficulty { difficulty: 75 });
+        .insert(Difficulty { difficulty: 75 })
+        .insert(Maps {
+            path_map: load_map_path(),
+            cost_map: load_map_cost(),
+        });
 
     //spawn bat sprite
     commands
@@ -185,6 +186,10 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCFace);
+}
+
+pub fn load_map(mut npcs: Query<&mut Maps>) {
+    for maps in npcs.iter_mut() {}
 }
 
 // Select next move
@@ -213,7 +218,7 @@ pub fn select(
                 if timer.just_finished() {
                     // This will be the chance to go to the aggressive state selections
                     state.to_idle();
-                    let mut state_flag = -1;
+                    let state_flag: i32;
 
                     // Calculate proportion of probability equal to aggresion
                     let agg_factor = difficulty.difficulty as f32 / 100.0;
