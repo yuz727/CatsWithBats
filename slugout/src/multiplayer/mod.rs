@@ -59,6 +59,14 @@ impl Plugin for MultiplayerPlugin {
                 despawn_screen::<OnMultiplayerScreen>,
             )
             .add_systems(
+                OnExit(GameState::Multiplayer),
+                despawn_screen::<OnMultiplayerScreen>,
+            )
+            .add_systems(
+                OnExit(MultiplayerState::Main),
+                despawn_screen::<OnMultiplayerScreen>,
+            )
+            .add_systems(
                 OnExit(MultiplayerState::Lobby),
                 despawn_screen::<OnLobbyScreen>,
             )
