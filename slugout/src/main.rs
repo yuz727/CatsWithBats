@@ -21,9 +21,19 @@ pub enum GameState {
     HostGame,
 }
 
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum MultiplayerState {
+    Main,
+    Lobby,
+    Game,
+    #[default]
+    Disabled,
+}
+
 fn main() {
     App::new()
         .add_state::<GameState>()
+        .add_state::<MultiplayerState>()
         .add_systems(Startup, setup)
         .add_plugins(game::GamePlugin)
         .add_plugins(menu::MenuPlugin)

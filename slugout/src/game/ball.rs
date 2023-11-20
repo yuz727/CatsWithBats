@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::{prelude::*, window::PresentMode};
 
-use crate::GameState;
+use crate::{GameState, MultiplayerState};
 use bevy::window::CursorMoved;
 
 use super::components::BallVelocity;
@@ -27,11 +27,16 @@ pub struct BallPlugin;
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), setup);
+        app.add_systems(OnEnter(MultiplayerState::Game), setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, bounce.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, swing.run_if(in_state(MultiplayerState::Game)));
         //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, bat_hitbox.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, aim_follows_cursor.run_if(in_state(MultiplayerState::Game)));
 
     }
 }

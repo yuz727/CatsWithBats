@@ -1,4 +1,4 @@
-use super::{despawn_screen, GameState, TEXT_COLOR};
+use super::{despawn_screen, GameState, MultiplayerState, TEXT_COLOR};
 use bevy::{prelude::*, window::ReceivedCharacter};
 use std::net::{SocketAddr, UdpSocket};
 
@@ -23,14 +23,6 @@ enum MultiplayerButtonAction {
     JoinGame,
     Multiplayer,
     Back,
-}
-
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-enum MultiplayerState {
-    Main,
-    Lobby,
-    #[default]
-    Disabled,
 }
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -512,6 +504,7 @@ fn lobby_menu_action(
                     // TODO: Add code for starting the game here
                     // For now, just print a message
                     println!("Starting the game!");
+                    multiplayer_state.set(MultiplayerState::Game);
                 }
                 LobbyButtonAction::Back => {
                     multiplayer_state.set(MultiplayerState::Main);
