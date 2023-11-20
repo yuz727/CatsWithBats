@@ -21,22 +21,17 @@ enum SetupState {
 #[derive(Component)]
 struct SelectedOption;
 
-
-
 impl Plugin for SetupPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .add_state::<SetupState>()
-        .add_systems(OnEnter(GameState::Setup), setup_state_setup)
-        .add_systems(OnEnter(GameState::Setup), setup_menu_setup)
-        .add_systems(OnExit(GameState::Setup), despawn_screen::<OnSetUpScreen>)
-        .add_systems(
-            Update,
-            (setup_menu_action, button_system).run_if(in_state(GameState::Setup)),
-        ); 
-        
+        app.add_state::<SetupState>()
+            .add_systems(OnEnter(GameState::Setup), setup_state_setup)
+            .add_systems(OnEnter(GameState::Setup), setup_menu_setup)
+            .add_systems(OnExit(GameState::Setup), despawn_screen::<OnSetUpScreen>)
+            .add_systems(
+                Update,
+                (setup_menu_action, button_system).run_if(in_state(GameState::Setup)),
+            );
     }
-
 }
 
 // Tag component used to tag entities added on the setup  screen
@@ -126,52 +121,50 @@ fn setup_menu_setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
                         }),
                     );
                     parent
-                    .spawn((
-                        ButtonBundle {
-                            style: button_style.clone(),
-                            background_color: NORMAL_BUTTON.into(),
-                            ..default()
-                        },
-                        SetupButtonAction::Singleplayer,
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn(TextBundle::from_section(
-                            "Single Player",
-                            button_text_style.clone(),
-                        ));
-                    });
-                parent
-                    .spawn((
-                        ButtonBundle {
-                            style: button_style.clone(),
-                            background_color: NORMAL_BUTTON.into(),
-                            ..default()
-                        },
-                        SetupButtonAction::Multiplayer,
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn(TextBundle::from_section(
-                            "Multiplayer",
-                            button_text_style.clone(),
-                        ));
-                    });
-                parent
-                    .spawn((
-                        ButtonBundle {
-                            style: button_style.clone(),
-                            background_color: NORMAL_BUTTON.into(),
-                            ..default()
-                        },
-                        SetupButtonAction::Back,
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn(TextBundle::from_section(
-                            "Back",
-                            button_text_style.clone(),
-                        ));
-                    });
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            SetupButtonAction::Singleplayer,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Single Player",
+                                button_text_style.clone(),
+                            ));
+                        });
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            SetupButtonAction::Multiplayer,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Multiplayer",
+                                button_text_style.clone(),
+                            ));
+                        });
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            SetupButtonAction::Back,
+                        ))
+                        .with_children(|parent| {
+                            parent
+                                .spawn(TextBundle::from_section("Back", button_text_style.clone()));
+                        });
                 });
-            });
+        });
 }
 
 fn setup_menu_action(
@@ -186,18 +179,15 @@ fn setup_menu_action(
     for (interaction, setup_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
             match setup_button_action {
-                SetupButtonAction::Singleplayer => 
-                {
+                SetupButtonAction::Singleplayer => {
                     setup_state.set(SetupState::Disabled);
                     game_state.set(GameState::Game);
                 } //for right now singleplayer closes the game
-                SetupButtonAction::Multiplayer => 
-                {
+                SetupButtonAction::Multiplayer => {
                     setup_state.set(SetupState::Disabled);
                     game_state.set(GameState::Multiplayer);
                 }
-                SetupButtonAction::Back => 
-                {
+                SetupButtonAction::Back => {
                     setup_state.set(SetupState::Disabled);
                     game_state.set(GameState::Menu);
                 }

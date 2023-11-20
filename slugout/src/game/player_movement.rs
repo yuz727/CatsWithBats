@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::multiplayer::{ClientSocket, SocketAddress};
 
-use super::components::{Player, Face, Bat};
+use super::components::{Bat, Face, Player};
 
 const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s

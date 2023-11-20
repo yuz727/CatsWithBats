@@ -2,8 +2,8 @@ use bevy::prelude::*;
 
 mod game;
 mod menu;
-mod setup;
 mod multiplayer;
+mod setup;
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(game::components::Background);
-    }
+}
 
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
 fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {

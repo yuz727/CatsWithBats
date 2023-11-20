@@ -57,18 +57,19 @@ pub fn update(
             let client_msg = str::from_utf8(&buf[0..size]).expect("Bad data.");
             let clients = &mut client_list.clients;
 
-            let player_number = if let Some(index) = clients.iter().position(|client| client.address == peer) {
-                // Existing client, get the player number
-                index + 1
-            } else {
-                // This is a new client, add it to the list
-                clients.push(super::Client {
-                    address: peer,
-                    username: String::from(generate_username(10)),
-                });
-                println!("New client connected: {}", peer);
-                clients.len() // Player number is the length of the client list
-            };
+            let player_number =
+                if let Some(index) = clients.iter().position(|client| client.address == peer) {
+                    // Existing client, get the player number
+                    index + 1
+                } else {
+                    // This is a new client, add it to the list
+                    clients.push(super::Client {
+                        address: peer,
+                        username: String::from(generate_username(10)),
+                    });
+                    println!("New client connected: {}", peer);
+                    clients.len() // Player number is the length of the client list
+                };
 
             if let Ok(_player_info) = serde_json::from_str::<PlayerInfo>(&client_msg) {
                 // Handle player_info and perform game logic here
