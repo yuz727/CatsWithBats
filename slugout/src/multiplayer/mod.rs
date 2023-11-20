@@ -82,6 +82,7 @@ impl Plugin for MultiplayerPlugin {
                 client::update.run_if(in_state(NetworkingState::Join)),
             )*/
             .add_systems(OnEnter(NetworkingState::Host), server::create_server)
+            .add_systems(OnEnter(NetworkingState::Host), client::create_client)
             .add_systems(
                 Update,
                 server::update.run_if(in_state(NetworkingState::Host)),
