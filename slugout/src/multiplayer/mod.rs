@@ -23,7 +23,6 @@ pub struct ClientList {
 enum MultiplayerButtonAction {
     HostGame,
     JoinGame,
-    Multiplayer,
     Back,
 }
 
@@ -304,10 +303,6 @@ fn multiplayer_menu_action(
                 MultiplayerButtonAction::JoinGame => {
                     multiplayer_state.set(MultiplayerState::Lobby);
                     network_state.set(NetworkingState::Join);
-                }
-                MultiplayerButtonAction::Multiplayer => {
-                    multiplayer_state.set(MultiplayerState::Disabled);
-                    game_state.set(GameState::Multiplayer);
                 }
                 MultiplayerButtonAction::Back => {
                     multiplayer_state.set(MultiplayerState::Disabled);

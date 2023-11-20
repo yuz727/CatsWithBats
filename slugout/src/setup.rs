@@ -69,7 +69,7 @@ fn setup_state_setup(mut setup_state: ResMut<NextState<SetupState>>) {
     setup_state.set(SetupState::Main);
 }
 
-fn setup_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_menu_setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Common style for all buttons on the screen
     let button_style = Style {
         width: Val::Px(275.0),
@@ -179,7 +179,7 @@ fn setup_menu_action(
         (&Interaction, &SetupButtonAction),
         (Changed<Interaction>, With<Button>),
     >,
-    mut app_exit_events: EventWriter<AppExit>,
+    mut _app_exit_events: EventWriter<AppExit>,
     mut setup_state: ResMut<NextState<SetupState>>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {

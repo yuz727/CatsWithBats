@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::net::{SocketAddr, UdpSocket};
 use std::str;
-
-use crate::game::components::{Bat, Face, Player};
 
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
@@ -18,19 +15,11 @@ pub struct PlayerVelocity {
     pub velocity: Vec2,
 }
 
-impl PlayerVelocity {
-    pub fn new() -> Self {
-        Self {
-            velocity: Vec2::splat(0.),
-        }
-    }
-}
-
 pub fn create_client(
     mut socket: ResMut<super::ClientSocket>,
     mut client_list: ResMut<super::ClientList>,
     server_address: Res<super::SocketAddress>,
-    mut query: Query<(&Transform, &PlayerVelocity)>,
+    mut _query: Query<(&Transform, &PlayerVelocity)>,
 ) {
     // Use the server address from the resource
     let server_address_str = &server_address.0;
@@ -58,7 +47,7 @@ pub fn create_client(
     client_list.clients.push(new_client);
 }
 
-pub fn update(
+/*pub fn update(
     mut client_socket: ResMut<super::ClientSocket>,
     socket_address: Res<super::SocketAddress>,
     mut query: Query<(&Transform, &PlayerVelocity)>,
@@ -108,4 +97,4 @@ pub fn update(
     }
 
     // Sleep to control the sending frequency
-}
+}*/

@@ -16,7 +16,7 @@ struct PlayerInfo {
 
 pub fn create_server(
     mut socket: ResMut<super::ServerSocket>,
-    mut client_list: ResMut<super::ClientList>,
+    mut _client_list: ResMut<super::ClientList>,
     server_address: Res<super::SocketAddress>,
 ) {
     // Use the server address from the resource

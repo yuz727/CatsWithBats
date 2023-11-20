@@ -1,13 +1,10 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::prelude::*;
 
 mod game;
 mod menu;
 mod setup;
 mod multiplayer;
 
-const WIN_W: f32 = 1280.0;
-const WIN_H: f32 = 720.0;
-const TITLE: &str = "Cats with Bats";
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
