@@ -1,3 +1,5 @@
+use crate::NetworkingState;
+
 use super::{despawn_screen, GameState, MultiplayerState, TEXT_COLOR};
 use bevy::{prelude::*, window::ReceivedCharacter};
 use std::net::{SocketAddr, UdpSocket};
@@ -23,14 +25,6 @@ enum MultiplayerButtonAction {
     JoinGame,
     Multiplayer,
     Back,
-}
-
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-enum NetworkingState {
-    Host,
-    Join,
-    #[default]
-    Disabled,
 }
 
 #[derive(Component)]
@@ -83,10 +77,10 @@ impl Plugin for MultiplayerPlugin {
                     .run_if(in_state(MultiplayerState::Lobby)),
             )
             .add_systems(OnEnter(NetworkingState::Join), client::create_client)
-            .add_systems(
+            /* .add_systems(
                 Update,
                 client::update.run_if(in_state(NetworkingState::Join)),
-            )
+            )*/
             .add_systems(OnEnter(NetworkingState::Host), server::create_server)
             .add_systems(
                 Update,

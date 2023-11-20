@@ -30,6 +30,14 @@ enum MultiplayerState {
     Disabled,
 }
 
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum NetworkingState {
+    Host,
+    Join,
+    #[default]
+    Disabled,
+}
+
 fn main() {
     App::new()
         .add_state::<GameState>()

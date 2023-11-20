@@ -4,18 +4,33 @@ use serde_json;
 use std::net::{SocketAddr, UdpSocket};
 use std::str;
 
+use crate::game::components::{Player, Face, Bat};
+
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
     position: (f32, f32),
     health: u32,
-    // Used basic fields for Player info for now
     // Add other relevant fields here
+}
+
+#[derive(Component)]
+pub struct PlayerVelocity {
+    pub velocity: Vec2,
+}
+
+impl PlayerVelocity {
+    pub fn new() -> Self {
+        Self {
+            velocity: Vec2::splat(0.),
+        }
+    }
 }
 
 pub fn create_client(
     mut socket: ResMut<super::ClientSocket>,
     mut client_list: ResMut<super::ClientList>,
     server_address: Res<super::SocketAddress>,
+    mut query: Query<(&Transform, &PlayerVelocity)>,
 ) {
     // Use the server address from the resource
     let server_address_str = &server_address.0;
@@ -46,6 +61,7 @@ pub fn create_client(
 pub fn update(
     mut client_socket: ResMut<super::ClientSocket>,
     socket_address: Res<super::SocketAddress>,
+    mut query: Query<(&Transform, &PlayerVelocity)>,
 ) {
     let mut _buf = [0; 1024];
 
@@ -58,14 +74,22 @@ pub fn update(
         .set_nonblocking(true)
         .expect("cannot set nonblocking");
 
-    let mut player_info = PlayerInfo {
-        position: (42.0, 24.0),
+    let (transform, velocity) = match query.iter().next() {
+        Some((transform, velocity)) => (transform, velocity),
+        None => {
+            // Handle the case when there are no entities matching the query
+            println!("No entities found matching the query.");
+            return;
+        }
+    };
+
+    let player_info = PlayerInfo {
+        position: (transform.translation.x, transform.translation.y),
         health: 100,
     };
 
     let message = serde_json::to_string(&player_info).expect("Failed to serialize");
 
-    // Use the socket address from the resource instead of the hardcoded value
     let server_address_str = &socket_address.0;
     socket
         .send_to(message.as_bytes(), server_address_str)
