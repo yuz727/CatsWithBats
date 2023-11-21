@@ -6,7 +6,6 @@ use crate::GameState;
 use bevy::prelude::*;
 //use bevy::time::Stopwatch;
 use rand::prelude::*;
-use serde_json::Map;
 
 use super::components::Ball;
 use super::components::Player;
@@ -52,8 +51,19 @@ pub struct Maps {
 }
 
 #[derive(Component)]
+pub struct Path {
+    pub path: Vec<Vec2>,
+}
+
+#[derive(Component)]
 pub struct Difficulty {
     difficulty: i32,
+}
+
+impl Path {
+    pub fn set_new_path(&mut self, new_path: Vec<Vec2>) {
+        self.path = new_path;
+    }
 }
 
 impl States {
@@ -167,6 +177,9 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Maps {
             path_map: load_map_path(),
             cost_map: load_map_cost(),
+        })
+        .insert(Path {
+            path: vec![Vec2::ZERO],
         });
 
     //spawn bat sprite

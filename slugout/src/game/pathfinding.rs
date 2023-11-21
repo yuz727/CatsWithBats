@@ -18,12 +18,13 @@ impl Ord for Vertex {
     }
 }
 
-// For min-heap implementation
+// // For min-heap implementation
 impl PartialOrd for Vertex {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
+
 /*  Create a 2-d vector of tiles, each tile has a tile with a cost associated to it, default at max-int
  *  Each tile will be a 4x4 pixel chunk
  */
@@ -134,8 +135,8 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
             }
         }
     }
-    info!(goal_x);
-    info!(goal_y);
+    // info!(goal_x);
+    // info!(goal_y);
     // No path found, just return a vector containing 0
     if current.x != goal_x || current.y != goal_y {
         return vec![Vec2::ZERO];
@@ -150,7 +151,7 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
     }
 
     ret.push(coords_conversion_bevy(start));
-    ret.reverse();
+    //  ret.reverse();
     return ret;
 }
 
