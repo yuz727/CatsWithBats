@@ -1,15 +1,10 @@
-use std::env;
-
-use bevy::{prelude::*, window::PresentMode};
+use bevy::prelude::*;
 
 mod game;
 mod menu;
 mod multiplayer;
 mod setup;
 
-//const WIN_W: f32 = 1280.0;
-//const WIN_H: f32 = 720.0;
-//const TITLE: &str = "Slugout";
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -19,12 +14,31 @@ pub enum GameState {
     Setup,
     Game,
     Multiplayer,
+    JoinGame,
+    HostGame,
+}
+
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum MultiplayerState {
+    Main,
+    Lobby,
+    Game,
+    #[default]
+    Disabled,
+}
+
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum NetworkingState {
+    Host,
+    Join,
+    #[default]
+    Disabled,
 }
 
 fn main() {
-    env::set_var("RUST_BACKTRACE", "1");
     App::new()
         .add_state::<GameState>()
+        .add_state::<MultiplayerState>()
         .add_systems(Startup, setup)
         .add_plugins(game::GamePlugin)
         .add_plugins(menu::MenuPlugin)
