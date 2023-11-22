@@ -17,19 +17,21 @@ struct PlayerInfo {
     health: u32,
     // Add other relevant fields here
 }
+
 #[derive(Component)]
 pub struct PlayerVelocity {
     pub velocity: Vec2,
+    pub prev_position: (f32, f32),
 }
 
 impl PlayerVelocity {
     pub fn new() -> Self {
         Self {
             velocity: Vec2::splat(0.),
+            prev_position: (0.0, 0.0),
         }
     }
 }
-
 pub fn move_player(
     input: Res<Input<KeyCode>>,
     mut player: Query<
@@ -266,41 +268,46 @@ pub fn move_player_mult(
     face_transform.translation.y = transform.translation.y;
     //bat_transform.translation.x = transform.translation.x - 5.;
     //bat_transform.translation.y = transform.translation.y;
+    // Check if the position has changed before sending a message
+    if transform.translation.x != velocity.prev_position.0
+        || transform.translation.y != velocity.prev_position.1
+    {
+        let mut _buf = [0; 1024];
 
-    let mut _buf = [0; 1024];
-
-    if client_socket.0.is_none() {
-        return;
-    }
-
-    let socket = client_socket.0.as_mut().unwrap();
-    socket
-        .set_nonblocking(true)
-        .expect("cannot set nonblocking");
-
-    let player_info = PlayerInfo {
-        position: (transform.translation.x, transform.translation.y),
-        health: 100,
-    };
-
-    let message = serde_json::to_string(&player_info).expect("Failed to serialize");
-
-    let server_address_str = &socket_address.0;
-    socket
-        .send_to(message.as_bytes(), server_address_str)
-        .expect("Failed to send data.");
-
-    let mut response = [0; 1024];
-
-    match socket.recv_from(&mut response) {
-        Ok((size, _peer)) => {
-            let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
-            //println!("Received response: {}", response_str);
+        if client_socket.0.is_none() {
+            return;
         }
-        Err(_e) => {
-            //eprintln!("Error receiving data: {}", e);
-        }
-    }
 
-    // Sleep to control the sending frequency
+        let socket = client_socket.0.as_mut().unwrap();
+        socket
+            .set_nonblocking(true)
+            .expect("cannot set nonblocking");
+
+        let player_info = PlayerInfo {
+            position: (transform.translation.x, transform.translation.y),
+            health: 100,
+        };
+
+        let message = serde_json::to_string(&player_info).expect("Failed to serialize");
+
+        let server_address_str = &socket_address.0;
+        socket
+            .send_to(message.as_bytes(), server_address_str)
+            .expect("Failed to send data.");
+
+        let mut response = [0; 1024];
+
+        match socket.recv_from(&mut response) {
+            Ok((size, _peer)) => {
+                let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
+                //println!("Received response: {}", response_str);
+            }
+            Err(_e) => {
+                //eprintln!("Error receiving data: {}", e);
+            }
+        }
+
+        // Update the previous position
+        velocity.prev_position = (transform.translation.x, transform.translation.y);
+    }
 }
