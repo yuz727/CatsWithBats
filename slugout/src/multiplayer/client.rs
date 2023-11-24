@@ -1,46 +1,100 @@
-use std::io::{self, Write};
-use std::net::TcpStream;
-use serde::{Serialize, Deserialize};
-use serde_json;
+use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::net::{SocketAddr, UdpSocket};
+use std::str;
 
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
     position: (f32, f32),
     health: u32,
-    // Used basic fields for Player info for now
     // Add other relevant fields here
 }
 
-pub fn create_client() -> io::Result<()> {
-    //ip.push_str(":8080");
-    let mut stream = TcpStream::connect("127.0.0.1:8080")?;
-    let mut player_info = PlayerInfo {
-        position: (42.0, 24.0),
+#[derive(Component)]
+pub struct PlayerVelocity {
+    pub velocity: Vec2,
+}
+
+pub fn create_client(
+    mut socket: ResMut<super::ClientSocket>,
+    mut client_list: ResMut<super::ClientList>,
+    server_address: Res<super::SocketAddress>,
+    mut _query: Query<(&Transform, &PlayerVelocity)>,
+) {
+    // Use the server address from the resource
+    let server_address_str = &server_address.0;
+
+    // Parse the server address string into SocketAddr
+    if let Ok(server_address) = server_address_str.parse::<SocketAddr>() {
+        socket.0 = Some(UdpSocket::bind("0.0.0.0:0").expect("Failed to bind to address c."));
+        socket
+            .0
+            .as_mut()
+            .unwrap()
+            .connect(server_address)
+            .expect("Failed to connect to the server.");
+    } else {
+        eprintln!("Invalid server address format: {}", server_address_str);
+    }
+    println!("Connected to server {}", server_address_str);
+    // Create the new client
+    let new_client = super::Client {
+        address: socket.0.as_ref().unwrap().local_addr().unwrap(),
+        username: String::from("user"), // You might want to replace this with the actual username
+    };
+
+    // Add the first client to the client list
+    client_list.clients.push(new_client);
+}
+
+/*pub fn update(
+    mut client_socket: ResMut<super::ClientSocket>,
+    socket_address: Res<super::SocketAddress>,
+    mut query: Query<(&Transform, &PlayerVelocity)>,
+) {
+    let mut _buf = [0; 1024];
+
+    if client_socket.0.is_none() {
+        return;
+    }
+
+    let socket = client_socket.0.as_mut().unwrap();
+    socket
+        .set_nonblocking(true)
+        .expect("cannot set nonblocking");
+
+    let (transform, velocity) = match query.iter().next() {
+        Some((transform, velocity)) => (transform, velocity),
+        None => {
+            // Handle the case when there are no entities matching the query
+            println!("No entities found matching the query.");
+            return;
+        }
+    };
+
+    let player_info = PlayerInfo {
+        position: (transform.translation.x, transform.translation.y),
         health: 100,
     };
 
-    let mut move_left = true; // Flag to indicate movement direction
+    let message = serde_json::to_string(&player_info).expect("Failed to serialize");
 
-    loop {
-        // Update player position based on movement direction
-        // ** THIS IS ONLY USED TO EMULATE CHANGE/MOVEMENT **
-        if move_left {
-            player_info.position.0 -= 1.0; // Move left
-        } else {
-            player_info.position.0 += 1.0; // Move right
+    let server_address_str = &socket_address.0;
+    socket
+        .send_to(message.as_bytes(), server_address_str)
+        .expect("Failed to send data.");
+
+    let mut response = [0; 1024];
+
+    match socket.recv_from(&mut response) {
+        Ok((size, _peer)) => {
+            let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
+            println!("Received response: {}", response_str);
         }
-
-        // Serialize player info to JSON
-        let client_msg = serde_json::to_string(&player_info).expect("Failed to serialize");
-
-        // Write the JSON message to the server
-        stream.write(client_msg.as_bytes()).expect("Failed to write");
-
-        // Toggle the movement direction
-        // ** THIS IS ONLY USED TO EMULATE CHANGE/MOVEMENT **
-        move_left = !move_left;
-
-        // Sleep to control the sending frequency
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        Err(_e) => {
+            //eprintln!("Error receiving data: {}", e);
+        }
     }
-}
+
+    // Sleep to control the sending frequency
+}*/
