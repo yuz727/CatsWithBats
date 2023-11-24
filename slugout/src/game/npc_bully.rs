@@ -1,17 +1,15 @@
 use std::time::Duration;
 
-use super::components::Player;
+use super::components::*;
 use crate::game::npc::*;
 use crate::game::pathfinding::*;
 use crate::GameState;
 use bevy::prelude::*;
 use bevy::time::common_conditions::*;
 
-const NPC_SIZE: f32 = 30.;
-// 5px/frame @60Hz == 300px/s
-const NPC_SPEED: f32 = 300.;
-// 1px/frame^2 @60Hz == 3600px/s^2
-const NPC_ACCEL_RATE: f32 = 18000.;
+const BALL_SIZE: f32 = 10.;
+const NPC_SIZE: f32 = 100.;
+
 pub struct NPCBullyPlugin;
 
 impl Plugin for NPCBullyPlugin {
@@ -28,6 +26,7 @@ impl Plugin for NPCBullyPlugin {
             Update,
             approach_player_bully.run_if(in_state(GameState::Game)), //  .run_if(on_timer(Duration::from_secs(1))),
         );
+        app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         //  app.add_systems(Update, bat_swing.run_if(in_state(GameState::Game)));
     }
 }
@@ -88,6 +87,57 @@ pub fn approach_player_bully(
                 bat_transform.translation.y = npc_transform.translation.y;
                 face_transform.translation.x = npc_transform.translation.x;
                 face_transform.translation.y = npc_transform.translation.y;
+            }
+        }
+    }
+}
+
+pub fn swing(
+    // mut ball: Query<
+    //     (&mut Ball, &mut BallVelocity, &mut Transform),
+    //     (With<Ball>, Without<Hitbox>, Without<Bat>, Without<Player>),
+    // >,
+    mut bat: Query<
+        &mut Transform,
+        (
+            With<NPCBat>,
+            Without<Hitbox>,
+            Without<Ball>,
+            Without<Player>,
+            Without<NPC>,
+        ),
+    >,
+
+    mut npcs: Query<(&mut Transform, &mut AnimationTimer), (With<NPC>, Without<Player>)>,
+    player: Query<
+        &Transform,
+        (
+            With<Player>,
+            Without<Hitbox>,
+            Without<NPCBat>,
+            Without<Ball>,
+        ),
+    >,
+    time: Res<Time>,
+) {
+    let npc_dimensions = Vec2::new(100., 100.);
+    for (npc_transform, mut timer) in npcs.iter_mut() {
+        let mut bat_transform = bat.single_mut();
+        let player_transform = player.single();
+        if Vec2::distance(
+            npc_transform.translation.truncate(),
+            player_transform.translation.truncate(),
+        )
+        .abs()
+            < 100.
+        {
+            info!("collide");
+            timer.tick(time.delta());
+
+            if timer.just_finished() {
+                bat_transform.scale.y = -0.13;
+            } else {
+                bat_transform.scale.y = 0.13;
             }
         }
     }

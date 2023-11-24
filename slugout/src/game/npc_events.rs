@@ -1,4 +1,4 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::prelude::*;
 
 use super::components::*;
 
@@ -277,7 +277,7 @@ pub fn avoid_collision(
         ),
     >,
 ) {
-    let npc_dimensions = vec2(NPC_SIZE, NPC_SIZE);
+    let npc_dimensions = Vec2::new(NPC_SIZE, NPC_SIZE);
     // Iterate over combinations of possible objects that NPC can possibly collide with
     for (npc_transform, mut velocity) in npcs.iter_mut() {
         let recliner_collision = bevy::sprite::collide_aabb::collide(
@@ -299,7 +299,7 @@ pub fn avoid_collision(
             Vec2::new(103., 107.),
         );
 
-        // If it is going to collide on the x-axis, lock x-axis movement
+        // If it is going to collide on the x-axis, lock x-axis moveme  nt
         if recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
             || recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
             || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Left)

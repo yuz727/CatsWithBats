@@ -2,7 +2,6 @@ use crate::game::npc::*;
 use bevy::prelude::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use std::path;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct Vertex {
@@ -23,26 +22,6 @@ impl PartialOrd for Vertex {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
-}
-
-/*  Create a 2-d vector of tiles, each tile has a tile with a cost associated to it, default at max-int
- *  Each tile will be a 4x4 pixel chunk
- */
-pub fn load_map_cost() -> Vec<Vec<i32>> {
-    let mut cost_map: Vec<Vec<i32>> = Vec::new();
-    let mut curr_x = 0.;
-    let mut curr_y;
-    while curr_x < 1280. {
-        curr_y = 0.;
-        let mut row: Vec<i32> = Vec::new();
-        while curr_y < 720. {
-            row.push(-1);
-            curr_y += 4.;
-        }
-        cost_map.push(row);
-        curr_x += 4.;
-    }
-    return cost_map;
 }
 
 /*  Create a 2-d vector of tiles, each tile has the actual coordinates associated to it
@@ -72,18 +51,25 @@ fn get_neighbours(map: &Vec<Vec<Vec2>>, coords: Vec2) -> Vec<Vec2> {
     let x = coords.x as usize / 4;
     let y = coords.y as usize / 4;
     if x > 0 {
+        if y > 0 {
+            ret.push(map[x - 1][y - 1]);
+            ret.push(map[x][y - 1]);
+        }
         ret.push(map[x - 1][y]);
-    }
-    if y < 179 {
-        ret.push(map[x][y + 1]);
+        if y < 179 {
+            ret.push(map[x - 1][y + 1]);
+            ret.push(map[x][y + 1]);
+        }
     }
     if x < 319 {
+        if y > 0 {
+            ret.push(map[x + 1][y - 1]);
+        }
         ret.push(map[x + 1][y]);
+        if y < 179 {
+            ret.push(map[x + 1][y + 1]);
+        }
     }
-    if y > 0 {
-        ret.push(map[x][y - 1]);
-    }
-
     return ret;
 }
 
@@ -135,8 +121,7 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
             }
         }
     }
-    // info!(goal_x);
-    // info!(goal_y);
+
     // No path found, just return a vector containing 0
     if current.x != goal_x || current.y != goal_y {
         return vec![Vec2::ZERO];
@@ -151,7 +136,6 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
     }
 
     ret.push(coords_conversion_bevy(start));
-    //  ret.reverse();
     return ret;
 }
 
