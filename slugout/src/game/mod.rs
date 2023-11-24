@@ -10,6 +10,7 @@ pub mod components;
 mod npc;
 mod npc_bully;
 mod npc_events;
+//mod npc_tree;
 mod pathfinding;
 mod player_movement;
 

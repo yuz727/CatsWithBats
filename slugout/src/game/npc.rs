@@ -6,15 +6,18 @@ use crate::GameState;
 use bevy::prelude::*;
 //use bevy::time::Stopwatch;
 use rand::prelude::*;
-use serde_json::Map;
 
 use super::components::Ball;
 use super::components::Player;
+
+const ANIM_TIME: f32 = 0.2;
 
 // Timer for movement
 #[derive(Component, Deref, DerefMut)]
 pub struct NPCTimer(Timer);
 
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(Timer);
 // #[derive(Component)]
 // struct SwingAnimation {
 //     time: Stopwatch,
@@ -48,12 +51,22 @@ pub enum States {
 #[derive(Component)]
 pub struct Maps {
     pub path_map: Vec<Vec<Vec2>>,
-    pub cost_map: Vec<Vec<i32>>,
+}
+
+#[derive(Component)]
+pub struct Path {
+    pub path: Vec<Vec2>,
 }
 
 #[derive(Component)]
 pub struct Difficulty {
     difficulty: i32,
+}
+
+impl Path {
+    pub fn set_new_path(&mut self, new_path: Vec<Vec2>) {
+        self.path = new_path;
+    }
 }
 
 impl States {
@@ -121,7 +134,7 @@ impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), load_npc);
         //app.add_systems(Update, select_bully_mode.run_if(in_state(GameState::Game)));
-        app.add_systems(OnEnter(GameState::Game), load_map);
+        //app.add_systems(OnEnter(GameState::Game), load_map);
         app.add_systems(Update, select.run_if(in_state(GameState::Game)));
         app.add_systems(Update, avoid_collision.run_if(in_state(GameState::Game)));
         app.add_systems(
@@ -147,8 +160,15 @@ impl Plugin for NPCPlugin {
     }
 }
 
-pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn load_npc(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut _texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
     let mut rng = thread_rng();
+    // let player_handle = asset_server.load("walking.png");
+    // let player_atlas = TextureAtlas::from_grid(player_handle, Vec2::splat(100.), 2, 1, None, None);
+    // let player_atlas_handle = texture_atlases.add(player_atlas);
     // Spawn npc Sprite for testing
     commands
         .spawn(SpriteBundle {
@@ -166,8 +186,14 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Difficulty { difficulty: 75 })
         .insert(Maps {
             path_map: load_map_path(),
-            cost_map: load_map_cost(),
-        });
+        })
+        .insert(Path {
+            path: vec![Vec2::ZERO],
+        })
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )));
 
     //spawn bat sprite
     commands
@@ -177,7 +203,11 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCBat)
-        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)));
+        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)))
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )));
 
     commands
         .spawn(SpriteBundle {
@@ -188,9 +218,9 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPCFace);
 }
 
-pub fn load_map(mut npcs: Query<&mut Maps>) {
-    for maps in npcs.iter_mut() {}
-}
+// pub fn load_map(mut npcs: Query<&mut Maps>) {
+//     for maps in npcs.iter_mut() {}
+// }
 
 // Select next move
 pub fn select(
