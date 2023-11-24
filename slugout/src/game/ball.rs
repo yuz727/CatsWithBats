@@ -166,6 +166,8 @@ fn bounce(
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
 ) {
     for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
+
+        //ball radius on screen
         let ball_radius = ball.radius * 300.;
 
         // Find the new translation for the x and y for the ball
@@ -267,6 +269,24 @@ fn bounce(
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y + table_size.y / 2. + ball_radius;
         }
+
+        // Bounce when hitting another ball
+        /*for (ball2_transform, ball2_velocity, ball2) in query.iter() {
+            let ball2_radius = ball2.radius * 300.;
+            let ball_collision = bevy::sprite::collide_aabb::collide(ball2_transform.translation, 
+                Vec2::new(ball2_radius * 2., ball2_radius * 2.), new_translation, Vec2::new(ball_radius * 2., ball_radius * 2.));
+            
+            let new_velocity = Vec3::splat(0.);
+            if ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+                new_velocity.x = ball_velocity.velocity.x - ball2_velocity.velocity.x;
+                new_velocity.y = ball_velocity.velocity.y - ball2_velocity.velocity.y;
+            }
+
+            new_velocity = new_velocity.normalize_or_zero();
+            new_velocity.x = new_velocity.x * 500.;
+            new_velocity.y = new_velocity.y * 500.;
+            ball_velocity.velocity = new_velocity;
+        }*/
 
         // Move ball
         transform.translation.x = new_translation_x;
@@ -456,8 +476,8 @@ fn swing(
 
     if let Some(mouse_position) = window.single().physical_cursor_position() {
         //println!("Cursor is inside window {:?}", mouse_position);
-        //if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
-        if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x {
+        // Move bat to the same side of the player as the mouse
+        if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x{
             bat_transform.translation = player_transform.translation;
             bat_transform.translation.x = bat_transform.translation.x + 8.;
             bat_transform.scale.x = -0.175;

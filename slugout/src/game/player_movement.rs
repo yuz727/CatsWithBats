@@ -17,19 +17,21 @@ struct PlayerInfo {
     health: u32,
     // Add other relevant fields here
 }
+
 #[derive(Component)]
 pub struct PlayerVelocity {
     pub velocity: Vec2,
+    pub prev_position: (f32, f32),
 }
 
 impl PlayerVelocity {
     pub fn new() -> Self {
         Self {
             velocity: Vec2::splat(0.),
+            prev_position: (0.0, 0.0),
         }
     }
 }
-
 pub fn move_player(
     input: Res<Input<KeyCode>>,
     mut player: Query<
@@ -102,33 +104,33 @@ pub fn move_player(
     velocity.velocity = velocity.velocity * deltat;
     /////////////////////
     if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.8;
     }
 
     if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.9;
     }
 
     if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.85;
     }
     ///////////////////////////
 
@@ -137,6 +139,7 @@ pub fn move_player(
         -(1280. / 2.) + PLAYER_SIZE / 2.,
         1280. / 2. - PLAYER_SIZE / 2.,
     );
+
     transform.translation.y = (transform.translation.y + velocity.velocity.y).clamp(
         -(720. / 2.) + PLAYER_SIZE / 2.,
         720. / 2. - PLAYER_SIZE / 2.,
@@ -266,41 +269,46 @@ pub fn move_player_mult(
     face_transform.translation.y = transform.translation.y;
     //bat_transform.translation.x = transform.translation.x - 5.;
     //bat_transform.translation.y = transform.translation.y;
+    // Check if the position has changed before sending a message
+    if transform.translation.x != velocity.prev_position.0
+        || transform.translation.y != velocity.prev_position.1
+    {
+        let mut _buf = [0; 1024];
 
-    let mut _buf = [0; 1024];
-
-    if client_socket.0.is_none() {
-        return;
-    }
-
-    let socket = client_socket.0.as_mut().unwrap();
-    socket
-        .set_nonblocking(true)
-        .expect("cannot set nonblocking");
-
-    let player_info = PlayerInfo {
-        position: (transform.translation.x, transform.translation.y),
-        health: 100,
-    };
-
-    let message = serde_json::to_string(&player_info).expect("Failed to serialize");
-
-    let server_address_str = &socket_address.0;
-    socket
-        .send_to(message.as_bytes(), server_address_str)
-        .expect("Failed to send data.");
-
-    let mut response = [0; 1024];
-
-    match socket.recv_from(&mut response) {
-        Ok((size, _peer)) => {
-            let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
-            //println!("Received response: {}", response_str);
+        if client_socket.0.is_none() {
+            return;
         }
-        Err(_e) => {
-            //eprintln!("Error receiving data: {}", e);
-        }
-    }
 
-    // Sleep to control the sending frequency
+        let socket = client_socket.0.as_mut().unwrap();
+        socket
+            .set_nonblocking(true)
+            .expect("cannot set nonblocking");
+
+        let player_info = PlayerInfo {
+            position: (transform.translation.x, transform.translation.y),
+            health: 100,
+        };
+
+        let message = serde_json::to_string(&player_info).expect("Failed to serialize");
+
+        let server_address_str = &socket_address.0;
+        socket
+            .send_to(message.as_bytes(), server_address_str)
+            .expect("Failed to send data.");
+
+        let mut response = [0; 1024];
+
+        match socket.recv_from(&mut response) {
+            Ok((size, _peer)) => {
+                let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
+                //println!("Received response: {}", response_str);
+            }
+            Err(_e) => {
+                //eprintln!("Error receiving data: {}", e);
+            }
+        }
+
+        // Update the previous position
+        velocity.prev_position = (transform.translation.x, transform.translation.y);
+    }
 }
