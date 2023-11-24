@@ -94,33 +94,33 @@ pub fn move_player(
     velocity.velocity = velocity.velocity * deltat;
     /////////////////////
     if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.8;
     }
 
     if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.9;
     }
 
     if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.85;
     }
     ///////////////////////////
 
@@ -129,6 +129,7 @@ pub fn move_player(
         -(1280. / 2.) + PLAYER_SIZE / 2.,
         1280. / 2. - PLAYER_SIZE / 2.,
     );
+
     transform.translation.y = (transform.translation.y + velocity.velocity.y).clamp(
         -(720. / 2.) + PLAYER_SIZE / 2.,
         720. / 2. - PLAYER_SIZE / 2.,
