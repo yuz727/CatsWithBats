@@ -134,8 +134,8 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
             }
         }
     }
-    info!(goal_x);
-    info!(goal_y);
+    //info!(goal_x);
+    //info!(goal_y);
     // No path found, just return a vector containing 0
     if current.x != goal_x || current.y != goal_y {
         return vec![Vec2::ZERO];
