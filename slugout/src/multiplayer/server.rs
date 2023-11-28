@@ -1,15 +1,11 @@
 use bevy::prelude::*;
-use bevy::transform::commands;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::net::UdpSocket;
 use std::str;
-
-use crate::game::components::{Player, Face, Bat};
-
-use super::{ConnectRequest, ConnectResponse};
+use super::ConnectRequest;
 
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
