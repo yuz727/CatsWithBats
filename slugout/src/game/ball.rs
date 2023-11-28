@@ -29,7 +29,6 @@ impl Plugin for BallPlugin {
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
         app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bounce.run_if(in_state(MultiplayerState::Game)));
-        app.add_systems(OnEnter(MultiplayerState::Game), setup);
         app.add_systems(Update, bounce_balls.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bounce_balls.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));

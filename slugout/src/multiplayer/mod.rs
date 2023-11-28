@@ -2,6 +2,7 @@ use crate::NetworkingState;
 
 use super::{despawn_screen, GameState, MultiplayerState, TEXT_COLOR};
 use bevy::{prelude::*, window::ReceivedCharacter};
+use serde::{Serialize, Deserialize};
 use std::net::{SocketAddr, UdpSocket};
 
 pub struct MultiplayerPlugin;
@@ -45,6 +46,14 @@ pub struct ServerSocket(pub Option<UdpSocket>);
 
 #[derive(Component)]
 struct InputText(pub String);
+
+#[derive(Serialize, Deserialize)]
+struct ConnectRequest {}
+
+#[derive(Serialize, Deserialize)]
+struct ConnectResponse {
+    player_number: usize,
+}
 
 pub static mut USER_INPUT: Option<String> = None;
 
