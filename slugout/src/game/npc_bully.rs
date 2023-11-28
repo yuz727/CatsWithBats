@@ -131,7 +131,7 @@ pub fn swing(
         .abs()
             < 100.
         {
-            info!("collide");
+            //info!("collide");
             timer.tick(time.delta());
 
             if timer.just_finished() {

@@ -13,6 +13,7 @@ use super::components::Player;
 use super::components::Rug;
 use crate::game::components::Hitbox;
 
+
 const WIN_W: f32 = 1280.;
 const WIN_H: f32 = 720.;
 const BALL_SIZE: f32 = 10.;
@@ -25,17 +26,28 @@ pub struct BallPlugin;
 
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
+        /*app.add_system_set(
+            SystemSet::new()
+                .label("MultiplayerSet")
+            .with_system(bounce)
+        );
+        app.configure_sets(Update, (
+            GameSet
+                .run_if(in_state(GameState::Game)),
+            MultiplayerSet
+                .run_if(in_state(MultiplayerState::Game)),
+        ));*/
         app.add_systems(OnEnter(GameState::Game), setup);
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
-        app.add_systems(Update, bounce.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, bounce.run_if(in_state(MultiplayerState::Game)));
+        //app.add_systems(Update, bounce).in_set(GameSet);
+        //app.add_systems(Update, bounce.in_set(MultiplayerSet));
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
-        app.add_systems(Update, bounce_balls.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, bounce_balls.run_if(in_state(MultiplayerState::Game)));
+        //app.add_systems(Update, bounce_balls.after(bounce).in_set(GameSet));
+        //app.add_systems(Update, bounce_balls.after(bounce).in_set(MultiplayerSet));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(MultiplayerState::Game)));
-        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, friction.run_if(in_state(MultiplayerState::Game)));
+        //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+        //app.add_systems(Update, friction.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
@@ -57,6 +69,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.025,
             elasticity: 0.95,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -74,6 +87,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.0275,
             elasticity: 1.,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(super::components::BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
@@ -92,6 +106,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.031,
             elasticity: 0.975,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(-500., 3., 2.),
@@ -108,6 +123,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.034,
             elasticity: 0.9,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -124,6 +140,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.038,
             elasticity: 0.875,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -140,6 +157,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.042,
             elasticity: 0.85,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -147,9 +165,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Colliding::new())
         .insert(Density { density: 2. });
 
-    // added for debugging
+    /*// added for debugging
 
-    /*commands
+    commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
             transform: Transform::from_xyz(7., 400., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
@@ -158,6 +176,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.025,
             elasticity: 0.95,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(67.0, 282.0, 2.0),
@@ -175,6 +194,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.0275,
             elasticity: 1.,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(super::components::BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
@@ -193,6 +213,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.031,
             elasticity: 0.975,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(-500., 3., 2.),
@@ -209,6 +230,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.034,
             elasticity: 0.9,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(70.0, 300.0, 2.0),
@@ -225,6 +247,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.038,
             elasticity: 0.875,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -241,6 +264,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ball {
             radius: 0.042,
             elasticity: 0.85,
+            prev_pos: Vec2::splat(0.),
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -267,7 +291,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 //bounce the ball
-fn bounce(
+pub fn bounce(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
 ) {
@@ -376,6 +400,9 @@ fn bounce(
             new_translation_y = table_translation.y + table_size.y / 2. + ball_radius;
         }
 
+        ball.prev_pos.x = transform.translation.x;
+        ball.prev_pos.x = transform.translation.y;        
+
         // Move ball
         transform.translation.x = new_translation_x;
         transform.translation.y = new_translation_y;
@@ -392,9 +419,12 @@ fn bounce(
     }
 }
 
-fn bounce_balls(
+pub fn bounce_balls(
+    time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
 ) {
+    // for debugging
+    static mut FRAMENUM: i32 = 0;
     let mut combinations = query.iter_combinations_mut();
     while let Some([mut ball1query, mut ball2query]) = combinations.fetch_next() {
         let (mut ball1_transform, mut ball1_velocity, mut ball1) =  ball1query;
@@ -412,19 +442,31 @@ fn bounce_balls(
         if ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
             //Find time t where the 2 balls collided
             // Using equations: d = sqrt((ball1.x - ball2.x)^2 + (ball1.y - ball2.y)^2)   ,   y' = velocity.y * t + y    , and       x' = velocity.x * t + x
-            /*let a = ball1_velocity.velocity.x * ball1_velocity.velocity.x  + ball1_velocity.velocity.y * ball1_velocity.velocity.y + ball2_velocity.velocity.x * ball2_velocity.velocity.x + ball2_velocity.velocity.y * ball2_velocity.velocity.y - 2. * ball1_velocity.velocity.x * ball2_velocity.velocity.x - 2. * ball1_velocity.velocity.y * ball2_velocity.velocity.y;
+            let a = ball1_velocity.velocity.x * ball1_velocity.velocity.x  + ball1_velocity.velocity.y * ball1_velocity.velocity.y + ball2_velocity.velocity.x * ball2_velocity.velocity.x + ball2_velocity.velocity.y * ball2_velocity.velocity.y - 2. * ball1_velocity.velocity.x * ball2_velocity.velocity.x - 2. * ball1_velocity.velocity.y * ball2_velocity.velocity.y;
             let b = 2. * ball1_velocity.velocity.x * ball1_transform.translation.x + 2. * ball1_velocity.velocity.y * ball1_transform.translation.y + 2. * ball2_velocity.velocity.x * ball2_transform.translation.x + 2. * ball2_velocity.velocity.y * ball2_transform.translation.y - 2. * ball1_velocity.velocity.x * ball2_transform.translation.x - 2. * ball2_velocity.velocity.x * ball1_transform.translation.x - 2. * ball2_velocity.velocity.y * ball1_transform.translation.y - 2. * ball2_transform.translation.y * ball1_velocity.velocity.y;
             let c = ball1_transform.translation.x * ball1_transform.translation.x + ball2_transform.translation.x * ball2_transform.translation.x + ball1_transform.translation.y * ball1_transform.translation.y + ball2_transform.translation.y * ball2_transform.translation.y - 2. * ball1_transform.translation.x * ball2_transform.translation.x - 2. * ball1_transform.translation.y * ball2_transform.translation.y - (ball1_radius + ball2_radius) * (ball1_radius + ball2_radius);
 
-            let changet = (-b + (b * b - 4. * a * c).sqrt()) / (2. * a);
+            //let changet = (-b + (b * b - 4. * a * c).sqrt()) / (2. * a);
             let negchange = (-b - (b * b - 4. * a * c).sqrt()) / (2. * a);
 
-            println!("{}", changet.to_string());
             println!("{}", negchange.to_string());
-            //println!("Balls colliding");*/
 
-            //move balls back so they do not ever overlap
-            //new_translation_1 = 
+            if !negchange.is_nan() && !negchange.is_infinite(){
+            ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
+            ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
+
+            ball2_transform.translation.x = ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
+            ball2_transform.translation.y = ball2_velocity.velocity.y * negchange + ball2_transform.translation.y;
+
+
+            unsafe{
+                println!("{}", FRAMENUM);
+                FRAMENUM += 1;
+            }
+            //println!("{}", changet.to_string());
+            println!("{}", negchange.to_string());
+            //println!("Balls colliding");
+
             
             new_velocity.x = ball1_velocity.velocity.x + (ball1_transform.translation.x - ball2_transform.translation.x);
             new_velocity.y = ball1_velocity.velocity.y + (ball1_transform.translation.y - ball2_transform.translation.y);
@@ -435,8 +477,9 @@ fn bounce_balls(
             ball1_velocity.velocity = new_velocity;
 
             ball2_velocity.velocity = new_velocity_2;
-        }
 
+            }
+        }
     }
 }
 

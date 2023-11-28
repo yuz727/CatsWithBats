@@ -24,6 +24,7 @@ pub struct Background;
 pub struct Ball{
     pub radius: f32,
     pub elasticity: f32,
+    pub prev_pos: Vec2,
 }
 
 #[derive(Component)]
