@@ -149,7 +149,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // added for debugging
 
-    commands
+    /*commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
             transform: Transform::from_xyz(7., 400., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
@@ -248,7 +248,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Colliding::new())
         .insert(Density { density: 2. });
 
-    //
+    // */
 
     //Spawn bat hitbox for bat
     commands
