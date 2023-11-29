@@ -41,7 +41,8 @@ impl Plugin for BallPlugin {
         app.add_systems(
             Update,
             aim_follows_cursor.run_if(in_state(MultiplayerState::Game)),
-        );
+        )
+        .insert_resource(Input::<KeyCode>::default());    
     }
 }
 
@@ -539,16 +540,13 @@ fn friction(
     }
 }
 
-/*
-   bat swing function, now on RELEASE of mouse button (based on cursor)
-       doesn't exactly move towards cursor bc it depends on the current ball velocity and position
-   still hits both yarnballs
-   (DOES NOT ACCOUNT FOR COLLISIONS)
-*/
+
+//bat swing function, now on RELEASE of mouse button (based on cursor)
 
 fn swing(
     //mut commands: Commands,
     input_mouse: Res<Input<MouseButton>>,
+    input: Res<Input<KeyCode>>,
     mut query: Query<
         (&mut Ball, &mut BallVelocity, &mut Transform),
         (With<Ball>, Without<Hitbox>, Without<Bat>, Without<Player>),
@@ -669,6 +667,17 @@ fn swing(
 
                     new_velocity.x = new_velocity.x * 500.;
                     new_velocity.y = new_velocity.y * 500.;
+
+                    // if Q is pressed, backspin -> ball moves slower
+                    if input.pressed(KeyCode::Q) {
+                        new_velocity *= 0.5;
+                    }
+
+                    // if E is pressed, topspin -> ball moves faster
+                    if input.pressed(KeyCode::E) {
+                        new_velocity *= 1.5;
+                    }
+                    
                     ball_velocity.velocity = new_velocity * ball.elasticity;
                 }
 
