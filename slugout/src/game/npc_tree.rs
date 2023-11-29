@@ -1,16 +1,14 @@
 use bevy::prelude::*;
 
-// Components
 struct Npc {
-    difficulty: u32,      // Adjust the type according to your game's specifics
-    last_swing_time: f64, // Timestamp of the last swing
+    difficulty: u32,
+    last_swing_time: f64, // timestamp of last swing
 }
 
 struct Ball;
 struct Player;
 struct GameObject;
 
-// Behavior Tree Nodes
 enum Node {
     Sequence(Vec<Node>),
     Fallback(Vec<Node>),
@@ -54,18 +52,13 @@ enum NodeStatus {
     Running,
 }
 
-// Behavior Tree Setup
 fn setup(mut commands: Commands) {
     commands.spawn().insert(Npc {
         difficulty: 50,
         last_swing_time: 0.0,
     });
-
-    // Spawn entities for the game world (balls, players, objects)
-    // Add Ball, Player, and GameObject components to respective entities
 }
 
-// Behavior Tree Execution
 fn behavior_tree(
     npc: &mut Npc,
     commands: &mut Commands,
@@ -133,7 +126,6 @@ fn behavior_tree(
         ]),
     ]);
 
-    // Execute the behavior tree
     execute_node(
         root_node,
         npc,
@@ -144,7 +136,6 @@ fn behavior_tree(
     );
 }
 
-// Execute a single behavior tree node
 fn execute_node(
     node: Node,
     npc: &mut Npc,
@@ -199,26 +190,21 @@ fn execute_node(
     }
 }
 
-// Define your condition and action functions here
-
 fn danger_check(
     npc: &Npc,
     ball_query: &QuerySet<(Entity, &Ball)>,
     _: &QuerySet<(Entity, &Player)>,
     _: &QuerySet<(Entity, &GameObject)>,
 ) -> bool {
-    // Implement danger check logic
-    true // Replace with your logic
+    true
 }
 
 fn aggression_check(npc: &Npc) -> bool {
-    // Implement aggression check logic
-    true // Replace with your logic
+    true
 }
 
 fn swing_cooldown_check(npc: &Npc) -> bool {
-    // Implement swing cooldown check logic
-    true // Replace with your logic
+    true
 }
 
 fn sidestep(
@@ -239,7 +225,7 @@ fn player_proximity_check(
     _: &QuerySet<(Entity, &GameObject)>,
 ) -> bool {
     // Implement player proximity check logic
-    true // Replace with your logic
+    true
 }
 
 fn tag_is_null(
@@ -249,7 +235,7 @@ fn tag_is_null(
     _: &QuerySet<(Entity, &GameObject)>,
 ) -> bool {
     // Implement TAG null check logic
-    true // Replace with your logic
+    true
 }
 
 fn set_tag_to_closest_ball(
