@@ -27,7 +27,7 @@ pub fn create_server(
     // Use the [IP Address]:[Port#] from user input (server_address from mod.rs in Multiplayer)
     let server_address_str = &server_address.0;
     // Attempt to bind the socket to the specified address
-    socket.0 = Some(UdpSocket::bind(server_address_str).expect("Failed to bind to address s."));
+    socket.0 = Some(UdpSocket::bind("0.0.0.0:8080").expect("Failed to bind to address s."));
     // Log whether the server socket was successfully created
     info!("{}", socket.0.is_some());
     // let's say that server was just created now
