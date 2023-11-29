@@ -51,6 +51,7 @@ pub enum States {
 #[derive(Component)]
 pub struct Maps {
     pub path_map: Vec<Vec<Vec2>>,
+    pub walkable: Vec<Vec<bool>>,
 }
 
 #[derive(Component)]
@@ -165,7 +166,7 @@ pub fn load_npc(
     asset_server: Res<AssetServer>,
     mut _texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let mut rng = thread_rng();
+    // let mut rng = thread_rng();
     // let player_handle = asset_server.load("walking.png");
     // let player_atlas = TextureAtlas::from_grid(player_handle, Vec2::splat(100.), 2, 1, None, None);
     // let player_atlas_handle = texture_atlases.add(player_atlas);
@@ -173,28 +174,84 @@ pub fn load_npc(
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player4.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 3.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-600., 300., 3.),
+                Vec3::splat(0.13),
+            ),
             ..default()
         })
-        .insert(NPCTimer(Timer::from_seconds(
-            rng.gen_range(0.0..1.0),
-            TimerMode::Repeating,
-        )))
+        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Idle)
         .insert(Difficulty { difficulty: 75 })
         .insert(Maps {
             path_map: load_map_path(),
+            walkable: load_walkable(),
         })
         .insert(Path {
-            path: vec![Vec2::ZERO],
+            path: Vec::with_capacity(1),
         })
         .insert(AnimationTimer(Timer::from_seconds(
             ANIM_TIME,
             TimerMode::Repeating,
         )));
-
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("Player2.png"),
+    //         transform: Transform::with_scale(
+    //             Transform::from_xyz(600., 300., 3.),
+    //             Vec3::splat(0.13),
+    //         ),
+    //         ..default()
+    //     })
+    //     .insert(NPCTimer(Timer::from_seconds(
+    //         rng.gen_range(0.0..1.0),
+    //         TimerMode::Repeating,
+    //     )))
+    //     .insert(NPC)
+    //     .insert(NPCVelocity::new())
+    //     .insert(States::Idle)
+    //     .insert(Difficulty { difficulty: 75 })
+    //     .insert(Maps {
+    //         path_map: load_map_path(),
+    //         walkable: load_walkable(),
+    //     })
+    //     .insert(Path {
+    //         path: Vec::with_capacity(1),
+    //     })
+    //     .insert(AnimationTimer(Timer::from_seconds(
+    //         ANIM_TIME,
+    //         TimerMode::Repeating,
+    //     )));
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("Player3.png"),
+    //         transform: Transform::with_scale(
+    //             Transform::from_xyz(600., -300., 3.),
+    //             Vec3::splat(0.13),
+    //         ),
+    //         ..default()
+    //     })
+    //     .insert(NPCTimer(Timer::from_seconds(
+    //         rng.gen_range(0.0..1.0),
+    //         TimerMode::Repeating,
+    //     )))
+    //     .insert(NPC)
+    //     .insert(NPCVelocity::new())
+    //     .insert(States::Idle)
+    //     .insert(Difficulty { difficulty: 75 })
+    //     .insert(Maps {
+    //         path_map: load_map_path(),
+    //         walkable: load_walkable(),
+    //     })
+    //     .insert(Path {
+    //         path: Vec::with_capacity(1),
+    //     })
+    //     .insert(AnimationTimer(Timer::from_seconds(
+    //         ANIM_TIME,
+    //         TimerMode::Repeating,
+    //     )));
     //spawn bat sprite
     commands
         .spawn(SpriteBundle {
