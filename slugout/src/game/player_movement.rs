@@ -148,7 +148,7 @@ pub fn move_player(
     face_transform.translation.x = transform.translation.x;
     face_transform.translation.y = transform.translation.y;
     //bat_transform.translation.x = transform.translation.x - 5.;
-    //bat_transform.translation.y = transform.translation.y; 
+    //bat_transform.translation.y = transform.translation.y;
 }
 
 pub fn move_player_mult(
@@ -281,7 +281,9 @@ pub fn move_player_mult(
         // Unwrap to get a mutable reference to the client socket
         let socket = client_socket.0.as_mut().unwrap();
         // Set the socket to non-blocking mode
-        socket.set_nonblocking(true).expect("Cannot set nonblocking");
+        socket
+            .set_nonblocking(true)
+            .expect("Cannot set nonblocking");
         // Create player information
         let player_info = PlayerInfo {
             position: (transform.translation.x, transform.translation.y),
@@ -305,7 +307,7 @@ pub fn move_player_mult(
             Err(_e) => {
                 //eprintln!("Error receiving data: {}", e);
             }
-        }   
+        }
         // Update the previous position
         velocity.prev_position = (transform.translation.x, transform.translation.y);
     }
