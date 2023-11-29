@@ -39,11 +39,10 @@ impl Plugin for BallPlugin {
         ));*/
         app.add_systems(OnEnter(GameState::Game), setup);
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
-        //app.add_systems(Update, bounce).in_set(GameSet);
-        //app.add_systems(Update, bounce.in_set(MultiplayerSet));
+        app.add_systems(Update, bounce)/* .run_if(in_state(GameState::Game)))*/;
+        //app.add_systems(Update, bounce/* .run_if(in_state(MultiplayerState::Game)))*/;
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
-        //app.add_systems(Update, bounce_balls.after(bounce).in_set(GameSet));
-        //app.add_systems(Update, bounce_balls.after(bounce).in_set(MultiplayerSet));
+        app.add_systems(Update, bounce_balls.after(bounce));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(MultiplayerState::Game)));
         //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
@@ -165,7 +164,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Colliding::new())
         .insert(Density { density: 2. });
 
-    /*// added for debugging
+    // added for debugging
 
     commands
         .spawn(SpriteBundle {
@@ -449,23 +448,43 @@ pub fn bounce_balls(
             //let changet = (-b + (b * b - 4. * a * c).sqrt()) / (2. * a);
             let negchange = (-b - (b * b - 4. * a * c).sqrt()) / (2. * a);
 
-            println!("{}", negchange.to_string());
 
             if !negchange.is_nan() && !negchange.is_infinite(){
+            
+                if negchange < -1.{
+                    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n");
+                unsafe{
+                    println!("{}", FRAMENUM);
+                    FRAMENUM += 1;
+                }
+                //println!("{}", changet.to_string());
+                println!("{}", negchange.to_string());
+                println!("ball1 x: {}", ball1_transform.translation.x.to_string());
+                println!("ball1 y: {}", ball1_transform.translation.y.to_string());
+                println!("ball1 velocity x: {}", ball1_velocity.velocity.x.to_string());
+                println!("ball1 velocity y: {}", ball1_velocity.velocity.y.to_string());
+                println!("ball1 radius: {}", ball1_radius.to_string());
+    
+                println!("\n");
+    
+                println!("ball2 x: {}", ball2_transform.translation.x.to_string());
+                println!("ball2 y: {}", ball2_transform.translation.y.to_string());
+                println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
+                println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
+                println!("ball2 radius: {}", ball2_radius.to_string());
+                //println!("Balls colliding");
+    
+                println!("\n");
+    
+                println!("a: {}", a.to_string());
+                println!("b: {}", b.to_string());
+                println!("c: {}", c.to_string());
+            
             ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
             ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
 
             ball2_transform.translation.x = ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
             ball2_transform.translation.y = ball2_velocity.velocity.y * negchange + ball2_transform.translation.y;
-
-
-            unsafe{
-                println!("{}", FRAMENUM);
-                FRAMENUM += 1;
-            }
-            //println!("{}", changet.to_string());
-            println!("{}", negchange.to_string());
-            //println!("Balls colliding");
 
             
             new_velocity.x = ball1_velocity.velocity.x + (ball1_transform.translation.x - ball2_transform.translation.x);
@@ -477,6 +496,26 @@ pub fn bounce_balls(
             ball1_velocity.velocity = new_velocity;
 
             ball2_velocity.velocity = new_velocity_2;
+
+
+            println!("\n\nAFTER COLLISION");
+
+            //println!("{}", changet.to_string());
+            println!("{}", negchange.to_string());
+            println!("ball1 x: {}", ball1_transform.translation.x.to_string());
+            println!("ball1 y: {}", ball1_transform.translation.y.to_string());
+            println!("ball1 velocity x: {}", ball1_velocity.velocity.x.to_string());
+            println!("ball1 velocity y: {}", ball1_velocity.velocity.y.to_string());
+
+            println!("\n");
+
+            println!("ball2 x: {}", ball2_transform.translation.x.to_string());
+            println!("ball2 y: {}", ball2_transform.translation.y.to_string());
+            println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
+            println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
+            //println!("Balls colliding");
+
+            }
 
             }
         }
