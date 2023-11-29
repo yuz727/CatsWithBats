@@ -10,7 +10,7 @@ pub mod components;
 mod npc;
 mod npc_bully;
 mod npc_events;
-//mod npc_tree;
+mod npc_tree;
 mod pathfinding;
 mod player_movement;
 
@@ -60,13 +60,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
 
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("Face.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
-            ..default()
-        })
-        .insert(Face);
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("Face.png"),
+    //         transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
+    //         ..default()
+    //     })
+    //     .insert(Face);
 
     commands
         .spawn(SpriteBundle {

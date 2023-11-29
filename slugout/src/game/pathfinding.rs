@@ -41,7 +41,6 @@ pub fn load_map_path() -> Vec<Vec<Vec2>> {
         path_map.push(row);
         curr_x += 4.;
     }
-    info!("path done");
     return path_map;
 }
 
@@ -76,7 +75,6 @@ pub fn load_walkable() -> Vec<Vec<bool>> {
         walkable_map.push(row);
         curr_x += 4.;
     }
-    info!("walkable Done");
     return walkable_map;
 }
 
@@ -144,6 +142,7 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
             let neighbourx = neighbour.x as usize / 4;
             let neighboury = neighbour.y as usize / 4;
             if maps.walkable[neighbourx][neighboury] == false {
+                // Try to avoid objects in the map
                 continue;
             }
             //  info!("neightbour");
@@ -162,9 +161,9 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
         }
     }
 
-    // No path found, just return a vector containing 0
+    // No path found, just return an empty vector
     if current.x != goal_x || current.y != goal_y {
-        return vec![Vec2::ZERO];
+        return Vec::with_capacity(1);
     }
 
     // Generate the path and store it into a vector
