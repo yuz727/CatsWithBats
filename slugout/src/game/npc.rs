@@ -1,9 +1,12 @@
 // use crate::components::*;
 
 use crate::game::npc_events::*;
+// use crate::game::npc_tree::Node;
+// use crate::game::npc_tree::*;
 use crate::game::pathfinding::*;
 use crate::GameState;
 use bevy::prelude::*;
+use bevy::utils::synccell::SyncCell;
 //use bevy::time::Stopwatch;
 use rand::prelude::*;
 
@@ -40,9 +43,12 @@ pub enum States {
     Aggression,
     Evade,
     Idle,
-    AggressionBall,
-    AggressionPlayer,
 }
+
+// #[derive(Component)]
+// pub struct Tree {
+//     root_node: Node,
+// }
 
 #[derive(Component)]
 pub struct Maps {
@@ -58,7 +64,7 @@ pub struct Path {
 
 #[derive(Component)]
 pub struct Difficulty {
-    difficulty: i32,
+    pub difficulty: i32,
 }
 
 impl Path {
@@ -82,23 +88,23 @@ impl States {
             v => v,
         }
     }
-    fn to_aggression_ball(&mut self) {
-        *self = match std::mem::replace(self, States::AggressionBall) {
-            States::Aggression => States::AggressionBall,
-            v => v,
-        }
-    }
-    fn to_aggression_player(&mut self) {
-        *self = match std::mem::replace(self, States::AggressionPlayer) {
-            States::Aggression => States::AggressionPlayer,
-            v => v,
-        }
-    }
+    // fn to_aggression_ball(&mut self) {
+    //     *self = match std::mem::replace(self, States::AggressionBall) {
+    //         States::Aggression => States::AggressionBall,
+    //         v => v,
+    //     }
+    // }
+    // fn to_aggression_player(&mut self) {
+    //     *self = match std::mem::replace(self, States::AggressionPlayer) {
+    //         States::Aggression => States::AggressionPlayer,
+    //         v => v,
+    //     }
+    // }
     fn to_idle(&mut self) {
         *self = match std::mem::replace(self, States::Idle) {
             States::Aggression => States::Idle,
-            States::AggressionBall => States::Idle,
-            States::AggressionPlayer => States::Idle,
+            // States::AggressionBall => States::Idle,
+            // States::AggressionPlayer => States::Idle,
             States::Evade => States::Idle,
             v => v,
         }
@@ -132,6 +138,8 @@ pub struct NPCPlugin;
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), load_npc);
+        // app.add_systems(OnEnter(GameState::Game), behavior_tree);
+        // app.add_systems(Update, execute_node.after(load_npc).after(behavior_tree));
         //app.add_systems(Update, select_bully_mode.run_if(in_state(GameState::Game)));
         //app.add_systems(OnEnter(GameState::Game), load_map);
         // app.add_systems(Update, select.run_if(in_state(GameState::Game)));
@@ -191,6 +199,12 @@ pub fn load_npc(
             ANIM_TIME,
             TimerMode::Repeating,
         )));
+    // .insert();
+    // .insert(SyncCell {
+    //     inner: Tree {
+    //         root_node: Node::Null,
+    //     },
+    // });
     //spawn bat sprite
     commands
         .spawn(SpriteBundle {
@@ -229,7 +243,7 @@ pub fn load_npc(
 
 //                 // If timer is up, roll next state
 //                 timer.tick(time.delta());
-//                 if timer.just_finished() {
+//                 if tier.just_finished() {m
 //                     // This will be the chance to go to the aggressive state selections
 //                     state.to_idle();
 //                     let state_flag: i32;

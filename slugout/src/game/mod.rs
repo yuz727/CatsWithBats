@@ -10,10 +10,10 @@ pub mod components;
 mod npc;
 mod npc_bully;
 mod npc_events;
-mod npc_tree;
+// mod npc_tree;
 mod pathfinding;
 mod player_movement;
-
+mod tree;
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
 const TITLE: &str = "Slugout";
