@@ -1,8 +1,9 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::prelude::*;
 
 use super::components::*;
 
-use super::npc::{NPCBat, NPCFace, NPCTimer, NPCVelocity, States, NPC};
+use super::npc::{Maps, NPCBat, NPCFace, NPCTimer, NPCVelocity, Path, States, NPC};
+use super::pathfinding::{a_star, coords_conversion_astar};
 
 const NPC_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
@@ -15,7 +16,7 @@ const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
 // Just go the the player straight
 pub fn approach_player(
     mut npcs: Query<
-        (&mut Transform, &mut NPCVelocity, &States),
+        (&mut Transform, &mut NPCVelocity, &mut Path, &Maps),
         (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
     >,
     mut bat: Query<
@@ -28,69 +29,138 @@ pub fn approach_player(
             Without<NPCFace>,
         ),
     >,
-    mut face: Query<
-        &mut Transform,
-        (
-            With<NPCFace>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCBat>,
-        ),
-    >,
+    // mut face: Query<
+    //     &mut Transform,
+    //     (
+    //         With<NPCFace>,
+    //         Without<Player>,
+    //         Without<NPC>,
+    //         Without<Ball>,
+    //         Without<NPCBat>,
+    //     ),
+    // >,
     player: Query<&Transform, With<Player>>,
     time: Res<Time>,
 ) {
-    for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
-        if matches!(state, States::AggressionPlayer) {
-            for mut bat_transform in bat.iter_mut() {
-                //info!("Chasing Player");
-                //debug!("Chasing Player");
-                for player_transform in player.iter() {
-                    for mut face_transform in face.iter_mut() {
-                        let mut deltav = Vec2::splat(0.);
-                        if npc_transform.translation.x < player_transform.translation.x {
-                            deltav.x += 1000.;
-                        }
-                        if npc_transform.translation.x > player_transform.translation.x {
-                            deltav.x -= 1000.;
-                        }
-                        if npc_transform.translation.y < player_transform.translation.y {
-                            deltav.y += 1000.;
-                        }
-                        if npc_transform.translation.y > player_transform.translation.y {
-                            deltav.y -= 1000.;
-                        }
+    for (mut npc_transform, mut velocity, mut path, maps) in npcs.iter_mut() {
+        for mut bat_transform in bat.iter_mut() {
+            for player_transform in player.iter() {
+                //  for mut face_transform in face.iter_mut() {
+                let Some(Vec2 { x, y }) = path.path.pop() else {
+                    path.set_new_path(a_star(
+                        coords_conversion_astar(npc_transform.translation.truncate().floor()),
+                        coords_conversion_astar(player_transform.translation.truncate().floor()),
+                        maps,
+                    ));
+                    return;
+                };
 
-                        let deltat = time.delta_seconds();
-                        let acc = NPC_ACCEL_RATE * deltat;
-                        velocity.velocity = if deltav.length() > 0. {
-                            (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                                .clamp_length_max(NPC_SPEED)
-                        } else if velocity.velocity.length() > acc {
-                            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-                        } else {
-                            Vec2::splat(0.)
-                        };
-                        velocity.velocity = velocity.velocity * deltat;
-                        if velocity.xlock == 0 {
-                            npc_transform.translation.x = (npc_transform.translation.x
-                                + velocity.velocity.x)
-                                .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
-                        }
-                        if velocity.ylock == 0 {
-                            npc_transform.translation.y = (npc_transform.translation.y
-                                + velocity.velocity.y)
-                                .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
-                        }
-
-                        bat_transform.translation.x = npc_transform.translation.x - 5.;
-                        bat_transform.translation.y = npc_transform.translation.y;
-                        face_transform.translation.x = npc_transform.translation.x;
-                        face_transform.translation.y = npc_transform.translation.y;
-                    }
+                let mut deltav = Vec2::splat(0.);
+                if npc_transform.translation.x < x {
+                    deltav.x += 1000.;
                 }
+                if npc_transform.translation.x > x {
+                    deltav.x -= 1000.;
+                }
+                if npc_transform.translation.y < y {
+                    deltav.y += 1000.;
+                }
+                if npc_transform.translation.y > y {
+                    deltav.y -= 1000.;
+                }
+
+                let deltat = time.delta_seconds();
+                let acc = NPC_ACCEL_RATE * deltat;
+                velocity.velocity = if deltav.length() > 0. {
+                    (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                        .clamp_length_max(NPC_SPEED)
+                } else if velocity.velocity.length() > acc {
+                    velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                } else {
+                    Vec2::splat(0.)
+                };
+
+                let recliner_size = Vec2::new(112., 184.);
+                let recliner_translation = Vec3::new(-60., 210., 1.);
+                let recliner = bevy::sprite::collide_aabb::collide(
+                    recliner_translation,
+                    recliner_size,
+                    npc_transform.translation,
+                    Vec2::new(NPC_SIZE, NPC_SIZE),
+                );
+
+                let tv_size = Vec2::new(164., 104.);
+                let tv_translation = Vec3::new(0., -250., 1.);
+                let tv_stand = bevy::sprite::collide_aabb::collide(
+                    tv_translation,
+                    tv_size,
+                    npc_transform.translation,
+                    Vec2::new(NPC_SIZE, NPC_SIZE),
+                );
+
+                let table_size = Vec2::new(104., 108.);
+                let table_translation = Vec3::new(120., 170., 1.);
+                let side_table = bevy::sprite::collide_aabb::collide(
+                    table_translation,
+                    table_size,
+                    npc_transform.translation,
+                    Vec2::new(NPC_SIZE, NPC_SIZE),
+                );
+
+                if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                    velocity.velocity.x = -1. * 0.8;
+                } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
+                    velocity.velocity.x = 1. * 0.8;
+                } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                    velocity.velocity.y = -1. * 0.8;
+                } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                    velocity.velocity.y = 1. * 0.8;
+                }
+
+                if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
+                    velocity.velocity.x = 1. * 0.9;
+                } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                    velocity.velocity.x = -1. * 0.9;
+                } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                    velocity.velocity.y = -1. * 0.9;
+                } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                    velocity.velocity.y = 1. * 0.9;
+                }
+
+                if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
+                    velocity.velocity.x = 1. * 0.85;
+                } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                    velocity.velocity.x = -1. * 0.85;
+                } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                    velocity.velocity.y = -1. * 0.85;
+                } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                    velocity.velocity.y = 1. * 0.85;
+                }
+
+                velocity.velocity = velocity.velocity * deltat;
+                if velocity.xlock == 0 {
+                    npc_transform.translation.x = (npc_transform.translation.x
+                        + velocity.velocity.x)
+                        .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
+                }
+                if velocity.ylock == 0 {
+                    npc_transform.translation.y = (npc_transform.translation.y
+                        + velocity.velocity.y)
+                        .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
+                }
+
+                // Fixes Misalign
+                if npc_transform.translation.x != x || npc_transform.translation.y != y {
+                    npc_transform.translation.x = x;
+                    npc_transform.translation.y = y;
+                }
+                bat_transform.translation.x = npc_transform.translation.x - 5.;
+                bat_transform.translation.y = npc_transform.translation.y;
+                // face_transform.translation.x = npc_transform.translation.x;
+                // face_transform.translation.y = npc_transform.translation.y;
             }
+            //          }
+            //    }
         }
     }
 }
@@ -130,53 +200,52 @@ pub fn approach_ball(
     time: Res<Time>,
 ) {
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
-        if matches!(state, States::AggressionBall) {
-            for mut bat_transform in bat.iter_mut() {
-                //info!("Chasing Ball");
-                for ball_transform in ball.iter() {
-                    for mut face_transform in face.iter_mut() {
-                        npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
-                        let mut deltav = Vec2::splat(0.);
-                        if npc_transform.translation.x < ball_transform.translation.x {
-                            deltav.x += 1000.;
-                        }
-                        if npc_transform.translation.x > ball_transform.translation.x {
-                            deltav.x -= 1000.;
-                        }
-                        if npc_transform.translation.y < ball_transform.translation.y {
-                            deltav.y += 1000.;
-                        }
-                        if npc_transform.translation.y > ball_transform.translation.y {
-                            deltav.y -= 1000.;
-                        }
-
-                        let deltat = time.delta_seconds();
-                        let acc = NPC_ACCEL_RATE * deltat;
-                        velocity.velocity = if deltav.length() > 0. {
-                            (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                                .clamp_length_max(NPC_SPEED)
-                        } else if velocity.velocity.length() > acc {
-                            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-                        } else {
-                            Vec2::splat(0.)
-                        };
-                        velocity.velocity = velocity.velocity * deltat;
-                        if velocity.xlock == 0 {
-                            npc_transform.translation.x = (npc_transform.translation.x
-                                + velocity.velocity.x)
-                                .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
-                        }
-                        if velocity.ylock == 0 {
-                            npc_transform.translation.y = (npc_transform.translation.y
-                                + velocity.velocity.y)
-                                .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
-                        }
-
-                        bat_transform.translation.x = npc_transform.translation.x - 5.;
-                        bat_transform.translation.y = npc_transform.translation.y;
-                        face_transform.translation.x = npc_transform.translation.x;
-                        face_transform.translation.y = npc_transform.translation.y;
+        // if matches!(state, States::AggressionBall) {
+        for mut bat_transform in bat.iter_mut() {
+            //info!("Chasing Ball");
+            for ball_transform in ball.iter() {
+                for mut face_transform in face.iter_mut() {
+                    npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
+                    let mut deltav = Vec2::splat(0.);
+                    if npc_transform.translation.x < ball_transform.translation.x {
+                        deltav.x += 1000.;
                     }
+                    if npc_transform.translation.x > ball_transform.translation.x {
+                        deltav.x -= 1000.;
+                    }
+                    if npc_transform.translation.y < ball_transform.translation.y {
+                        deltav.y += 1000.;
+                    }
+                    if npc_transform.translation.y > ball_transform.translation.y {
+                        deltav.y -= 1000.;
+                    }
+
+                    let deltat = time.delta_seconds();
+                    let acc = NPC_ACCEL_RATE * deltat;
+                    velocity.velocity = if deltav.length() > 0. {
+                        (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                            .clamp_length_max(NPC_SPEED)
+                    } else if velocity.velocity.length() > acc {
+                        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                    } else {
+                        Vec2::splat(0.)
+                    };
+                    velocity.velocity = velocity.velocity * deltat;
+                    if velocity.xlock == 0 {
+                        npc_transform.translation.x = (npc_transform.translation.x
+                            + velocity.velocity.x)
+                            .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
+                    }
+                    if velocity.ylock == 0 {
+                        npc_transform.translation.y = (npc_transform.translation.y
+                            + velocity.velocity.y)
+                            .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
+                    }
+
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
+                    face_transform.translation.x = npc_transform.translation.x;
+                    face_transform.translation.y = npc_transform.translation.y;
                 }
             }
         }
@@ -211,7 +280,6 @@ pub fn evade_ball(
     ball: Query<&Transform, (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>)>,
     time: Res<Time>,
 ) {
-    let mut velocity_change = 0;
     for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
         if matches!(state, States::Evade) {
             for mut bat_transform in bat.iter_mut() {
@@ -278,7 +346,7 @@ pub fn avoid_collision(
         ),
     >,
 ) {
-    let npc_dimensions = vec2(NPC_SIZE, NPC_SIZE);
+    let npc_dimensions = Vec2::new(NPC_SIZE, NPC_SIZE);
     // Iterate over combinations of possible objects that NPC can possibly collide with
     for (npc_transform, mut velocity) in npcs.iter_mut() {
         let recliner_collision = bevy::sprite::collide_aabb::collide(
@@ -300,7 +368,7 @@ pub fn avoid_collision(
             Vec2::new(103., 107.),
         );
 
-        // If it is going to collide on the x-axis, lock x-axis movement
+        // If it is going to collide on the x-axis, lock x-axis moveme  nt
         if recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
             || recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
             || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Left)

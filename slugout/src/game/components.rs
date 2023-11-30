@@ -23,6 +23,7 @@ pub struct Background;
 #[derive(Component)]
 pub struct Ball{
     pub radius: f32,
+    pub elasticity: f32,
 }
 
 #[derive(Component)]
@@ -47,3 +48,14 @@ impl Colliding{
 pub struct Density{
     pub density: f32,
 }
+
+#[derive(Component)]
+pub struct Hitbox{
+    pub size: Vec2, 
+}
+
+#[derive(Component)]
+pub struct Aim;
+
+#[derive(Component)]
+pub struct Health;

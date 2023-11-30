@@ -1,54 +1,117 @@
-use bevy::{app::AppExit, prelude::*, window::ReceivedCharacter};
-use std::thread;
-use super::{despawn_screen, GameState, TEXT_COLOR};
+use crate::NetworkingState;
+
+use super::{despawn_screen, GameState, MultiplayerState, TEXT_COLOR};
+use bevy::{prelude::*, window::ReceivedCharacter};
+use serde::{Serialize, Deserialize};
+use std::net::{SocketAddr, UdpSocket};
 
 pub struct MultiplayerPlugin;
 
-mod server;
 mod client;
+mod server;
+
+pub struct Client {
+    pub address: SocketAddr,
+    pub username: String,
+}
+
+#[derive(Resource)]
+pub struct ClientList {
+    pub clients: Vec<Client>,
+}
 
 #[derive(Component)]
 enum MultiplayerButtonAction {
     HostGame,
     JoinGame,
-    Multiplayer,
     Back,
 }
 
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-enum MultiplayerState {
-    Main,
-    #[default]
-    Disabled,
+#[derive(Component)]
+enum LobbyButtonAction {
+    Start,
+    Back,
 }
-
-
 #[derive(Component)]
 struct SelectedOption;
 
+#[derive(Resource)]
+pub struct SocketAddress(pub String);
+
+#[derive(Resource)]
+pub struct ClientSocket(pub Option<UdpSocket>);
+
+#[derive(Resource)]
+pub struct ServerSocket(pub Option<UdpSocket>);
+
 #[derive(Component)]
-struct InputText(String);
+struct InputText(pub String);
 
+#[derive(Serialize, Deserialize)]
+struct ConnectRequest {}
 
+#[derive(Serialize, Deserialize)]
+struct ConnectResponse {
+    player_number: usize,
+}
+
+pub static mut USER_INPUT: Option<String> = None;
 
 impl Plugin for MultiplayerPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .add_state::<MultiplayerState>()
-        .add_systems(OnEnter(GameState::Multiplayer), multiplayer_setup)
-        .add_systems(OnExit(GameState::Multiplayer), despawn_screen::<OnMultiplayerScreen>)
-        .add_systems(
-            Update,
-            (multiplayer_menu_action, button_system, update_user_input).run_if(in_state(GameState::Multiplayer)),
-          
-        ); 
+        app.add_state::<MultiplayerState>()
+            .add_state::<NetworkingState>()
+            .add_systems(OnEnter(GameState::Multiplayer), multiplayer_setup)
+            .add_systems(OnEnter(MultiplayerState::Main), multiplayer_setup)
+            .add_systems(
+                OnExit(MultiplayerState::Disabled),
+                despawn_screen::<OnMultiplayerScreen>,
+            )
+            .add_systems(
+                OnExit(GameState::Multiplayer),
+                despawn_screen::<OnMultiplayerScreen>,
+            )
+            .add_systems(
+                OnExit(MultiplayerState::Main),
+                despawn_screen::<OnMultiplayerScreen>,
+            )
+            .add_systems(
+                OnExit(MultiplayerState::Lobby),
+                despawn_screen::<OnLobbyScreen>,
+            )
+            .add_systems(OnEnter(MultiplayerState::Lobby), lobby_setup)
+            .add_systems(
+                Update,
+                (multiplayer_menu_action, button_system, update_user_input)
+                    .run_if(in_state(GameState::Multiplayer))
+                    .run_if(in_state(MultiplayerState::Disabled)),
+            )
+            .add_systems(
+                Update,
+                (lobby_menu_action, button_system)
+                    .run_if(in_state(GameState::Multiplayer))
+                    .run_if(in_state(MultiplayerState::Lobby)),
+            )
+            .add_systems(OnEnter(NetworkingState::Join), client::create_client)
+            /* .add_systems(
+                Update,
+                client::update.run_if(in_state(NetworkingState::Join)),
+            )*/
+            .add_systems(OnEnter(NetworkingState::Host), server::create_server)
+            .add_systems(OnEnter(NetworkingState::Host), client::create_client)
+            .add_systems(
+                Update,
+                server::update.run_if(in_state(NetworkingState::Host)),
+            );
     }
-
 }
 
 // Tag component used to tag entities added on the multiplayer  screen
 #[derive(Component)]
 struct OnMultiplayerScreen;
+// Tag component used to tag entities added on the multiplayer  screen
+#[derive(Component)]
+struct OnLobbyScreen;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
@@ -72,9 +135,7 @@ fn button_system(
     }
 }
 
-
-
-fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn multiplayer_setup(mut commands: Commands, _asset_server: Res<AssetServer>) {
     // Common style for all buttons on the screen
     let button_style = Style {
         width: Val::Px(250.0),
@@ -89,7 +150,13 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         color: TEXT_COLOR,
         ..default()
     };
-    
+
+    commands.insert_resource(SocketAddress(String::new()));
+    commands.insert_resource(ServerSocket(None));
+    commands.insert_resource(ClientSocket(None));
+    commands.insert_resource(ClientList {
+        clients: Vec::new(),
+    });
 
     commands
         .spawn((
@@ -107,22 +174,20 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             OnMultiplayerScreen,
         ))
         // .insert(InputText(String::new()))
-        .with_children(|parent| { 
-            parent 
-                .spawn(
-                    NodeBundle { 
-                        style: Style {
-                            width: Val::Px(250.0),
-                            height: Val::Px(40.0),
-                            margin: UiRect::all(Val::Px(20.0)),
-                            justify_content: JustifyContent::Center,
-                            flex_direction: FlexDirection::Column,
-                            ..default()
-                        },
-                        background_color: Color::NONE.into(),
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(250.0),
+                        height: Val::Px(40.0),
+                        margin: UiRect::all(Val::Px(20.0)),
+                        justify_content: JustifyContent::Center,
+                        flex_direction: FlexDirection::Column,
                         ..default()
-                    }
-                )
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
                 .with_children(|parent| {
                     parent.spawn(
                         TextBundle::from_section(
@@ -138,30 +203,31 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             ..default()
                         }),
                     );
-                    parent.spawn(TextBundle::from_section(
-                            String::new().to_string(),
-                            TextStyle {
-                                font_size: 30.0,
-                                color: TEXT_COLOR,
+                    parent
+                        .spawn(
+                            TextBundle::from_section(
+                                String::new().to_string(),
+                                TextStyle {
+                                    font_size: 30.0,
+                                    color: TEXT_COLOR,
+                                    ..default()
+                                },
+                            )
+                            .with_style(Style {
+                                margin: UiRect::all(Val::Px(10.0)),
                                 ..default()
-                            },
-                           
+                            }),
                         )
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(10.0)),
-                            ..default()
-                        }),
-                    )
-                    .insert(InputText(String::new()));
-                
-                parent
+                        .insert(InputText(String::new()));
+
+                    parent
                         .spawn((
                             ButtonBundle {
                                 style: button_style.clone(),
                                 background_color: NORMAL_BUTTON.into(),
                                 ..default()
                             },
-                            MultiplayerButtonAction::HostGame,
+                            MultiplayerButtonAction::JoinGame,
                         ))
                         .with_children(|parent| {
                             parent.spawn(TextBundle::from_section(
@@ -169,7 +235,7 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 button_text_style.clone(),
                             ));
                         });
-                    });
+                });
         })
         .with_children(|parent| {
             parent
@@ -228,49 +294,34 @@ fn multiplayer_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             MultiplayerButtonAction::Back,
                         ))
                         .with_children(|parent| {
-                            parent.spawn(TextBundle::from_section(
-                                "Back",
-                                button_text_style.clone(),
-                            ));
+                            parent
+                                .spawn(TextBundle::from_section("Back", button_text_style.clone()));
                         });
                 });
         });
 }
-
-
 
 fn multiplayer_menu_action(
     interaction_query: Query<
         (&Interaction, &MultiplayerButtonAction),
         (Changed<Interaction>, With<Button>),
     >,
-    mut app_exit_events: EventWriter<AppExit>,
     mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut network_state: ResMut<NextState<NetworkingState>>,
 ) {
     for (interaction, multiplayer_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
             match multiplayer_button_action {
                 MultiplayerButtonAction::HostGame => {
-                    let server_thread = thread::spawn(|| {
-                    let _ = server::create_server();
-                    });
-                    
-                    let client_thread = thread::spawn(|| {
-                        let _ = client::create_client();
-                    });
-                
-                    server_thread.join().unwrap();
-                    client_thread.join().unwrap();
-                } //for right now HostGame closes the game
-                MultiplayerButtonAction::JoinGame => app_exit_events.send(AppExit),
-                MultiplayerButtonAction::Multiplayer => 
-                {
-                    multiplayer_state.set(MultiplayerState::Disabled);
-                    game_state.set(GameState::Multiplayer);
+                    multiplayer_state.set(MultiplayerState::Lobby);
+                    network_state.set(NetworkingState::Host);
                 }
-                MultiplayerButtonAction::Back => 
-                {
+                MultiplayerButtonAction::JoinGame => {
+                    multiplayer_state.set(MultiplayerState::Lobby);
+                    network_state.set(NetworkingState::Join);
+                }
+                MultiplayerButtonAction::Back => {
                     multiplayer_state.set(MultiplayerState::Disabled);
                     game_state.set(GameState::Setup);
                 }
@@ -279,19 +330,193 @@ fn multiplayer_menu_action(
     }
 }
 
-fn update_user_input(mut char_input_events: EventReader<ReceivedCharacter>, keyboard: Res<Input<KeyCode>>, mut textbox: Query<(&mut Text, &mut InputText), With<InputText>>,) {
-
+fn update_user_input(
+    mut char_input_events: EventReader<ReceivedCharacter>,
+    keyboard: Res<Input<KeyCode>>,
+    mut textbox: Query<(&mut Text, &mut InputText), With<InputText>>,
+    mut server_address: ResMut<SocketAddress>,
+) {
     let (mut single_box, mut user_input) = textbox.single_mut();
     for event in char_input_events.iter() {
-        if keyboard.pressed(KeyCode::Back){
+        if keyboard.pressed(KeyCode::Back) {
             single_box.sections[0].value.pop();
             user_input.0.pop();
             info!("{}", user_input.0);
-        }
-        else{
+        } else {
             single_box.sections[0].value.push(event.char);
             user_input.0.push(event.char);
             info!("{}", user_input.0);
+        }
+        server_address.0 = single_box.sections[0].value.clone();
+    }
+}
+
+fn lobby_setup(mut commands: Commands, client_list: ResMut<ClientList>) {
+    // Common style for all buttons on the screen
+    let button_style = Style {
+        width: Val::Px(250.0),
+        height: Val::Px(65.0),
+        margin: UiRect::all(Val::Px(20.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+    let button_text_style = TextStyle {
+        font_size: 40.0,
+        color: TEXT_COLOR,
+        ..default()
+    };
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Row,
+                    ..default()
+                },
+                ..default()
+            },
+            OnLobbyScreen,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(250.0),
+                        height: Val::Px(40.0),
+                        margin: UiRect::all(Val::Px(20.0)),
+                        justify_content: JustifyContent::Center,
+                        flex_direction: FlexDirection::Column,
+                        ..default()
+                    },
+                    background_color: Color::NONE.into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn(
+                        TextBundle::from_section(
+                            "Lobby",
+                            TextStyle {
+                                font_size: 60.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
+                    );
+                    // Display the user input
+                    let user_input_text = unsafe {
+                        if let Some(user_input) = &USER_INPUT {
+                            user_input.clone()
+                        } else {
+                            String::new()
+                        }
+                    };
+                    parent.spawn(
+                        TextBundle::from_section(
+                            format!("IP: {}", user_input_text),
+                            TextStyle {
+                                font_size: 30.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
+                    );
+                    parent.spawn(
+                        TextBundle::from_section(
+                            format!("Players: -"),
+                            TextStyle {
+                                font_size: 30.0,
+                                color: TEXT_COLOR,
+                                ..default()
+                            },
+                        )
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
+                    );
+                    for (i, client) in client_list.clients.iter().enumerate() {
+                        parent.spawn(
+                            TextBundle::from_section(
+                                format!("Player {}: {}", i + 1, client.username),
+                                TextStyle {
+                                    font_size: 20.0,
+                                    color: Color::WHITE,
+                                    ..default()
+                                },
+                            )
+                            .with_style(Style {
+                                margin: UiRect::all(Val::Px(50.0)),
+                                ..default()
+                            }),
+                        );
+                    }
+
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            LobbyButtonAction::Start,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Start",
+                                button_text_style.clone(),
+                            ));
+                        });
+
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            LobbyButtonAction::Back,
+                        ))
+                        .with_children(|parent| {
+                            parent
+                                .spawn(TextBundle::from_section("Back", button_text_style.clone()));
+                        });
+                });
+        });
+}
+
+fn lobby_menu_action(
+    interaction_query: Query<
+        (&Interaction, &LobbyButtonAction),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
+) {
+    for (interaction, lobby_button_action) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            match lobby_button_action {
+                LobbyButtonAction::Start => {
+                    // TODO: Add code for starting the game here
+                    // For now, just print a message
+                    println!("Starting the game!");
+                    multiplayer_state.set(MultiplayerState::Game);
+                }
+                LobbyButtonAction::Back => {
+                    multiplayer_state.set(MultiplayerState::Main);
+                }
+            }
         }
     }
 }

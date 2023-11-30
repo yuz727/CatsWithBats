@@ -75,8 +75,6 @@ impl Plugin for MenuPlugin {
     }
 }
 
-
-
 // This system handles changing all buttons color based on mouse interaction
 fn button_system(
     mut interaction_query: Query<
@@ -267,9 +265,9 @@ fn settings_menu_setup(mut commands: Commands) {
                     ..default()
                 })
                 /*  Needs changed to this when SettingsDisplay & SettingsSound are implemented
-                        (MenuButtonAction::SettingsDisplay, "Display"),
-                        (MenuButtonAction::SettingsSound, "Sound"),
-                        (MenuButtonAction::BackToMainMenu, "Back"), */
+                (MenuButtonAction::SettingsDisplay, "Display"),
+                (MenuButtonAction::SettingsSound, "Sound"),
+                (MenuButtonAction::BackToMainMenu, "Back"), */
                 .with_children(|parent| {
                     for (action, text) in [
                         (MenuButtonAction::BackToMainMenu, "Display"),
@@ -295,7 +293,6 @@ fn settings_menu_setup(mut commands: Commands) {
                 });
         });
 }
-
 
 fn menu_action(
     interaction_query: Query<
