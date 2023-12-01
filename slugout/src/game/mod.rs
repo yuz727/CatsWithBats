@@ -13,7 +13,7 @@ mod npc_events;
 // mod npc_tree;
 mod pathfinding;
 mod player_movement;
-mod tree;
+// mod tree;
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
 const TITLE: &str = "Slugout";
@@ -34,7 +34,7 @@ impl Plugin for GamePlugin {
         }))
         .add_systems(OnEnter(GameState::Game), setup)
         .add_systems(OnEnter(MultiplayerState::Game), setup)
-        //.add_plugins(npc::NPCPlugin)
+        // .add_plugins(tree::NPCTreePlugin)
         .add_plugins(npc_bully::NPCBullyPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(
