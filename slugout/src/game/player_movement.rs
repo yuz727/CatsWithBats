@@ -38,12 +38,12 @@ pub fn move_player(
         (&mut Transform, &mut PlayerVelocity),
         (With<Player>, Without<Face>, Without<Bat>),
     >,
-    mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
+    //  mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
     mut bat: Query<&mut Transform, (With<Bat>, Without<Player>, Without<Face>)>,
     time: Res<Time>,
 ) {
     let (mut transform, mut velocity) = player.single_mut();
-    let mut face_transform = face.single_mut();
+    //  let mut face_transform = face.single_mut();
     //let mut bat_transform = bat.single_mut();
 
     /////////////////////////////////////////////////////////////// with objects
@@ -145,8 +145,8 @@ pub fn move_player(
         720. / 2. - PLAYER_SIZE / 2.,
     );
 
-    face_transform.translation.x = transform.translation.x;
-    face_transform.translation.y = transform.translation.y;
+    // face_transform.translation.x = transform.translation.x;
+    // face_transform.translation.y = transform.translation.y;
     //bat_transform.translation.x = transform.translation.x - 5.;
     //bat_transform.translation.y = transform.translation.y;
 }
@@ -157,14 +157,14 @@ pub fn move_player_mult(
         (&mut Transform, &mut PlayerVelocity),
         (With<Player>, Without<Face>, Without<Bat>),
     >,
-    mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
+    //    mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
     mut bat: Query<&mut Transform, (With<Bat>, Without<Player>, Without<Face>)>,
     mut client_socket: ResMut<ClientSocket>,
     socket_address: Res<SocketAddress>,
     time: Res<Time>,
 ) {
     let (mut transform, mut velocity) = player.single_mut();
-    let mut face_transform = face.single_mut();
+    //  let mut face_transform = face.single_mut();
     //let mut bat_transform = bat.single_mut();
 
     /////////////////////////////////////////////////////////////// with objects
@@ -265,8 +265,8 @@ pub fn move_player_mult(
         720. / 2. - PLAYER_SIZE / 2.,
     );
 
-    face_transform.translation.x = transform.translation.x;
-    face_transform.translation.y = transform.translation.y;
+    // face_transform.translation.x = transform.translation.x;
+    // face_transform.translation.y = transform.translation.y;
     //bat_transform.translation.x = transform.translation.x - 5.;
     //bat_transform.translation.y = transform.translation.y;
     // Check if the position has changed before sending a message

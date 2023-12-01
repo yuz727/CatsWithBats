@@ -10,10 +10,10 @@ pub mod components;
 mod npc;
 mod npc_bully;
 mod npc_events;
-//mod npc_tree;
+// mod npc_tree;
 mod pathfinding;
 mod player_movement;
-
+// mod tree;
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
 const TITLE: &str = "Slugout";
@@ -34,7 +34,7 @@ impl Plugin for GamePlugin {
         }))
         .add_systems(OnEnter(GameState::Game), setup)
         .add_systems(OnEnter(MultiplayerState::Game), setup)
-        //.add_plugins(npc::NPCPlugin)
+        // .add_plugins(tree::NPCTreePlugin)
         .add_plugins(npc_bully::NPCBullyPlugin)
         .add_plugins(ball::BallPlugin)
         .add_systems(
@@ -60,13 +60,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
 
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("Face.png"),
-            transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
-            ..default()
-        })
-        .insert(Face);
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("Face.png"),
+    //         transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
+    //         ..default()
+    //     })
+    //     .insert(Face);
 
     commands
         .spawn(SpriteBundle {
