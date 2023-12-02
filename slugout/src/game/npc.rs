@@ -1,3 +1,4 @@
+use crate::game::npc_bully::*;
 /// Imports
 use crate::game::npc_events::*;
 use crate::game::pathfinding::*;
@@ -5,6 +6,7 @@ use crate::GameState;
 
 use bevy::prelude::*;
 use bevy::time::common_conditions::on_fixed_timer;
+use bevy::time::common_conditions::on_timer;
 use rand::prelude::*;
 use std::time::Duration;
 
@@ -104,22 +106,44 @@ impl Path {
 }
 
 /// Plugin for modular import
-pub struct NPCTreePlugin;
+pub struct NPCPlugin {
+    pub bully_mode: bool,
+}
 
-impl Plugin for NPCTreePlugin {
+impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), load_npc);
-        app.add_systems(
-            FixedUpdate,
-            selection.run_if(on_fixed_timer(Duration::from_millis(500))),
-        );
-        app.add_systems(
-            Update,
-            perform_a_star.run_if(on_fixed_timer(Duration::from_millis(50))),
-        );
-        app.add_systems(Update, sidestep);
-        app.add_systems(Update, swing);
-        app.add_systems(Update, target_check);
+        if self.bully_mode {
+            app.add_systems(
+                Update,
+                set_path
+                    .run_if(in_state(GameState::Game))
+                    .run_if(on_timer(Duration::from_secs(10))),
+            );
+            app.add_systems(
+                Update,
+                approach_player
+                    .run_if(in_state(GameState::Game))
+                    .run_if(on_fixed_timer(Duration::from_millis(70))), // Timer here to control the speed of the NPC
+            );
+            app.add_systems(Update, bully_swing.run_if(in_state(GameState::Game)));
+        } else {
+            app.add_systems(
+                FixedUpdate,
+                selection
+                    .run_if(in_state(GameState::Game))
+                    .run_if(on_fixed_timer(Duration::from_millis(500))),
+            );
+            app.add_systems(
+                Update,
+                perform_a_star
+                    .run_if(in_state(GameState::Game))
+                    .run_if(on_fixed_timer(Duration::from_millis(50))),
+            );
+            app.add_systems(Update, sidestep.run_if(in_state(GameState::Game)));
+            app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
+            app.add_systems(Update, target_check.run_if(in_state(GameState::Game)));
+        }
     }
 }
 
@@ -167,7 +191,7 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// For a more detailed version, check the spec sheet
 /// The acutal movement will follow the update ticks, the logic below is simply for Target setting
 /// Swinging will follow by the target check (Whether it is close to a target)
-/// Root -> Danger Check -> Difficulty Check -> Swing Cooldown Check -> Set goal to closest ball & Aggression Mode,
+/// Root -> Danger Check -> Difficulty Check -> Swing Cooldown Check -> Set goal to closest ball & Aggression Mode
 ///                      -> Sidestep & Danger Mode
 ///      -> Player Close Check -> Difficulty Check -> Swing Cooldown Check -> Set goal to player & Aggression Mode
 ///      -> Difficulty Check -> Set goal to random ball & Aggression Mode
