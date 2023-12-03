@@ -1,4 +1,5 @@
 /// Imports
+use crate::game::npc::States;
 use crate::game::npc::*;
 use crate::game::pathfinding::*;
 
@@ -43,8 +44,96 @@ pub fn danger_check(
 }
 
 /// NPC movement in danger state, sidestep to avoid getting hit by ball
-pub fn sidestep(mut npc: Query<(&mut Transform, &mut NPCVelocity), With<NPC>>) {
-    for (npc_transform, velocity) in npc.iter_mut() {}
+pub fn sidestep(
+    mut npc: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut States,
+            &mut Path,
+            &mut DangerTimer,
+        ),
+        (With<NPC>, Without<NPCBat>, Without<Player>),
+    >,
+    mut bat: Query<&mut Transform, (With<NPCBat>, Without<NPC>, Without<Player>)>,
+    player: Query<&Transform, (With<Player>, Without<NPCBat>, Without<NPC>)>,
+    time: Res<Time>,
+) {
+    for (mut npc_transform, mut velocity, mut state, path, mut danger_timer) in npc.iter_mut() {
+        if state.is_danger() {
+            danger_timer.tick(time.delta());
+            if danger_timer.just_finished() {
+                danger_timer.reset();
+                for player_transform in player.iter() {
+                    let mut bat_transform = bat.single_mut();
+
+                    let mut deltav = Vec2::splat(0.);
+                    let mut rand = thread_rng();
+                    let rand_result = rand.gen_bool(0.5);
+
+                    if path.ball.x < 0. && path.ball.y < 0. {
+                        deltav.x -= 1000.;
+                        deltav.y += 1000.;
+                    } else if path.ball.x < 0. && path.ball.y > 0. {
+                        deltav.x += 1000.;
+                        deltav.y += 1000.;
+                    } else if path.ball.x > 0. && path.ball.y < 0. {
+                        deltav.x -= 1000.;
+                        deltav.y -= 1000.;
+                    } else if path.ball.x > 0. && path.ball.y > 0. {
+                        deltav.x += 1000.;
+                        deltav.y -= 1000.;
+                    } else if path.ball.x < 0. {
+                        deltav.y += 1000.;
+                    } else if path.ball.x > 0. {
+                        deltav.y -= 1000.;
+                    } else if path.ball.y < 0. {
+                        deltav.x -= 1000.;
+                    } else if path.ball.y > 0. {
+                        deltav.x += 1000.;
+                    }
+                    if rand_result {
+                        deltav.x = 0. - deltav.x;
+                        deltav.y = 0. - deltav.y;
+                    }
+                    info!("x: {}", deltav.x);
+                    info!("y: {}", deltav.y);
+                    let deltat = time.delta_seconds();
+                    let acc = NPC_ACCEL_RATE * deltat;
+                    velocity.velocity = if deltav.length() > 0. {
+                        (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                            .clamp_length_max(NPC_SPEED)
+                    } else if velocity.velocity.length() > acc {
+                        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                    } else {
+                        Vec2::splat(0.)
+                    };
+
+                    velocity.velocity = collision_check(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                    velocity.velocity = velocity.velocity * deltat;
+
+                    npc_transform.translation.x = (npc_transform.translation.x
+                        + velocity.velocity.x)
+                        .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
+                    npc_transform.translation.y = (npc_transform.translation.y
+                        + velocity.velocity.y)
+                        .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
+
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
+                } // match: Danger
+            }
+            // match
+            else {
+                state.to_default();
+                return;
+            }
+        }
+    } // for
 }
 
 /// Return whether player is < 200 pixels in distance to the NPC
@@ -56,7 +145,7 @@ pub fn player_proximity_check(npc_translation: Vec3, player_translation: Vec3) -
     return false;
 }
 
-/// Return whether
+/// Return whether there is a current point for the npc to go to
 pub fn tag_is_null(path: &Path) -> bool {
     // Implement TAG null check logic
     if path.goal.x == -1. && path.goal.y == -1. {
@@ -65,7 +154,7 @@ pub fn tag_is_null(path: &Path) -> bool {
     return false;
 }
 
-/// Find the closest ball to NPC, and set the goal to it.
+/// Find the closest ball to NPC, and set the goal to it
 pub fn set_tag_to_closest_ball(
     npc_translation: Vec3,
     path: &mut Path,
@@ -75,22 +164,24 @@ pub fn set_tag_to_closest_ball(
     >,
 ) -> bool {
     let mut ret = Vec2::splat(10000000000.);
-    for (ball_transform, _, _) in ball_query.iter() {
+    let mut new_ball_vel = Vec2::splat(-1.);
+    for (ball_transform, velocity, _) in ball_query.iter() {
         if ball_transform.translation.distance(npc_translation)
             < npc_translation.truncate().distance(ret)
         {
             ret = ball_transform.translation.truncate();
+            new_ball_vel = velocity.velocity.truncate();
         }
     }
     if ret.x == 10000000000. && ret.y == 10000000000. {
         return false;
     }
     path.goal = ret;
+    path.set_new_ball(new_ball_vel);
     return true;
 }
 
-pub fn target_check() {}
-/// Return a random check on difficulty
+/// Return a check on difficulty
 pub fn difficulty_check(difficulty: i32) -> bool {
     let mut rand = thread_rng();
     if difficulty > rand.gen_range(0.0..100.0) as i32 {
@@ -99,10 +190,7 @@ pub fn difficulty_check(difficulty: i32) -> bool {
     return false;
 }
 
-// fn aggression_check(mut npcs: Query<&States, With<NPC>>) -> bool {
-//     return true;
-// }
-
+/// Return whether the NPC can swing at the moment
 pub fn swing_cooldown_check(swing_timer: &mut NPCTimer, time: &Res<Time>) -> bool {
     swing_timer.tick(time.delta());
     if swing_timer.just_finished() {
@@ -111,19 +199,39 @@ pub fn swing_cooldown_check(swing_timer: &mut NPCTimer, time: &Res<Time>) -> boo
     return false;
 }
 
+/// Set the goal to hind behind the closest object to the NPC
 pub fn set_tag_to_closest_object(npc_translation: Vec3, path: &mut Path) -> bool {
-    // Implement setting TAG to the closest object logic
-    // return NodeStatus::Success;
-    let recliner_distance = npc_translation.distance(Vec3::new(-60., 210., 1.));
-    let table_distance = npc_translation.distance(Vec3::new(120., 170., 1.));
-    let tv_distance = npc_translation.distance(Vec3::new(0., -250., 1.));
-    let recliner_size = Vec2::new(109., 184.);
-    let recliner_translation = Vec3::new(-60., 210., 1.);
-    let tv_size = Vec2::new(164., 103.);
-    let tv_translation = Vec3::new(0., -245., 1.);
-    let table_size = Vec2::new(103., 107.);
-    let table_translation = Vec3::new(120., 170., 1.);
-
+    let mut rand = thread_rng();
+    let recliner = Vec3::new(-60., 210., 1.);
+    let tv = Vec3::new(0., -250., 1.);
+    let side_table = Vec3::new(120., 170., 1.);
+    let recliner_distance = npc_translation.distance(recliner);
+    let table_distance = npc_translation.distance(side_table);
+    let tv_distance = npc_translation.distance(tv);
+    let choice = rand.gen_range(0..4);
+    let closest_coords: Vec2;
+    if recliner_distance < table_distance {
+        if recliner_distance < tv_distance {
+            closest_coords = recliner.truncate();
+        } else {
+            closest_coords = tv.truncate();
+        }
+    } else {
+        if table_distance < tv_distance {
+            closest_coords = side_table.truncate();
+        } else {
+            closest_coords = tv.truncate();
+        }
+    }
+    if choice == 0 {
+        path.goal = Vec2::new(closest_coords.x, closest_coords.y + 192.);
+    } else if choice == 1 {
+        path.goal = Vec2::new(closest_coords.x - 168., closest_coords.y);
+    } else if choice == 2 {
+        path.goal = Vec2::new(closest_coords.x, closest_coords.y - 192.);
+    } else if choice == 3 {
+        path.goal = Vec2::new(closest_coords.x + 168., closest_coords.y);
+    }
     return true;
 }
 
@@ -145,17 +253,16 @@ pub fn set_a_star(npc_translation: Vec3, path: &mut Path, maps: &Maps) {
 /// Movement for Aggression and Evade state, move along the path generated by A*
 pub fn perform_a_star(
     mut npcs: Query<
-        (&mut Transform, &mut NPCVelocity, &mut Path, &Maps),
+        (&mut Transform, &mut NPCVelocity, &mut Path),
         (With<NPC>, Without<Player>, Without<NPCBat>),
     >,
     mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>)>,
     player: Query<&Transform, (With<Player>, Without<NPCBat>, Without<NPC>)>,
     time: Res<Time>,
 ) {
-    for (mut npc_transform, mut velocity, mut path, maps) in npcs.iter_mut() {
+    for (mut npc_transform, mut velocity, mut path) in npcs.iter_mut() {
         for mut bat_transform in bat.iter_mut() {
             for player_transform in player.iter() {
-                //  for mut face_transform in face.iter_mut() {
                 let Some(Vec2 { x, y }) = path.path.pop() else {
                     return;
                 };
@@ -209,22 +316,83 @@ pub fn perform_a_star(
     } // for
 }
 
+/// Swing and hit the ball
 pub fn swing(
-    mut npcs: Query<
+    mut npc: Query<
         (
             &mut Transform,
-            &mut NPCVelocity,
-            &mut Path,
-            &Maps,
-            &Difficulty,
             &mut AnimationTimer,
+            &mut NPCTimer,
+            &Difficulty,
         ),
-        With<NPC>,
+        (With<NPC>, Without<Ball>, Without<NPCBat>, Without<Player>),
     >,
-    ball_query: Query<&Transform, With<Ball>>,
+    mut ball_query: Query<
+        (&mut Transform, &mut BallVelocity, &mut Ball),
+        (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
+    >,
+    player: Query<&Transform, (With<Player>, Without<NPC>, Without<NPCBat>, Without<Ball>)>,
+    mut bat: Query<&mut Transform, (With<NPCBat>, Without<NPC>, Without<Ball>, Without<Player>)>,
+    time: Res<Time>,
 ) {
     // Implement swing logic
-    // return NodeStatus::Success;
+    for (npc_transform, mut ani_timer, mut swing_timer, difficulty) in npc.iter_mut() {
+        for mut bat_transform in bat.iter_mut() {
+            for player_transform in player.iter() {
+                for (ball_transform, mut ball_velocity, ball) in ball_query.iter_mut() {
+                    if ball_transform
+                        .translation
+                        .distance(npc_transform.translation)
+                        < 75.
+                        && swing_cooldown_check(&mut swing_timer, &time)
+                    {
+                        ball_velocity.velocity = Vec3::splat(0.);
+                        let new_velocity = hit_accuracy(
+                            npc_transform.translation,
+                            player_transform.translation,
+                            difficulty.difficulty,
+                        );
+
+                        ball_velocity.velocity = new_velocity * ball.elasticity;
+
+                        bat_transform.scale.y = -0.13;
+                    }
+                }
+                if ani_timer.just_finished() {
+                    bat_transform.scale.y = 0.13;
+                } else {
+                    ani_timer.tick(time.delta());
+                }
+            }
+        }
+    }
+}
+
+/// Determine where to send the ball, deviate the movement vector depending on the difficulty
+fn hit_accuracy(npc_translation: Vec3, player_translation: Vec3, difficulty: i32) -> Vec3 {
+    let x_diff = player_translation.x - npc_translation.x;
+    let y_diff = player_translation.y - npc_translation.y;
+    let mut ball_velocity = Vec3::new(x_diff, y_diff, 0.);
+    // Implement Hit accuracy deviation based on difficulty
+    let mut rand = thread_rng();
+    if rand.gen_bool(0.5) {
+        if y_diff > x_diff {
+            ball_velocity.y = ball_velocity.y - (100 - difficulty) as f32;
+        } else {
+            ball_velocity.x = ball_velocity.x - (100 - difficulty) as f32;
+        }
+    } else {
+        if y_diff > x_diff {
+            ball_velocity.y = ball_velocity.y + (100 - difficulty) as f32;
+        } else {
+            ball_velocity.x = ball_velocity.x + (100 - difficulty) as f32;
+        }
+    }
+
+    ball_velocity = ball_velocity.normalize();
+    ball_velocity.x = ball_velocity.x * 500.;
+    ball_velocity.y = ball_velocity.y * 500.;
+    return ball_velocity;
 }
 
 /// Check whether collision happened, modify velocity if needed
@@ -233,7 +401,7 @@ pub fn collision_check(
     mut velocity: Vec2,
     player_translation: Vec3,
 ) -> Vec2 {
-    let recliner_size = Vec2::new(112., 184.);
+    let recliner_size = Vec2::new(109., 184.);
     let recliner_translation = Vec3::new(-60., 210., 1.);
     let recliner = bevy::sprite::collide_aabb::collide(
         recliner_translation,
@@ -242,7 +410,7 @@ pub fn collision_check(
         Vec2::new(NPC_SIZE, NPC_SIZE),
     );
 
-    let tv_size = Vec2::new(164., 104.);
+    let tv_size = Vec2::new(164., 103.);
     let tv_translation = Vec3::new(0., -250., 1.);
     let tv_stand = bevy::sprite::collide_aabb::collide(
         tv_translation,
@@ -251,7 +419,7 @@ pub fn collision_check(
         Vec2::new(NPC_SIZE, NPC_SIZE),
     );
 
-    let table_size = Vec2::new(104., 108.);
+    let table_size = Vec2::new(103., 107.);
     let table_translation = Vec3::new(120., 170., 1.);
     let side_table = bevy::sprite::collide_aabb::collide(
         table_translation,
