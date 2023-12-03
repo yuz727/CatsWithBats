@@ -151,13 +151,13 @@ pub fn move_player(
     //bat_transform.translation.y = transform.translation.y;
 }
 
-pub fn player_NPC_collisions(
-    mut player: Query<(&mut Transform, &mut PlayerVelocity, (With<Player>, Without<Hitbox>, Without<Bat>, Without<Ball>, Without<NPC>)>,
-    mut NPCquery: Query<(&mut Transform, &mut NPCVelocity, (With<NPC>, Without<Hitbox>, Without<Bat>, Without<Ball>, Without<Player>)>,
+/*pub fn player_NPC_collisions(
+    mut player: Query<(&mut Transform, &mut PlayerVelocity, (With<Player>, Without<Bat>, Without<NPC>))>,
+    mut NPCquery: Query<(&mut Transform, &mut NPCVelocity, (With<NPC>, Without<Bat>, Without<Player>))>,
 ){
     let (mut player_transform, mut player_velocity) = player.single_mut();
     
-}
+}*/
 
 pub fn move_player_mult(
     input: Res<Input<KeyCode>>,

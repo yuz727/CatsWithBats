@@ -580,7 +580,7 @@ fn swing(
         (With<Hitbox>, Without<Ball>, Without<Ball>, Without<Player>),
     >,
     window: Query<&Window>,
-    
+    player: Query<&Transform, (With<Player>, Without<Hitbox>, Without<Bat>, Without<Ball>)>,
 ) {
     let (mut hitbox_transform, hitbox) = hitbox.single_mut();
 
