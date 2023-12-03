@@ -115,15 +115,27 @@ impl Path {
 }
 
 impl States {
-    pub fn to_default(&mut self) {
-        *self = match std::mem::replace(self, States::Default) {
-            States::Danger => States::Default,
-            v => v,
-        }
-    }
+    // pub fn to_default(&mut self) {
+    //     *self = match std::mem::replace(self, States::Default) {
+    //         States::Danger => States::Default,
+    //         v => v,
+    //     }
+    // }
     pub fn is_danger(&self) -> bool {
         match *self {
             States::Danger => true,
+            _ => false,
+        }
+    }
+    pub fn is_aggression(&self) -> bool {
+        match *self {
+            States::Aggression => true,
+            _ => false,
+        }
+    }
+    pub fn is_evade(&self) -> bool {
+        match *self {
+            States::Evade => true,
             _ => false,
         }
     }
@@ -146,9 +158,7 @@ impl Plugin for NPCPlugin {
             );
             app.add_systems(
                 Update,
-                approach_player
-                    .run_if(in_state(GameState::Game))
-                    .run_if(on_fixed_timer(Duration::from_millis(50))), // Timer here to control the speed of the NPC
+                approach_player.run_if(in_state(GameState::Game)), // Timer here to control the speed of the NPC
             );
             app.add_systems(Update, bully_swing.run_if(in_state(GameState::Game)));
         } else {
@@ -156,13 +166,12 @@ impl Plugin for NPCPlugin {
                 FixedUpdate,
                 selection
                     .run_if(in_state(GameState::Game))
-                    .run_if(on_fixed_timer(Duration::from_millis(500))),
+                    .run_if(on_fixed_timer(Duration::from_millis(500)))
+                    .after(perform_a_star),
             );
             app.add_systems(
                 Update,
-                perform_a_star
-                    .run_if(in_state(GameState::Game))
-                    .run_if(on_fixed_timer(Duration::from_millis(50))),
+                perform_a_star.run_if(in_state(GameState::Game)), //.run_if(on_fixed_timer(Duration::from_millis(17))),
             );
             app.add_systems(Update, sidestep.run_if(in_state(GameState::Game)));
             app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
@@ -216,12 +225,12 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// For a more detailed version, check the spec sheet
 /// The acutal movement will follow the update ticks, the logic below is simply for Target setting
 /// Swinging will follow by the target check (Whether it is close to a target)
-/// Root -> Danger Check -> Difficulty Check -> Set goal to closest ball & Aggression Mode
-///                      -> Sidestep & Danger Mode
-///      -> Player Close Check -> Difficulty Check -> Set goal to player & Aggression Mode
-///      -> Difficulty Check -> Set goal to random ball & Aggression Mode
-///      -> Evade Check -> Set goal to behind the closest object
-///                     -> Idle
+//  Root -> Danger Check -> Difficulty Check -> Set goal to closest ball & Aggression Mode
+//                      -> Sidestep & Danger Mode
+//      -> Player Close Check -> Difficulty Check -> Set goal to player & Aggression Mode
+//      -> Difficulty Check -> Set goal to random ball & Aggression Mode
+//      -> Evade Check -> Set goal to behind the closest object
+//                     -> Idle
 pub fn selection(
     mut npc: Query<
         (&Transform, &mut Path, &Maps, &Difficulty, &mut States),
@@ -235,7 +244,6 @@ pub fn selection(
     >,
 ) {
     for (npc_transform, mut path, maps, difficulty, mut state) in npc.iter_mut() {
-        *state = States::Default;
         for player_transform in player.iter() {
             let danger = danger_check(npc_transform.translation, &time, &ball_query);
             if danger {
@@ -243,12 +251,12 @@ pub fn selection(
                     if set_tag_to_closest_ball(npc_transform.translation, &mut path, &ball_query) {
                         set_a_star(npc_transform.translation, &mut path, maps);
                         *state = States::Aggression;
-                        info!("Aggression");
+                        // info!("Aggression");
                         return;
                     } // if
                 } // if
                 *state = States::Danger;
-                info!("Danger");
+                // info!("Danger");
                 return;
             } // if danger
             if tag_is_null(&path)
@@ -258,14 +266,14 @@ pub fn selection(
                 set_tag_to_player(&mut path, player_transform.translation);
                 set_a_star(npc_transform.translation, &mut path, maps);
                 *state = States::Aggression;
-                info!("Aggression");
+                // info!("Aggression");
                 return;
             } // if player close
             if difficulty_check(difficulty.difficulty) {
                 if set_tag_to_closest_ball(npc_transform.translation, &mut path, &ball_query) {
                     set_a_star(npc_transform.translation, &mut path, maps);
                     *state = States::Aggression;
-                    info!("Aggression");
+                    // info!("Aggression");
                     return;
                 } // if
             } // if
@@ -274,12 +282,12 @@ pub fn selection(
                 if set_tag_to_closest_object(npc_transform.translation, &mut path) {
                     set_a_star(npc_transform.translation, &mut path, maps);
                     *state = States::Evade;
-                    info!("Evade");
+                    // info!("Evade");
                     return;
                 } // if
             } // if
             *state = States::Idle;
-            info!("Idle");
+            // info!("Idle");
             return;
         } // for
     } // for
