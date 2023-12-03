@@ -35,8 +35,8 @@ impl Plugin for BallPlugin {
         app.add_systems(Update, bounce_balls.after(bounce));
         app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
         app.add_systems(Update, swing.run_if(in_state(MultiplayerState::Game)));
-        //app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
-        //app.add_systems(Update, friction.run_if(in_state(MultiplayerState::Game)));
+        app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, friction.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
