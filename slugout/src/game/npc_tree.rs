@@ -15,7 +15,7 @@ use super::components::Player;
 use super::npc;
 
 /*  In rememberance of the Box version tree
- *  Ran into synchronisation issues with bevy's concurrency and variable lifetime so didn't finish
+ *  Ran into synchronisation issues with bevy's concurrency and variable lifetime so didn't workout
  *  Maybe Someday, Welp we Tried D:
  */
 

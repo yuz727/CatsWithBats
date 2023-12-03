@@ -127,6 +127,24 @@ impl States {
             _ => false,
         }
     }
+    pub fn is_aggression(&self) -> bool {
+        match *self {
+            States::Aggression => true,
+            _ => false,
+        }
+    }
+    pub fn is_evade(&self) -> bool {
+        match *self {
+            States::Evade => true,
+            _ => false,
+        }
+    }
+    pub fn is_default(&self) -> bool {
+        match *self {
+            States::Default => true,
+            _ => false,
+        }
+    }
 }
 
 /// Plugin for modular import
@@ -156,7 +174,7 @@ impl Plugin for NPCPlugin {
                 FixedUpdate,
                 selection
                     .run_if(in_state(GameState::Game))
-                    .run_if(on_fixed_timer(Duration::from_millis(500))),
+                    .run_if(on_fixed_timer(Duration::from_millis(1000))),
             );
             app.add_systems(
                 Update,
@@ -216,12 +234,12 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// For a more detailed version, check the spec sheet
 /// The acutal movement will follow the update ticks, the logic below is simply for Target setting
 /// Swinging will follow by the target check (Whether it is close to a target)
-/// Root -> Danger Check -> Difficulty Check -> Set goal to closest ball & Aggression Mode
-///                      -> Sidestep & Danger Mode
-///      -> Player Close Check -> Difficulty Check -> Set goal to player & Aggression Mode
-///      -> Difficulty Check -> Set goal to random ball & Aggression Mode
-///      -> Evade Check -> Set goal to behind the closest object
-///                     -> Idle
+//  Root -> Danger Check -> Difficulty Check -> Set goal to closest ball & Aggression Mode
+//                      -> Sidestep & Danger Mode
+//      -> Player Close Check -> Difficulty Check -> Set goal to player & Aggression Mode
+//      -> Difficulty Check -> Set goal to random ball & Aggression Mode
+//      -> Evade Check -> Set goal to behind the closest object
+//                     -> Idle
 pub fn selection(
     mut npc: Query<
         (&Transform, &mut Path, &Maps, &Difficulty, &mut States),
@@ -235,7 +253,6 @@ pub fn selection(
     >,
 ) {
     for (npc_transform, mut path, maps, difficulty, mut state) in npc.iter_mut() {
-        *state = States::Default;
         for player_transform in player.iter() {
             let danger = danger_check(npc_transform.translation, &time, &ball_query);
             if danger {
@@ -275,6 +292,8 @@ pub fn selection(
                     set_a_star(npc_transform.translation, &mut path, maps);
                     *state = States::Evade;
                     info!("Evade");
+                    info!("goalx: {}", path.goal.x);
+                    info!("goaly: {}", path.goal.y);
                     return;
                 } // if
             } // if

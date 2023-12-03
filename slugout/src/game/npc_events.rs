@@ -96,8 +96,6 @@ pub fn sidestep(
                         deltav.x = 0. - deltav.x;
                         deltav.y = 0. - deltav.y;
                     }
-                    info!("x: {}", deltav.x);
-                    info!("y: {}", deltav.y);
                     let deltat = time.delta_seconds();
                     let acc = NPC_ACCEL_RATE * deltat;
                     velocity.velocity = if deltav.length() > 0. {
@@ -125,10 +123,8 @@ pub fn sidestep(
 
                     bat_transform.translation.x = npc_transform.translation.x - 5.;
                     bat_transform.translation.y = npc_transform.translation.y;
-                } // match: Danger
-            }
-            // match
-            else {
+                }
+            } else {
                 state.to_default();
                 return;
             }
@@ -357,15 +353,15 @@ pub fn swing(
 
                         bat_transform.scale.y = -0.13;
                     }
-                }
+                } // for ball_query
                 if ani_timer.just_finished() {
                     bat_transform.scale.y = 0.13;
                 } else {
                     ani_timer.tick(time.delta());
                 }
-            }
-        }
-    }
+            } // for player_query
+        } // for bat_query
+    } // for npc_query
 }
 
 /// Determine where to send the ball, deviate the movement vector depending on the difficulty
