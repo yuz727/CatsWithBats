@@ -225,9 +225,9 @@ pub fn move_player_mult(
     velocity.velocity = velocity.velocity * deltat;
     /////////////////////
     if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
         velocity.velocity.x = 1.;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.velocity.x = -1.;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
         velocity.velocity.y = -1.;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
@@ -235,9 +235,9 @@ pub fn move_player_mult(
     }
 
     if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
         velocity.velocity.x = -1.;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.velocity.x = 1.;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
         velocity.velocity.y = -1.;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
