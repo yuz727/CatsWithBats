@@ -24,7 +24,8 @@ pub struct Background;
 pub struct Ball{
     pub radius: f32,
     pub elasticity: f32,
-    pub prev_pos: Vec2,
+    pub prev_pos: Vec3,
+    pub density: f32,
 }
 
 #[derive(Component)]
@@ -45,10 +46,6 @@ impl Colliding{
     }
 }
 
-#[derive(Component)]
-pub struct Density{
-    pub density: f32,
-}
 
 #[derive(Component)]
 pub struct Hitbox{

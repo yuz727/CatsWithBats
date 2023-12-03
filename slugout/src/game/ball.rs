@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 
 use crate::{GameState, MultiplayerState};
@@ -8,7 +10,6 @@ use super::components::Ball;
 use super::components::BallVelocity;
 use super::components::Bat;
 use super::components::Colliding;
-use super::components::Density;
 use super::components::Player;
 use super::components::Rug;
 use crate::game::components::Hitbox;
@@ -26,17 +27,6 @@ pub struct BallPlugin;
 
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
-        /*app.add_system_set(
-            SystemSet::new()
-                .label("MultiplayerSet")
-            .with_system(bounce)
-        );
-        app.configure_sets(Update, (
-            GameSet
-                .run_if(in_state(GameState::Game)),
-            MultiplayerSet
-                .run_if(in_state(MultiplayerState::Game)),
-        ));*/
         app.add_systems(OnEnter(GameState::Game), setup);
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
         app.add_systems(Update, bounce)/* .run_if(in_state(GameState::Game)))*/;
@@ -62,19 +52,19 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
+            transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)), 
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.025,
+            radius: 2.5,
             elasticity: 0.95,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 2.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
+        .insert(Colliding::new());
 
     // 2ND ball
     commands
@@ -84,15 +74,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.0275,
-            elasticity: 1.,
-            prev_pos: Vec2::splat(0.),
+            radius: 2.8,
+            elasticity: 10.,
+            prev_pos: Vec3::splat(0.),
+            density: 4.,
         })
         .insert(super::components::BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
+        .insert(Colliding::new());
 
     //3RD ball
     commands
@@ -103,15 +93,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.031,
+            radius: 3.1,
             elasticity: 0.975,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 6.
         })
         .insert(BallVelocity {
             velocity: Vec3::new(-500., 3., 2.),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
+        .insert(Colliding::new());
 
     commands
         .spawn(SpriteBundle {
@@ -120,16 +110,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.034,
+            radius: 3.4,
             elasticity: 0.9,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 8.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
@@ -137,16 +126,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.038,
+            radius: 3.8,
             elasticity: 0.875,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 10.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
@@ -154,16 +142,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.042,
+            radius: 4.2,
             elasticity: 0.85,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 3., 
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     // added for debugging
 
     commands
@@ -173,16 +160,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.025,
+            radius: 2.5,
             elasticity: 0.95,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 7.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(67.0, 282.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     // 2ND ball
     commands
         .spawn(SpriteBundle {
@@ -191,16 +177,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.0275,
+            radius: 2.8,
             elasticity: 1.,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 9.,
         })
         .insert(super::components::BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     //3RD ball
     commands
         .spawn(SpriteBundle {
@@ -210,16 +195,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.031,
+            radius: 3.1,
             elasticity: 0.975,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 2.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(-500., 3., 2.),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
@@ -227,16 +211,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.034,
+            radius: 3.4,
             elasticity: 0.9,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 1.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(70.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
@@ -244,16 +227,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.038,
+            radius: 3.8,
             elasticity: 0.875,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 4.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
@@ -261,16 +243,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Ball {
-            radius: 0.042,
+            radius: 4.2,
             elasticity: 0.85,
-            prev_pos: Vec2::splat(0.),
+            prev_pos: Vec3::splat(0.),
+            density: 6.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new())
-        .insert(Density { density: 2. });
-
+        .insert(Colliding::new());
     // */
 
     //Spawn bat hitbox for bat
@@ -297,7 +278,7 @@ pub fn bounce(
     for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
 
         //ball radius on screen
-        let ball_radius = ball.radius * 300.;
+        let ball_radius = ball.radius * 3.;
 
         // Find the new translation for the x and y for the ball
         let mut new_translation_x = (transform.translation.x
@@ -399,8 +380,7 @@ pub fn bounce(
             new_translation_y = table_translation.y + table_size.y / 2. + ball_radius;
         }
 
-        ball.prev_pos.x = transform.translation.x;
-        ball.prev_pos.x = transform.translation.y;        
+        ball.prev_pos = transform.translation;     
 
         // Move ball
         transform.translation.x = new_translation_x;
@@ -429,18 +409,22 @@ pub fn bounce_balls(
         let (mut ball1_transform, mut ball1_velocity, mut ball1) =  ball1query;
         let (mut ball2_transform, mut ball2_velocity, mut ball2) =  ball2query;
 
-        let ball1_radius = ball1.radius * 300.;
-        let ball2_radius = ball2.radius * 300.;
+        let ball1_radius = ball1.radius * 3.;
+        let ball2_radius = ball2.radius * 3.;
 
         let ball_collision = bevy::sprite::collide_aabb::collide(ball2_transform.translation, 
             Vec2::new(ball2_radius * 2., ball2_radius * 2.), ball1_transform.translation, Vec2::new(ball1_radius * 2., ball1_radius * 2.));
         
+        let prev_collision = bevy::sprite::collide_aabb::collide(ball2.prev_pos, 
+            Vec2::new(ball2_radius * 2., ball2_radius * 2.), ball1.prev_pos, Vec2::new(ball1_radius * 2., ball1_radius * 2.));
+        
+
         let mut new_velocity = Vec3::splat(0.);
         let mut new_velocity_2 = Vec3::splat(0.);
 
-        if ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+        if ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) && prev_collision == None{
             //Find time t where the 2 balls collided
-            // Using equations: d = sqrt((ball1.x - ball2.x)^2 + (ball1.y - ball2.y)^2)   ,   y' = velocity.y * t + y    , and       x' = velocity.x * t + x
+            // Using equations: d = sqrt((ball1.x - ball2.x)^2 + (ball1.y - ball2.y)^2), y' = velocity.y * t + y, and x' = velocity.x * t + x
             let a = ball1_velocity.velocity.x * ball1_velocity.velocity.x  + ball1_velocity.velocity.y * ball1_velocity.velocity.y + ball2_velocity.velocity.x * ball2_velocity.velocity.x + ball2_velocity.velocity.y * ball2_velocity.velocity.y - 2. * ball1_velocity.velocity.x * ball2_velocity.velocity.x - 2. * ball1_velocity.velocity.y * ball2_velocity.velocity.y;
             let b = 2. * ball1_velocity.velocity.x * ball1_transform.translation.x + 2. * ball1_velocity.velocity.y * ball1_transform.translation.y + 2. * ball2_velocity.velocity.x * ball2_transform.translation.x + 2. * ball2_velocity.velocity.y * ball2_transform.translation.y - 2. * ball1_velocity.velocity.x * ball2_transform.translation.x - 2. * ball2_velocity.velocity.x * ball1_transform.translation.x - 2. * ball2_velocity.velocity.y * ball1_transform.translation.y - 2. * ball2_transform.translation.y * ball1_velocity.velocity.y;
             let c = ball1_transform.translation.x * ball1_transform.translation.x + ball2_transform.translation.x * ball2_transform.translation.x + ball1_transform.translation.y * ball1_transform.translation.y + ball2_transform.translation.y * ball2_transform.translation.y - 2. * ball1_transform.translation.x * ball2_transform.translation.x - 2. * ball1_transform.translation.y * ball2_transform.translation.y - (ball1_radius + ball2_radius) * (ball1_radius + ball2_radius);
@@ -448,16 +432,15 @@ pub fn bounce_balls(
             //let changet = (-b + (b * b - 4. * a * c).sqrt()) / (2. * a);
             let negchange = (-b - (b * b - 4. * a * c).sqrt()) / (2. * a);
 
+            
 
             if !negchange.is_nan() && !negchange.is_infinite(){
             
-                if negchange < -1.{
-                    println!("\n\n\n\n\n\n\n\n\n\n\n\n\n");
+                /* println!("\n\n\n\n\n\n\n\n\n\n\n\n\n");
                 unsafe{
                     println!("{}", FRAMENUM);
                     FRAMENUM += 1;
                 }
-                //println!("{}", changet.to_string());
                 println!("{}", negchange.to_string());
                 println!("ball1 x: {}", ball1_transform.translation.x.to_string());
                 println!("ball1 y: {}", ball1_transform.translation.y.to_string());
@@ -472,50 +455,56 @@ pub fn bounce_balls(
                 println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
                 println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
                 println!("ball2 radius: {}", ball2_radius.to_string());
-                //println!("Balls colliding");
     
                 println!("\n");
     
                 println!("a: {}", a.to_string());
                 println!("b: {}", b.to_string());
-                println!("c: {}", c.to_string());
+                println!("c: {}", c.to_string());*/
             
-            ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
-            ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
+                ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
+                ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
 
-            ball2_transform.translation.x = ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
-            ball2_transform.translation.y = ball2_velocity.velocity.y * negchange + ball2_transform.translation.y;
+                ball2_transform.translation.x = ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
+                ball2_transform.translation.y = ball2_velocity.velocity.y * negchange + ball2_transform.translation.y;
+
+                let force_on_ball1 = ball2_velocity.velocity.dot(ball1_transform.translation - ball2_transform.translation)/(ball1_transform.translation - ball2_transform.translation).length();
+                let force_on_ball2 = ball1_velocity.velocity.dot(ball2_transform.translation - ball1_transform.translation)/(ball2_transform.translation - ball1_transform.translation).length();
+
+                let ball1_mass = (4./3.) * PI * (ball1_radius).powf(3.) * ball1.density;
+                let ball2_mass = (4./3.) * PI * (ball2_radius).powf(3.) * ball2.density;
+
+                //new_velocity = ball1_velocity.velocity + force_on_ball1;
+                //new_velocity_2 = ball2_velocity.velocity + force_on_ball2;
+
+                
+
 
             
-            new_velocity.x = ball1_velocity.velocity.x + (ball1_transform.translation.x - ball2_transform.translation.x);
-            new_velocity.y = ball1_velocity.velocity.y + (ball1_transform.translation.y - ball2_transform.translation.y);
+                new_velocity.x = ball1_velocity.velocity.x + 5. * (ball1_transform.translation.x - ball2_transform.translation.x);
+                new_velocity.y = ball1_velocity.velocity.y + 5. * (ball1_transform.translation.y - ball2_transform.translation.y);
 
-            new_velocity_2.x = ball2_velocity.velocity.x + (ball2_transform.translation.x - ball1_transform.translation.x);
-            new_velocity_2.y = ball2_velocity.velocity.y + (ball2_transform.translation.y - ball1_transform.translation.y);
+                new_velocity_2.x = ball2_velocity.velocity.x; //+ ball1_mass * ball2_mass *(ball2_transform.translation.x - ball1_transform.translation.x);
+                new_velocity_2.y = ball2_velocity.velocity.y; //+ ball1_mass * ball2_mass *(ball2_transform.translation.y - ball1_transform.translation.y);
 
-            ball1_velocity.velocity = new_velocity;
+                ball1_velocity.velocity = new_velocity;
 
-            ball2_velocity.velocity = new_velocity_2;
+                ball2_velocity.velocity = new_velocity_2;
 
 
-            println!("\n\nAFTER COLLISION");
+                println!("\n\nAFTER COLLISION");
 
-            //println!("{}", changet.to_string());
-            println!("{}", negchange.to_string());
-            println!("ball1 x: {}", ball1_transform.translation.x.to_string());
-            println!("ball1 y: {}", ball1_transform.translation.y.to_string());
-            println!("ball1 velocity x: {}", ball1_velocity.velocity.x.to_string());
-            println!("ball1 velocity y: {}", ball1_velocity.velocity.y.to_string());
+                println!("ball1 x: {}", ball1_transform.translation.x.to_string());
+                println!("ball1 y: {}", ball1_transform.translation.y.to_string());
+                println!("ball1 velocity x: {}", ball1_velocity.velocity.x.to_string());
+                println!("ball1 velocity y: {}", ball1_velocity.velocity.y.to_string());
 
-            println!("\n");
+                println!("\n");
 
-            println!("ball2 x: {}", ball2_transform.translation.x.to_string());
-            println!("ball2 y: {}", ball2_transform.translation.y.to_string());
-            println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
-            println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
-            //println!("Balls colliding");
-
-            }
+                println!("ball2 x: {}", ball2_transform.translation.x.to_string());
+                println!("ball2 y: {}", ball2_transform.translation.y.to_string());
+                println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
+                println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
 
             }
         }
@@ -539,7 +528,7 @@ fn bat_hitbox(
 }
 
 fn friction(
-    mut query: Query<(&Transform, &mut BallVelocity, &Density, &Ball), With<Ball>>,
+    mut query: Query<(&Transform, &mut BallVelocity, &Ball), With<Ball>>,
     rug: Query<(&Transform, &Rug), With<Rug>>,
     time: Res<Time>,
 ) {
@@ -547,7 +536,7 @@ fn friction(
     let rug_size = Vec2::new(720., 500.);
     let deltat = time.delta_seconds();
 
-    for (ball_transform, mut ball_velocity, ball_density, ball) in query.iter_mut() {
+    for (ball_transform, mut ball_velocity, ball) in query.iter_mut() {
         // If the ball is on the rug, slow it down using the rugs coefficient of friction
         let rug_collision = bevy::sprite::collide_aabb::collide(
             rug_transform.translation,
