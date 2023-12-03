@@ -9,8 +9,9 @@ use super::components::{Bat, Face, Player};
 const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
 const PLAYER_SPEED: f32 = 300.;
+const RUG_SPEED: f32 = 200.;
 // 1px/frame^2 @60Hz == 3600px/s^2
-const ACCEL_RATE: f32 = 18000.;
+const ACCEL_RATE: f32 = 58000.;
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
     position: (f32, f32),
@@ -94,13 +95,34 @@ pub fn move_player(
 
     // Calculate change in vector
     let acc = ACCEL_RATE * deltat;
-    velocity.velocity = if deltav.length() > 0. {
-        (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
-    } else if velocity.velocity.length() > acc {
-        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-    } else {
-        Vec2::splat(0.)
-    };
+    let rug_collision = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 0.,1.),
+        Vec2::new(732.6, 507.6),
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
+    if(rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(RUG_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+    }
+    else{
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+    }
     velocity.velocity = velocity.velocity * deltat;
     /////////////////////
     if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
@@ -223,13 +245,34 @@ pub fn move_player_mult(
 
     // Calculate change in vector
     let acc = ACCEL_RATE * deltat;
-    velocity.velocity = if deltav.length() > 0. {
-        (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
-    } else if velocity.velocity.length() > acc {
-        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-    } else {
-        Vec2::splat(0.)
-    };
+    let rug_collision = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 0.,1.),
+        Vec2::new(732.6, 507.6),
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
+    if(rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(RUG_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+    }
+    else{
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+    }
     velocity.velocity = velocity.velocity * deltat;
     /////////////////////
     if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
