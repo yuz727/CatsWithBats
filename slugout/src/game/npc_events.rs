@@ -1,377 +1,482 @@
+/// Imports
+use crate::game::npc::States;
+use crate::game::npc::*;
+use crate::game::pathfinding::*;
+
 use bevy::prelude::*;
+use rand::prelude::*;
 
-use super::components::*;
+use super::components::Ball;
+use super::components::BallVelocity;
+use super::components::Player;
 
-use super::npc::{NPCBat, NPCFace, NPCTimer, NPCVelocity, States, NPC};
-
+/// Constants for movement calculation
 const NPC_SIZE: f32 = 30.;
-// 5px/frame @60Hz == 300px/s
 const NPC_SPEED: f32 = 300.;
-// 1px/frame^2 @60Hz == 3600px/s^2
 const NPC_ACCEL_RATE: f32 = 18000.;
 
-const HIT_POWER: Vec3 = Vec3::new(500.0, 500.0, 2.0);
+/// Return whether a ball is going to hit the npc
+pub fn danger_check(
+    npc_translation: Vec3,
+    time: &Res<Time>,
+    ball_query: &Query<
+        (&Transform, &BallVelocity, &Ball),
+        (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
+    >,
+) -> bool {
+    // For every ball
+    for (ball_transform, ball_velocity, ball) in ball_query.iter() {
+        // If a ball is close enough (< 200 pixels away) and it is moving towards the npc, then return true
+        let ball_future_position = Vec2::new(
+            (ball_transform.translation.x + (ball_velocity.velocity.x * time.delta_seconds()))
+                .clamp(-(1280. / 2.) + ball.radius, 1280. / 2. - ball.radius),
+            (ball_transform.translation.y + (ball_velocity.velocity.y * time.delta_seconds()))
+                .clamp(-(720. / 2.) + ball.radius, 720. / 2. - ball.radius),
+        );
+        if ball_transform.translation.distance(npc_translation) < 200.
+            && ball_future_position.distance(npc_translation.truncate())
+                < ball_transform.translation.distance(npc_translation)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
-// Just go the the player straight
-pub fn approach_player(
-    mut npcs: Query<
-        (&mut Transform, &mut NPCVelocity, &States),
-        (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
-    >,
-    mut bat: Query<
-        &mut Transform,
+/// NPC movement in danger state, sidestep to avoid getting hit by ball
+pub fn sidestep(
+    mut npc: Query<
         (
-            With<NPCBat>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCFace>,
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut States,
+            &mut Path,
+            &mut DangerTimer,
         ),
+        (With<NPC>, Without<NPCBat>, Without<Player>),
     >,
-    mut face: Query<
-        &mut Transform,
-        (
-            With<NPCFace>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCBat>,
-        ),
-    >,
-    player: Query<&Transform, With<Player>>,
+    mut bat: Query<&mut Transform, (With<NPCBat>, Without<NPC>, Without<Player>)>,
+    player: Query<&Transform, (With<Player>, Without<NPCBat>, Without<NPC>)>,
     time: Res<Time>,
 ) {
-    for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
-        if matches!(state, States::AggressionPlayer) {
-            for mut bat_transform in bat.iter_mut() {
-                //info!("Chasing Player");
-                //debug!("Chasing Player");
+    for (mut npc_transform, mut velocity, mut state, path, mut danger_timer) in npc.iter_mut() {
+        if state.is_danger() {
+            danger_timer.tick(time.delta());
+            if danger_timer.just_finished() {
+                danger_timer.reset();
                 for player_transform in player.iter() {
-                    for mut face_transform in face.iter_mut() {
-                        let mut deltav = Vec2::splat(0.);
-                        if npc_transform.translation.x < player_transform.translation.x {
-                            deltav.x += 1000.;
-                        }
-                        if npc_transform.translation.x > player_transform.translation.x {
-                            deltav.x -= 1000.;
-                        }
-                        if npc_transform.translation.y < player_transform.translation.y {
-                            deltav.y += 1000.;
-                        }
-                        if npc_transform.translation.y > player_transform.translation.y {
-                            deltav.y -= 1000.;
-                        }
+                    let mut bat_transform = bat.single_mut();
 
-                        let deltat = time.delta_seconds();
-                        let acc = NPC_ACCEL_RATE * deltat;
-                        velocity.velocity = if deltav.length() > 0. {
-                            (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                                .clamp_length_max(NPC_SPEED)
-                        } else if velocity.velocity.length() > acc {
-                            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-                        } else {
-                            Vec2::splat(0.)
-                        };
-                        velocity.velocity = velocity.velocity * deltat;
-                        if velocity.xlock == 0 {
-                            npc_transform.translation.x = (npc_transform.translation.x
-                                + velocity.velocity.x)
-                                .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
-                        }
-                        if velocity.ylock == 0 {
-                            npc_transform.translation.y = (npc_transform.translation.y
-                                + velocity.velocity.y)
-                                .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
-                        }
+                    let mut deltav = Vec2::splat(0.);
+                    let mut rand = thread_rng();
+                    let rand_result = rand.gen_bool(0.5);
 
-                        bat_transform.translation.x = npc_transform.translation.x - 5.;
-                        bat_transform.translation.y = npc_transform.translation.y;
-                        face_transform.translation.x = npc_transform.translation.x;
-                        face_transform.translation.y = npc_transform.translation.y;
+                    if path.ball.x < 0. && path.ball.y < 0. {
+                        deltav.x -= 1000.;
+                        deltav.y += 1000.;
+                    } else if path.ball.x < 0. && path.ball.y > 0. {
+                        deltav.x += 1000.;
+                        deltav.y += 1000.;
+                    } else if path.ball.x > 0. && path.ball.y < 0. {
+                        deltav.x -= 1000.;
+                        deltav.y -= 1000.;
+                    } else if path.ball.x > 0. && path.ball.y > 0. {
+                        deltav.x += 1000.;
+                        deltav.y -= 1000.;
+                    } else if path.ball.x < 0. {
+                        deltav.y += 1000.;
+                    } else if path.ball.x > 0. {
+                        deltav.y -= 1000.;
+                    } else if path.ball.y < 0. {
+                        deltav.x -= 1000.;
+                    } else if path.ball.y > 0. {
+                        deltav.x += 1000.;
                     }
-                }
+                    if rand_result {
+                        deltav.x = 0. - deltav.x;
+                        deltav.y = 0. - deltav.y;
+                    }
+                    info!("x: {}", deltav.x);
+                    info!("y: {}", deltav.y);
+                    let deltat = time.delta_seconds();
+                    let acc = NPC_ACCEL_RATE * deltat;
+                    velocity.velocity = if deltav.length() > 0. {
+                        (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                            .clamp_length_max(NPC_SPEED)
+                    } else if velocity.velocity.length() > acc {
+                        velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                    } else {
+                        Vec2::splat(0.)
+                    };
+
+                    velocity.velocity = collision_check(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                    velocity.velocity = velocity.velocity * deltat;
+
+                    npc_transform.translation.x = (npc_transform.translation.x
+                        + velocity.velocity.x)
+                        .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
+                    npc_transform.translation.y = (npc_transform.translation.y
+                        + velocity.velocity.y)
+                        .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
+
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
+                } // match: Danger
+            }
+            // match
+            else {
+                state.to_default();
+                return;
             }
         }
-    }
+    } // for
 }
 
-pub fn approach_ball(
-    mut npcs: Query<
-        (&mut Transform, &mut NPCVelocity, &States),
-        (
-            With<NPC>,
-            Without<Ball>,
-            Without<Player>,
-            Without<NPCBat>,
-            Without<NPCFace>,
-        ),
-    >,
-    mut bat: Query<
-        &mut Transform,
-        (
-            With<NPCBat>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCFace>,
-        ),
-    >,
-    mut face: Query<
-        &mut Transform,
-        (
-            With<NPCFace>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCBat>,
-        ),
-    >,
-    ball: Query<&Transform, (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>)>,
-    time: Res<Time>,
-) {
-    for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
-        if matches!(state, States::AggressionBall) {
-            for mut bat_transform in bat.iter_mut() {
-                //info!("Chasing Ball");
-                for ball_transform in ball.iter() {
-                    for mut face_transform in face.iter_mut() {
-                        npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
-                        let mut deltav = Vec2::splat(0.);
-                        if npc_transform.translation.x < ball_transform.translation.x {
-                            deltav.x += 1000.;
-                        }
-                        if npc_transform.translation.x > ball_transform.translation.x {
-                            deltav.x -= 1000.;
-                        }
-                        if npc_transform.translation.y < ball_transform.translation.y {
-                            deltav.y += 1000.;
-                        }
-                        if npc_transform.translation.y > ball_transform.translation.y {
-                            deltav.y -= 1000.;
-                        }
-
-                        let deltat = time.delta_seconds();
-                        let acc = NPC_ACCEL_RATE * deltat;
-                        velocity.velocity = if deltav.length() > 0. {
-                            (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                                .clamp_length_max(NPC_SPEED)
-                        } else if velocity.velocity.length() > acc {
-                            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-                        } else {
-                            Vec2::splat(0.)
-                        };
-                        velocity.velocity = velocity.velocity * deltat;
-                        if velocity.xlock == 0 {
-                            npc_transform.translation.x = (npc_transform.translation.x
-                                + velocity.velocity.x)
-                                .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
-                        }
-                        if velocity.ylock == 0 {
-                            npc_transform.translation.y = (npc_transform.translation.y
-                                + velocity.velocity.y)
-                                .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
-                        }
-
-                        bat_transform.translation.x = npc_transform.translation.x - 5.;
-                        bat_transform.translation.y = npc_transform.translation.y;
-                        face_transform.translation.x = npc_transform.translation.x;
-                        face_transform.translation.y = npc_transform.translation.y;
-                    }
-                }
-            }
-        }
+/// Return whether player is < 200 pixels in distance to the NPC
+pub fn player_proximity_check(npc_translation: Vec3, player_translation: Vec3) -> bool {
+    // If player is close enough (< 200 pixels away) and it is moving towards the npc, then return true
+    if player_translation.distance(npc_translation) < 200. {
+        return true;
     }
+    return false;
 }
 
-pub fn evade_ball(
-    mut npcs: Query<
-        (&mut Transform, &mut NPCVelocity, &States),
-        (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
-    >,
-    mut bat: Query<
-        &mut Transform,
-        (
-            With<NPCBat>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCFace>,
-        ),
-    >,
-    mut face: Query<
-        &mut Transform,
-        (
-            With<NPCFace>,
-            Without<Player>,
-            Without<NPC>,
-            Without<Ball>,
-            Without<NPCBat>,
-        ),
-    >,
-    ball: Query<&Transform, (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>)>,
-    time: Res<Time>,
-) {
-    for (mut npc_transform, mut velocity, state) in npcs.iter_mut() {
-        if matches!(state, States::Evade) {
-            for mut bat_transform in bat.iter_mut() {
-                //info!("Running Away from Ball");
-                for ball_transform in ball.iter() {
-                    for mut face_transform in face.iter_mut() {
-                        //npc_transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
-                        let mut deltav = Vec2::splat(0.);
-                        if npc_transform.translation.x < ball_transform.translation.x {
-                            deltav.x -= 1000.;
-                        }
-                        if npc_transform.translation.x > ball_transform.translation.x {
-                            deltav.x += 1000.;
-                        }
-                        if npc_transform.translation.y < ball_transform.translation.y {
-                            deltav.y -= 1000.;
-                        }
-                        if npc_transform.translation.y > ball_transform.translation.y {
-                            deltav.y += 1000.;
-                        }
-
-                        let deltat = time.delta_seconds();
-                        let acc = NPC_ACCEL_RATE * deltat;
-                        velocity.velocity = if deltav.length() > 0. {
-                            (velocity.velocity + (deltav.normalize_or_zero() * acc))
-                                .clamp_length_max(NPC_SPEED)
-                        } else if velocity.velocity.length() > acc {
-                            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
-                        } else {
-                            Vec2::splat(0.)
-                        };
-                        velocity.velocity = velocity.velocity * deltat;
-
-                        if velocity.xlock == 0 {
-                            npc_transform.translation.x = (npc_transform.translation.x
-                                + velocity.velocity.x)
-                                .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
-                        }
-                        if velocity.ylock == 0 {
-                            npc_transform.translation.y = (npc_transform.translation.y
-                                + velocity.velocity.y)
-                                .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
-                        }
-                        bat_transform.translation.x = npc_transform.translation.x - 5.;
-                        bat_transform.translation.y = npc_transform.translation.y;
-                        face_transform.translation.x = npc_transform.translation.x;
-                        face_transform.translation.y = npc_transform.translation.y;
-                    }
-                }
-            }
-        }
+/// Return whether there is a current point for the npc to go to
+pub fn tag_is_null(path: &Path) -> bool {
+    // Implement TAG null check logic
+    if path.goal.x == -1. && path.goal.y == -1. {
+        return true;
     }
+    return false;
 }
 
-pub fn avoid_collision(
-    mut npcs: Query<
-        (&Transform, &mut NPCVelocity),
-        (
-            With<NPC>,
-            Without<Ball>,
-            Without<Player>,
-            Without<NPCBat>,
-            Without<Object>,
-        ),
+/// Find the closest ball to NPC, and set the goal to it
+pub fn set_tag_to_closest_ball(
+    npc_translation: Vec3,
+    path: &mut Path,
+    ball_query: &Query<
+        (&Transform, &BallVelocity, &Ball),
+        (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
     >,
-) {
-    let npc_dimensions = Vec2::new(NPC_SIZE, NPC_SIZE);
-    // Iterate over combinations of possible objects that NPC can possibly collide with
-    for (npc_transform, mut velocity) in npcs.iter_mut() {
-        let recliner_collision = bevy::sprite::collide_aabb::collide(
-            npc_transform.translation,
-            npc_dimensions,
-            Vec3::new(-60., 210., 1.),
-            Vec2::new(109., 184.),
-        );
-        let tv_stand_collision = bevy::sprite::collide_aabb::collide(
-            npc_transform.translation,
-            npc_dimensions,
-            Vec3::new(0., -250., 1.),
-            Vec2::new(164., 103.),
-        );
-        let side_table_collision = bevy::sprite::collide_aabb::collide(
-            npc_transform.translation,
-            npc_dimensions,
-            Vec3::new(120., 170., 1.),
-            Vec2::new(103., 107.),
-        );
-
-        // If it is going to collide on the x-axis, lock x-axis moveme  nt
-        if recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
-            || recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
-            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
-            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
-            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
-            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
+) -> bool {
+    let mut ret = Vec2::splat(10000000000.);
+    let mut new_ball_vel = Vec2::splat(-1.);
+    for (ball_transform, velocity, _) in ball_query.iter() {
+        if ball_transform.translation.distance(npc_translation)
+            < npc_translation.truncate().distance(ret)
         {
-            velocity.lock_x();
-            velocity.unlock_y();
-            return;
-        // If it is going to collide on the y-axis, lock y-axis movement
-        } else if recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
-            || recliner_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
-            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
-            || tv_stand_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
-            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
-            || side_table_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
-        {
-            velocity.lock_y();
-            velocity.unlock_x();
-            return;
+            ret = ball_transform.translation.truncate();
+            new_ball_vel = velocity.velocity.truncate();
         }
-        velocity.unlock_x();
-        velocity.unlock_y();
+    }
+    if ret.x == 10000000000. && ret.y == 10000000000. {
+        return false;
+    }
+    path.goal = ret;
+    path.set_new_ball(new_ball_vel);
+    return true;
+}
+
+/// Return a check on difficulty
+pub fn difficulty_check(difficulty: i32) -> bool {
+    let mut rand = thread_rng();
+    if difficulty > rand.gen_range(0.0..100.0) as i32 {
+        return true;
+    }
+    return false;
+}
+
+/// Return whether the NPC can swing at the moment
+pub fn swing_cooldown_check(swing_timer: &mut NPCTimer, time: &Res<Time>) -> bool {
+    swing_timer.tick(time.delta());
+    if swing_timer.just_finished() {
+        return true;
+    }
+    return false;
+}
+
+/// Set the goal to hind behind the closest object to the NPC
+pub fn set_tag_to_closest_object(npc_translation: Vec3, path: &mut Path) -> bool {
+    let mut rand = thread_rng();
+    let recliner = Vec3::new(-60., 210., 1.);
+    let tv = Vec3::new(0., -250., 1.);
+    let side_table = Vec3::new(120., 170., 1.);
+    let recliner_distance = npc_translation.distance(recliner);
+    let table_distance = npc_translation.distance(side_table);
+    let tv_distance = npc_translation.distance(tv);
+    let choice = rand.gen_range(0..4);
+    let closest_coords: Vec2;
+    if recliner_distance < table_distance {
+        if recliner_distance < tv_distance {
+            closest_coords = recliner.truncate();
+        } else {
+            closest_coords = tv.truncate();
+        }
+    } else {
+        if table_distance < tv_distance {
+            closest_coords = side_table.truncate();
+        } else {
+            closest_coords = tv.truncate();
+        }
+    }
+    if choice == 0 {
+        path.goal = Vec2::new(closest_coords.x, closest_coords.y + 192.);
+    } else if choice == 1 {
+        path.goal = Vec2::new(closest_coords.x - 168., closest_coords.y);
+    } else if choice == 2 {
+        path.goal = Vec2::new(closest_coords.x, closest_coords.y - 192.);
+    } else if choice == 3 {
+        path.goal = Vec2::new(closest_coords.x + 168., closest_coords.y);
+    }
+    return true;
+}
+
+/// Set NPC's goal to the player
+pub fn set_tag_to_player(path: &mut Path, player_translation: Vec3) {
+    path.goal = player_translation.truncate().floor();
+}
+
+/// Generate a new path using A*
+pub fn set_a_star(npc_translation: Vec3, path: &mut Path, maps: &Maps) {
+    let goal = path.goal;
+    path.set_new_path(a_star(
+        coords_conversion_astar(npc_translation.truncate().floor()),
+        coords_conversion_astar(goal),
+        maps,
+    ));
+}
+
+/// Movement for Aggression and Evade state, move along the path generated by A*
+pub fn perform_a_star(
+    mut npcs: Query<
+        (&mut Transform, &mut NPCVelocity, &mut Path),
+        (With<NPC>, Without<Player>, Without<NPCBat>),
+    >,
+    mut bat: Query<&mut Transform, (With<NPCBat>, Without<Player>, Without<NPC>)>,
+    player: Query<&Transform, (With<Player>, Without<NPCBat>, Without<NPC>)>,
+    time: Res<Time>,
+) {
+    for (mut npc_transform, mut velocity, mut path) in npcs.iter_mut() {
+        for mut bat_transform in bat.iter_mut() {
+            for player_transform in player.iter() {
+                let Some(Vec2 { x, y }) = path.path.pop() else {
+                    return;
+                };
+
+                let mut deltav = Vec2::splat(0.);
+                if npc_transform.translation.x < x {
+                    deltav.x += 1000.;
+                }
+                if npc_transform.translation.x > x {
+                    deltav.x -= 1000.;
+                }
+                if npc_transform.translation.y < y {
+                    deltav.y += 1000.;
+                }
+                if npc_transform.translation.y > y {
+                    deltav.y -= 1000.;
+                }
+
+                let deltat = time.delta_seconds();
+                let acc = NPC_ACCEL_RATE * deltat;
+                velocity.velocity = if deltav.length() > 0. {
+                    (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                        .clamp_length_max(NPC_SPEED)
+                } else if velocity.velocity.length() > acc {
+                    velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+                } else {
+                    Vec2::splat(0.)
+                };
+
+                velocity.velocity = collision_check(
+                    npc_transform.translation,
+                    velocity.velocity,
+                    player_transform.translation,
+                );
+                velocity.velocity = velocity.velocity * deltat;
+
+                npc_transform.translation.x = (npc_transform.translation.x + velocity.velocity.x)
+                    .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
+                npc_transform.translation.y = (npc_transform.translation.y + velocity.velocity.y)
+                    .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
+
+                // Fixes Misalign
+                if npc_transform.translation.x != x || npc_transform.translation.y != y {
+                    npc_transform.translation.x = x;
+                    npc_transform.translation.y = y;
+                }
+                bat_transform.translation.x = npc_transform.translation.x - 5.;
+                bat_transform.translation.y = npc_transform.translation.y;
+            } // for
+        } // for
+    } // for
+}
+
+/// Swing and hit the ball
+pub fn swing(
+    mut npc: Query<
+        (
+            &mut Transform,
+            &mut AnimationTimer,
+            &mut NPCTimer,
+            &Difficulty,
+        ),
+        (With<NPC>, Without<Ball>, Without<NPCBat>, Without<Player>),
+    >,
+    mut ball_query: Query<
+        (&mut Transform, &mut BallVelocity, &mut Ball),
+        (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
+    >,
+    player: Query<&Transform, (With<Player>, Without<NPC>, Without<NPCBat>, Without<Ball>)>,
+    mut bat: Query<&mut Transform, (With<NPCBat>, Without<NPC>, Without<Ball>, Without<Player>)>,
+    time: Res<Time>,
+) {
+    // Implement swing logic
+    for (npc_transform, mut ani_timer, mut swing_timer, difficulty) in npc.iter_mut() {
+        for mut bat_transform in bat.iter_mut() {
+            for player_transform in player.iter() {
+                for (ball_transform, mut ball_velocity, ball) in ball_query.iter_mut() {
+                    if ball_transform
+                        .translation
+                        .distance(npc_transform.translation)
+                        < 75.
+                        && swing_cooldown_check(&mut swing_timer, &time)
+                    {
+                        ball_velocity.velocity = Vec3::splat(0.);
+                        let new_velocity = hit_accuracy(
+                            npc_transform.translation,
+                            player_transform.translation,
+                            difficulty.difficulty,
+                        );
+
+                        ball_velocity.velocity = new_velocity * ball.elasticity;
+
+                        bat_transform.scale.y = -0.13;
+                    }
+                }
+                if ani_timer.just_finished() {
+                    bat_transform.scale.y = 0.13;
+                } else {
+                    ani_timer.tick(time.delta());
+                }
+            }
+        }
     }
 }
 
-pub fn bat_swing(
-    mut npcs: Query<
-        (&NPCVelocity, &States),
-        (With<NPC>, Without<Ball>, Without<Player>, Without<NPCBat>),
-    >,
-    mut bat: Query<
-        (&mut Transform, &mut NPCTimer),
-        (With<NPCBat>, Without<Player>, Without<NPC>, Without<Ball>),
-    >,
-    mut ball: Query<
-        &mut BallVelocity,
-        (With<Ball>, Without<NPC>, Without<Player>, Without<NPCBat>),
-    >,
-    time: Res<Time>,
-) {
-    for (npc_velocity, state) in npcs.iter_mut() {
-        if matches!(state, States::Idle) {
-            // bat swing animation
-            let (mut bat_transform, mut timer) = bat.single_mut();
-
-            // Not really working, will fix the animation later
-            timer.tick(time.delta());
-            if timer.just_finished() {
-                bat_transform.scale.y = -0.13;
-                //     bat_transform.scale.y = 0.13;
-            }
-            bat_transform.scale.y = 0.13;
-            for mut ball_velocity in ball.iter_mut() {
-                // Initialize the ball's velocity
-                ball_velocity.velocity = Vec3::new(0.0, 0.0, 0.0);
-
-                // hit based on game pong functionality, until i can get the cursor library approved
-                if npc_velocity.velocity.y > 0. {
-                    ball_velocity.velocity.y = HIT_POWER.y; //ball moves up
-                }
-                if npc_velocity.velocity.y < 0. {
-                    ball_velocity.velocity.y = -HIT_POWER.y; //down
-                }
-                if npc_velocity.velocity.x < 0. {
-                    ball_velocity.velocity.x = -HIT_POWER.x; //left
-                }
-                if npc_velocity.velocity.x > 0. {
-                    ball_velocity.velocity.x = HIT_POWER.x; //right
-                }
-            }
+/// Determine where to send the ball, deviate the movement vector depending on the difficulty
+fn hit_accuracy(npc_translation: Vec3, player_translation: Vec3, difficulty: i32) -> Vec3 {
+    let x_diff = player_translation.x - npc_translation.x;
+    let y_diff = player_translation.y - npc_translation.y;
+    let mut ball_velocity = Vec3::new(x_diff, y_diff, 0.);
+    // Implement Hit accuracy deviation based on difficulty
+    let mut rand = thread_rng();
+    if rand.gen_bool(0.5) {
+        if y_diff > x_diff {
+            ball_velocity.y = ball_velocity.y - (100 - difficulty) as f32;
+        } else {
+            ball_velocity.x = ball_velocity.x - (100 - difficulty) as f32;
+        }
+    } else {
+        if y_diff > x_diff {
+            ball_velocity.y = ball_velocity.y + (100 - difficulty) as f32;
+        } else {
+            ball_velocity.x = ball_velocity.x + (100 - difficulty) as f32;
         }
     }
+
+    ball_velocity = ball_velocity.normalize();
+    ball_velocity.x = ball_velocity.x * 500.;
+    ball_velocity.y = ball_velocity.y * 500.;
+    return ball_velocity;
+}
+
+/// Check whether collision happened, modify velocity if needed
+pub fn collision_check(
+    npc_translation: Vec3,
+    mut velocity: Vec2,
+    player_translation: Vec3,
+) -> Vec2 {
+    let recliner_size = Vec2::new(109., 184.);
+    let recliner_translation = Vec3::new(-60., 210., 1.);
+    let recliner = bevy::sprite::collide_aabb::collide(
+        recliner_translation,
+        recliner_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let tv_size = Vec2::new(164., 103.);
+    let tv_translation = Vec3::new(0., -250., 1.);
+    let tv_stand = bevy::sprite::collide_aabb::collide(
+        tv_translation,
+        tv_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let table_size = Vec2::new(103., 107.);
+    let table_translation = Vec3::new(120., 170., 1.);
+    let side_table = bevy::sprite::collide_aabb::collide(
+        table_translation,
+        table_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let player_collision = bevy::sprite::collide_aabb::collide(
+        player_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.8;
+    }
+
+    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    }
+
+    if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+        velocity.x = -1. * 0.85;
+        velocity.y = -1. * 0.85;
+    }
+
+    return velocity;
 }

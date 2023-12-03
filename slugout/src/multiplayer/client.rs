@@ -3,11 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::net::{SocketAddr, UdpSocket};
 use std::str;
 
+use crate::multiplayer::ConnectRequest;
+
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
     position: (f32, f32),
     health: u32,
-    // Add other relevant fields here
 }
 
 #[derive(Component)]
@@ -21,21 +22,33 @@ pub fn create_client(
     server_address: Res<super::SocketAddress>,
     mut _query: Query<(&Transform, &PlayerVelocity)>,
 ) {
-    // Use the server address from the resource
+    // Extract the server address string from the resource
     let server_address_str = &server_address.0;
-
-    // Parse the server address string into SocketAddr
+    // Attempt to parse the server address string into a SocketAddr
     if let Ok(server_address) = server_address_str.parse::<SocketAddr>() {
+        // Bind the UDP socket to an arbitrary local address
         socket.0 = Some(UdpSocket::bind("0.0.0.0:0").expect("Failed to bind to address c."));
+        // Connect the socket to the parsed server address
         socket
             .0
             .as_mut()
             .unwrap()
             .connect(server_address)
             .expect("Failed to connect to the server.");
+        // Send a connection request to the server
+        let connect_request = ConnectRequest {};
+        let connect_request_msg = serde_json::to_string(&connect_request).expect("Failed to serialize");
+        socket
+            .0
+            .as_mut()
+            .unwrap()
+            .send_to(connect_request_msg.as_bytes(), server_address_str)
+            .expect("Failed to send connection request");
     } else {
+        // Handle the case where the server address has an invalid format
         eprintln!("Invalid server address format: {}", server_address_str);
     }
+    // Print a message indicating a successful connection to the server
     println!("Connected to server {}", server_address_str);
     // Create the new client
     let new_client = super::Client {

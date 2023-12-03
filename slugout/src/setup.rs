@@ -181,7 +181,7 @@ fn setup_menu_action(
             match setup_button_action {
                 SetupButtonAction::Singleplayer => {
                     setup_state.set(SetupState::Disabled);
-                    game_state.set(GameState::Game);
+                    game_state.set(GameState::DifficultySelect);
                 } //for right now singleplayer closes the game
                 SetupButtonAction::Multiplayer => {
                     setup_state.set(SetupState::Disabled);

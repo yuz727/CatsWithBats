@@ -44,6 +44,40 @@ pub fn load_map_path() -> Vec<Vec<Vec2>> {
     return path_map;
 }
 
+pub fn load_walkable() -> Vec<Vec<bool>> {
+    let mut walkable_map: Vec<Vec<bool>> = Vec::new();
+    //  let mut records = reader.records();
+    let mut curr_x = 0.;
+    let mut curr_y;
+    while curr_x < 1280. {
+        curr_y = 0.;
+        let mut row: Vec<bool> = Vec::new();
+        while curr_y < 720. {
+            if (curr_x >= 708. && curr_x <= 812.) && (curr_y <= 224. && curr_y >= 136.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 556. && curr_x < 640.) && (curr_y <= 664. && curr_y >= 560.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 528. && curr_x <= 636.) && (curr_y <= 244. && curr_y >= 60.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            row.push(true);
+            curr_y += 4.;
+            continue;
+        }
+        walkable_map.push(row);
+        curr_x += 4.;
+    }
+    return walkable_map;
+}
+
 /*  Return a vector for the neighbouring tiles of a given tile
  */
 fn get_neighbours(map: &Vec<Vec<Vec2>>, coords: Vec2) -> Vec<Vec2> {
@@ -107,6 +141,11 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
             // Get a neighbouring tile, covert the coordinates to index in array/vector
             let neighbourx = neighbour.x as usize / 4;
             let neighboury = neighbour.y as usize / 4;
+            if maps.walkable[neighbourx][neighboury] == false {
+                // Try to avoid objects in the map
+                continue;
+            }
+            //  info!("neightbour");
             let new_cost: i32 = current_cost[currentx][currenty] + 1;
             if current_cost[neighbourx][neighboury] == -1
                 || new_cost < current_cost[neighbourx][neighboury]
@@ -122,9 +161,9 @@ pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
         }
     }
 
-    // No path found, just return a vector containing 0
+    // No path found, just return an empty vector
     if current.x != goal_x || current.y != goal_y {
-        return vec![Vec2::ZERO];
+        return Vec::with_capacity(1);
     }
 
     // Generate the path and store it into a vector
