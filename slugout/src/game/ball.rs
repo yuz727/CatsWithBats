@@ -297,7 +297,7 @@ pub fn bounce(
 
         // Check for collision with player
 
-        let recliner_size = Vec2::new(109., 184.);
+        let recliner_size = Vec2::new(100., 180.);
         let recliner_translation = Vec3::new(-60., 210., 1.);
         let recliner = bevy::sprite::collide_aabb::collide(
             recliner_translation,
@@ -315,7 +315,7 @@ pub fn bounce(
             Vec2::new(ball_radius * 2., ball_radius * 2.),
         );
 
-        let table_size = Vec2::new(103., 107.);
+        let table_size = Vec2::new(103., 103.);
         let table_translation = Vec3::new(120., 170., 1.);
         let side_table = bevy::sprite::collide_aabb::collide(
             table_translation,
@@ -399,7 +399,6 @@ pub fn bounce(
 }
 
 pub fn bounce_balls(
-    time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
 ) {
     // for debugging
@@ -418,22 +417,22 @@ pub fn bounce_balls(
             Vec2::new(ball2_radius * 2., ball2_radius * 2.), ball1.prev_pos, Vec2::new(ball1_radius * 2., ball1_radius * 2.));
         
 
-        let mut new_velocity = Vec3::splat(0.);
-        let mut new_velocity_2 = Vec3::splat(0.);
+        let mut new_velocity;
+        let mut new_velocity_2;
 
         if ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || ball_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) && prev_collision == None{
             //Find time t where the 2 balls collided
-            // Using equations: d = sqrt((ball1.x - ball2.x)^2 + (ball1.y - ball2.y)^2), y' = velocity.y * t + y, and x' = velocity.x * t + x
+            // Using equations: d = sqrt((ball1.x - ball2.x)^2 + (ball1.y - ball2.y)^2), y' = velocity.y * t + y, x' = velocity.x * t + x, and quadratic formula
             let a = ball1_velocity.velocity.x * ball1_velocity.velocity.x  + ball1_velocity.velocity.y * ball1_velocity.velocity.y + ball2_velocity.velocity.x * ball2_velocity.velocity.x + ball2_velocity.velocity.y * ball2_velocity.velocity.y - 2. * ball1_velocity.velocity.x * ball2_velocity.velocity.x - 2. * ball1_velocity.velocity.y * ball2_velocity.velocity.y;
             let b = 2. * ball1_velocity.velocity.x * ball1_transform.translation.x + 2. * ball1_velocity.velocity.y * ball1_transform.translation.y + 2. * ball2_velocity.velocity.x * ball2_transform.translation.x + 2. * ball2_velocity.velocity.y * ball2_transform.translation.y - 2. * ball1_velocity.velocity.x * ball2_transform.translation.x - 2. * ball2_velocity.velocity.x * ball1_transform.translation.x - 2. * ball2_velocity.velocity.y * ball1_transform.translation.y - 2. * ball2_transform.translation.y * ball1_velocity.velocity.y;
             let c = ball1_transform.translation.x * ball1_transform.translation.x + ball2_transform.translation.x * ball2_transform.translation.x + ball1_transform.translation.y * ball1_transform.translation.y + ball2_transform.translation.y * ball2_transform.translation.y - 2. * ball1_transform.translation.x * ball2_transform.translation.x - 2. * ball1_transform.translation.y * ball2_transform.translation.y - (ball1_radius + ball2_radius) * (ball1_radius + ball2_radius);
-
+            let d = b * b - 4. * a * c;
             //let changet = (-b + (b * b - 4. * a * c).sqrt()) / (2. * a);
             let negchange = (-b - (b * b - 4. * a * c).sqrt()) / (2. * a);
 
             
 
-            if !negchange.is_nan() && !negchange.is_infinite(){
+            if !negchange.is_nan() && !negchange.is_infinite() && b < (-0.000001) && d > 0. {
             
                 ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
                 ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
@@ -441,8 +440,6 @@ pub fn bounce_balls(
                 ball2_transform.translation.x = ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
                 ball2_transform.translation.y = ball2_velocity.velocity.y * negchange + ball2_transform.translation.y;
 
-                let force_on_ball1 = ball2_velocity.velocity.dot(ball1_transform.translation - ball2_transform.translation)/(ball1_transform.translation - ball2_transform.translation).length();
-                let force_on_ball2 = ball1_velocity.velocity.dot(ball2_transform.translation - ball1_transform.translation)/(ball2_transform.translation - ball1_transform.translation).length();
 
                 let ball1_mass = (4./3.) * PI * (ball1_radius).powf(3.) * ball1.density;
                 let ball2_mass = (4./3.) * PI * (ball2_radius).powf(3.) * ball2.density;
@@ -451,9 +448,10 @@ pub fn bounce_balls(
                 new_velocity = ((ball1_mass - ball2_mass) / (ball2_mass + ball1_mass)) * ball1_velocity.velocity + ((2. * ball2_mass) / (ball2_mass + ball1_mass)) * ball2_velocity.velocity;
                 new_velocity_2 = ((2. * ball1_mass) / (ball2_mass + ball1_mass)) * ball1_velocity.velocity + ((ball2_mass - ball1_mass) / (ball2_mass + ball1_mass)) * ball1_velocity.velocity;
 
+                new_velocity = new_velocity * ball1.elasticity * ball2.elasticity;
+                new_velocity_2 = new_velocity_2 * ball1.elasticity * ball2.elasticity;
 
                 ball1_velocity.velocity = new_velocity;
-
                 ball2_velocity.velocity = new_velocity_2;
 
             }
