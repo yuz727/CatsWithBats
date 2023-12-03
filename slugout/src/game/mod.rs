@@ -169,6 +169,16 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Health);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("FullHealthNPC.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-525., 280., 2.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
 }
 
 //This system handles changing all buttons color based on mouse interaction
