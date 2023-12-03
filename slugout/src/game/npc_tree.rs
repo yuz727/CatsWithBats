@@ -1,111 +1,262 @@
+use std::sync::Arc;
+use std::sync::Mutex;
+
+use crate::game::npc::*;
+use crate::game::npc_events::*;
+use crate::game::pathfinding::*;
+use crate::GameState;
 use bevy::prelude::*;
+use bevy::utils::synccell::SyncCell;
+//use bevy::time::Stopwatch;
 
-// Components
-struct Npc {
-    difficulty: u32, // Adjust the type according to your game's specifics
-    last_swing_time: f64, // Timestamp of the last swing
-}
+use super::components::Ball;
+use super::components::Object;
+use super::components::Player;
+use super::npc;
 
-struct Ball;
-struct Player;
-struct GameObject;
+/*  In rememberance of the Box version tree
+ *  Ran into synchronisation issues with bevy's concurrency and variable lifetime so didn't finish
+ *  Maybe Someday, Welp we Tried D:
+ */
 
-// Behavior Tree Nodes
-enum Node {
+pub enum Node {
     Sequence(Vec<Node>),
     Fallback(Vec<Node>),
-    Condition(Box<dyn Fn(&Npc, &QuerySet<(Entity, &Ball)>, &QuerySet<(Entity, &Player)>, &QuerySet<(Entity, &GameObject)>) -> bool>),
-    Action(Box<dyn Fn(&mut Npc, &mut Commands, &QuerySet<(Entity, &Ball)>, &QuerySet<(Entity, &Player)>, &QuerySet<(Entity, &GameObject)>) -> NodeStatus>),
-    Decorator(Box<dyn Fn(&Npc, &QuerySet<(Entity, &Ball)>, &QuerySet<(Entity, &Player)>, &QuerySet<(Entity, &GameObject)>) -> bool>, Box<Node>),
+    Condition(
+        Box<
+            dyn Fn(
+                Query<
+                    // NPC Query
+                    (
+                        &mut Transform,
+                        &mut NPCVelocity,
+                        &mut Path,
+                        &Maps,
+                        &Difficulty,
+                        &mut AnimationTimer,
+                    ),
+                    With<NPC>,
+                >,
+                Query<&Transform, With<Ball>>,
+                Query<&Transform, With<Player>>,
+                Query<&Transform, With<Object>>,
+            ) -> bool,
+        >,
+    ),
+    Action(
+        Box<
+            dyn Fn(
+                Query<
+                    (
+                        &mut Transform,
+                        &mut NPCVelocity,
+                        &mut Path,
+                        &Maps,
+                        &Difficulty,
+                        &mut AnimationTimer,
+                    ),
+                    With<NPC>,
+                >,
+                Query<&Transform, With<Ball>>,
+                Query<&Transform, With<Player>>,
+                Query<&Transform, With<Object>>,
+            ) -> NodeStatus,
+        >,
+    ),
+    Decorator(
+        Box<
+            dyn Fn(
+                Query<
+                    (
+                        &mut Transform,
+                        &mut NPCVelocity,
+                        &mut Path,
+                        &Maps,
+                        &Difficulty,
+                        &mut AnimationTimer,
+                    ),
+                    With<NPC>,
+                >,
+                Query<&Transform, With<Ball>>,
+                Query<&Transform, With<Player>>,
+                Query<&Transform, With<Object>>,
+            ) -> bool,
+        >,
+        Box<Node>,
+    ),
 }
 
+#[derive(Component, PartialEq, Eq, Debug, Clone)]
 enum NodeStatus {
     Success,
     Failure,
     Running,
 }
 
-// Behavior Tree Setup
-fn setup(mut commands: Commands) {
-    commands.spawn().insert(Npc {
-        difficulty: 50,
-        last_swing_time: 0.0,
-    });
+// unsafe impl Send for Node {}
+/*
+ */
 
-    // Spawn entities for the game world (balls, players, objects)
-    // Add Ball, Player, and GameObject components to respective entities
-}
+// fn behaviour_tree_setup(mut commands: Commands) {
+//     let npc_entity = commands.spawn(NPC).id();
+//     let sequence_node = commands.spawn(Sequence).id();
+//     let fallback_node = commands.spawn(Fallback).id();
+//     let decorator_node = commands.spawn(Decorator).id();
+//     let condition_node = commands.spawn(Decorator).id();
 
-// Behavior Tree Execution
-fn behavior_tree(npc: &mut Npc, commands: &mut Commands, ball_query: &QuerySet<(Entity, &Ball)>, player_query: &QuerySet<(Entity, &Player)>, object_query: &QuerySet<(Entity, &GameObject)>) {
+//     commands
+//         .entity(npc_entity)
+//         .insert(NPC)
+//         .insert(Fallback)
+//         .with_children(|npc_entity| {
+//             npc_entity
+//                 .spawn(sequence_node)
+//                 .insert(Sequence)
+//                 .with_children(|sequence| {
+//                     sequence.spawn().insert(MoveToDonut { agent });
+//                     sequence.spawn().insert(EatDonut { agent });
+//                 });
+//         });
+// }
+
+pub fn behavior_tree(
+    mut npc: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    ball_query: &Query<&Transform, With<Ball>>,
+    player_query: &Query<&Transform, With<Player>>,
+    object_query: &Query<&Transform, With<Object>>,
+) {
     let root_node = Node::Fallback(vec![
         Node::Sequence(vec![
-            Node::Condition(Box::new(|npc, ball_query, player_query, object_query| danger_check(npc, ball_query, player_query, object_query))),
+            Node::Condition(Box::new(|npc, ball_query, player_query, object_query| {
+                danger_check(npc, ball_query)
+            })),
             Node::Fallback(vec![
                 Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
                 Node::Condition(Box::new(|npc, _, _, _| swing_cooldown_check(npc))),
                 Node::Sequence(vec![
-                    Node::Action(Box::new(|npc, commands, ball_query, player_query, object_query| swing(npc, commands, ball_query, player_query, object_query))),
+                    Node::Action(Box::new(|npc, ball_query, player_query, object_query| {
+                        swing(npc, ball_query)
+                    })),
                     // Add more nodes for SWING subtree
                 ]),
             ]),
-            Node::Action(Box::new(|npc, commands, _, _, _| sidestep(npc, commands))),
+            Node::Action(Box::new(|npc, _, _, _| sidestep(npc))),
         ]),
         Node::Sequence(vec![
-            Node::Decorator(Box::new(|npc, _, _, _| player_proximity_check(npc)), Box::new(Node::Fallback(vec![
-                Node::Sequence(vec![
+            Node::Decorator(
+                Box::new(|npc, _, _, _| player_proximity_check(npc, *player_query)),
+                Box::new(Node::Fallback(vec![Node::Sequence(vec![
                     Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
-                    Node::Action(Box::new(|npc, commands, ball_query, player_query, object_query| swing(npc, commands, ball_query, player_query, object_query))),
+                    Node::Action(Box::new(|npc, ball_query, player_query, object_query| {
+                        swing(npc, ball_query)
+                    })),
                     // Add more nodes for SWING subtree
-                ]),
-            ]))),
-            Node::Decorator(Box::new(|npc, _, _, _| tag_is_null(npc)), Box::new(Node::Fallback(vec![
-                Node::Sequence(vec![
-                    Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
-                    Node::Action(Box::new(|npc, commands, ball_query, player_query, object_query| set_tag_to_closest_ball(npc, commands, ball_query, player_query, object_query))),
-                ]),
-                Node::Action(Box::new(|npc, commands, _, _, _| set_tag_to_closest_object(npc, commands))),
-            ]))),
-            Node::Action(Box::new(|npc, commands, _, _, _| perform_a_star(npc, commands))),
+                ])])),
+            ),
+            Node::Decorator(
+                Box::new(|npc, _, _, _| tag_is_null(npc)),
+                Box::new(Node::Fallback(vec![
+                    Node::Sequence(vec![
+                        Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
+                        Node::Action(Box::new(|npc, ball_query, player_query, object_query| {
+                            set_tag_to_closest_ball(npc, ball_query)
+                        })),
+                    ]),
+                    Node::Action(Box::new(|npc, _, _, _| {
+                        set_tag_to_closest_object(npc, *object_query)
+                    })),
+                ])),
+            ),
+            Node::Action(Box::new(|npc, _, _, _| perform_a_star(npc))),
         ]),
     ]);
-
-    // Execute the behavior tree
-    execute_node(root_node, npc, commands, ball_query, player_query, object_query);
 }
 
-// Execute a single behavior tree node
-fn execute_node(node: Node, npc: &mut Npc, commands: &mut Commands, ball_query: &QuerySet<(Entity, &Ball)>, player_query: &QuerySet<(Entity, &Player)>, object_query: &QuerySet<(Entity, &GameObject)>) -> NodeStatus {
+pub fn execute_node(
+    node: Node,
+    mut npc: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    commands: &mut Commands,
+    ball_query: Query<&Transform, With<Ball>>,
+    player_query: Query<&Transform, With<Player>>,
+    object_query: Query<&Transform, With<Object>>,
+) -> NodeStatus {
     match node {
         Node::Sequence(children) => {
             for child in children {
-                let status = execute_node(child, npc, commands, ball_query, player_query, object_query);
-                if status != NodeStatus::Success {
-                    return status;
+                let status =
+                    execute_node(child, npc, commands, ball_query, player_query, object_query);
+                match status {
+                    // If status != success, return current status
+                    NodeStatus::Success => {
+                        continue;
+                    }
+                    NodeStatus::Failure => {
+                        return status;
+                    }
+                    NodeStatus::Running => {
+                        return status;
+                    }
                 }
             }
-            NodeStatus::Success
+            return NodeStatus::Success;
         }
         Node::Fallback(children) => {
             for child in children {
-                let status = execute_node(child, npc, commands, ball_query, player_query, object_query);
-                if status != NodeStatus::Failure {
-                    return status;
+                let status =
+                    execute_node(child, npc, commands, ball_query, player_query, object_query);
+                match status {
+                    // If status != failure, return current status
+                    NodeStatus::Success => {
+                        return status;
+                    }
+                    NodeStatus::Failure => {
+                        continue;
+                    }
+                    NodeStatus::Running => {
+                        return status;
+                    }
                 }
             }
-            NodeStatus::Failure
+            return NodeStatus::Failure;
         }
         Node::Condition(condition) => {
             if condition(npc, ball_query, player_query, object_query) {
-                NodeStatus::Success
+                return NodeStatus::Success;
             } else {
-                NodeStatus::Failure
+                return NodeStatus::Failure;
             }
         }
-        Node::Action(action) => action(npc, commands, ball_query, player_query, object_query),
+        Node::Action(action) => action(npc, ball_query, player_query, object_query),
         Node::Decorator(decorator_condition, child) => {
             if decorator_condition(npc, ball_query, player_query, object_query) {
-                execute_node(*child, npc, commands, ball_query, player_query, object_query)
+                execute_node(
+                    *child,
+                    npc,
+                    commands,
+                    ball_query,
+                    player_query,
+                    object_query,
+                )
             } else {
                 NodeStatus::Failure
             }
@@ -113,54 +264,185 @@ fn execute_node(node: Node, npc: &mut Npc, commands: &mut Commands, ball_query: 
     }
 }
 
-// Define your condition and action functions here
-
-fn danger_check(npc: &Npc, ball_query: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> bool {
-    // Implement danger check logic
-    true // Replace with your logic
+fn danger_check(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    ball_query: Query<&Transform, With<Ball>>,
+    // _: &QuerySet<(Entity, &Player)>,
+    // _: &QuerySet<(Entity, &GameObject)>,
+) -> bool {
+    true
 }
 
-fn aggression_check(npc: &Npc) -> bool {
-    // Implement aggression check logic
-    true // Replace with your logic
-}
-
-fn swing_cooldown_check(npc: &Npc) -> bool {
-    // Implement swing cooldown check logic
-    true // Replace with your logic
-}
-
-fn sidestep(npc: &mut Npc, commands: &mut Commands, _: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> NodeStatus {
+fn sidestep(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> NodeStatus {
     // Implement sidestep logic
-    NodeStatus::Success
+    return NodeStatus::Success;
 }
 
-fn player_proximity_check(npc: &Npc, _: &QuerySet<(Entity, &Ball)>, player_query: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> bool {
+fn player_proximity_check(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    player_query: Query<&Transform, With<Player>>,
+) -> bool {
     // Implement player proximity check logic
-    true // Replace with your logic
+    return true;
 }
 
-fn tag_is_null(npc: &Npc, _: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> bool {
+fn tag_is_null(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> bool {
     // Implement TAG null check logic
-    true // Replace with your logic
+    return true;
 }
 
-fn set_tag_to_closest_ball(npc: &mut Npc, commands: &mut Commands, ball_query: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> NodeStatus {
+fn set_tag_to_closest_ball(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    ball_query: Query<&Transform, With<Ball>>,
+) -> NodeStatus {
     // Implement setting TAG to the closest ball logic
-    NodeStatus::Success
+    return NodeStatus::Success;
+}
+fn aggression_check(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> bool {
+    return true;
 }
 
-fn set_tag_to_closest_object(npc: &mut Npc, commands: &mut Commands, _: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> NodeStatus {
+fn swing_cooldown_check(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> bool {
+    return true;
+}
+fn set_tag_to_closest_object(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    object_query: Query<&Transform, With<Object>>,
+) -> NodeStatus {
     // Implement setting TAG to the closest object logic
-    NodeStatus::Success
+    return NodeStatus::Success;
 }
 
-fn perform_a_star(npc: &mut Npc, commands: &mut Commands, _: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> NodeStatus {
+fn perform_a_star(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> NodeStatus {
     // Implement A* pathfinding logic
-    NodeStatus::Success
+    for (npc_transform, _velocity, mut path, maps, _diffculty, _animation_timer) in npcs.iter_mut()
+    {
+        let goal = path.goal;
+        path.set_new_path(a_star(
+            coords_conversion_astar(npc_transform.translation.truncate().floor()),
+            coords_conversion_astar(goal),
+            maps,
+        ));
+    }
+    return NodeStatus::Success;
 }
 
-fn swing(npc: &mut Npc, commands: &mut Commands, _: &QuerySet<(Entity, &Ball)>, _: &QuerySet<(Entity, &Player)>, _: &QuerySet<(Entity, &GameObject)>) -> NodeStatus {
+fn swing(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    ball_query: Query<&Transform, With<Ball>>,
+    // _: &QuerySet<(Entity, &Player)>,
+    // _: &QuerySet<(Entity, &GameObject)>,
+) -> NodeStatus {
     // Implement swing logic
-    NodeStatus::Success
+    return NodeStatus::Success;
 }

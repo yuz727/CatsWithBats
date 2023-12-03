@@ -16,6 +16,7 @@ pub enum GameState {
     Multiplayer,
     JoinGame,
     HostGame,
+    DifficultySelect,
 }
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
