@@ -563,5 +563,9 @@ fn aim_follows_cursor(
     if let Some(mouse_position) = window.single().physical_cursor_position() {
         aim_transform.translation.x = (mouse_position.x - WIN_W) / 2.;
         aim_transform.translation.y = -(mouse_position.y - WIN_H) / 2. - 40.;
+        //print!("{:#?}", aim_transform);
+        //print!("{:#?}", mouse_position);
     }
 }
+
+/////////////////////////////////////try and play around
