@@ -1,5 +1,5 @@
-use crate::game::npc_bully::*;
 /// Imports
+use crate::game::npc_bully::*;
 use crate::game::npc_events::*;
 use crate::game::pathfinding::*;
 use crate::GameState;
@@ -7,7 +7,7 @@ use crate::GameState;
 use bevy::prelude::*;
 use bevy::time::common_conditions::on_fixed_timer;
 use bevy::time::common_conditions::on_timer;
-use rand::prelude::*;
+
 use std::time::Duration;
 
 use super::components::Ball;
@@ -24,6 +24,10 @@ pub struct NPCTimer(Timer);
 /// Timer for swing animation
 #[derive(Component, Deref, DerefMut)]
 pub struct AnimationTimer(Timer);
+
+/// Timer For Sidestep Duration
+#[derive(Component, Deref, DerefMut)]
+pub struct DangerTimer(Timer);
 
 /// Velocity for NPC
 #[derive(Component)]
@@ -63,6 +67,7 @@ pub struct Maps {
 pub struct Path {
     pub path: Vec<Vec2>,
     pub goal: Vec2,
+    pub ball: Vec2,
 }
 
 /// Difficulty set to the NPC
@@ -75,6 +80,9 @@ pub struct Difficulty {
 impl Path {
     pub fn set_new_path(&mut self, new_path: Vec<Vec2>) {
         self.path = new_path;
+    }
+    pub fn set_new_ball(&mut self, new_ball_velocity: Vec2) {
+        self.ball = new_ball_velocity;
     }
 }
 
@@ -101,6 +109,22 @@ impl Path {
         Self {
             path: Vec::with_capacity(1),
             goal: Vec2::splat(-1.),
+            ball: Vec2::splat(-1.),
+        }
+    }
+}
+
+impl States {
+    pub fn to_default(&mut self) {
+        *self = match std::mem::replace(self, States::Default) {
+            States::Danger => States::Default,
+            v => v,
+        }
+    }
+    pub fn is_danger(&self) -> bool {
+        match *self {
+            States::Danger => true,
+            _ => false,
         }
     }
 }
@@ -124,7 +148,7 @@ impl Plugin for NPCPlugin {
                 Update,
                 approach_player
                     .run_if(in_state(GameState::Game))
-                    .run_if(on_fixed_timer(Duration::from_millis(70))), // Timer here to control the speed of the NPC
+                    .run_if(on_fixed_timer(Duration::from_millis(50))), // Timer here to control the speed of the NPC
             );
             app.add_systems(Update, bully_swing.run_if(in_state(GameState::Game)));
         } else {
@@ -142,7 +166,7 @@ impl Plugin for NPCPlugin {
             );
             app.add_systems(Update, sidestep.run_if(in_state(GameState::Game)));
             app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
-            app.add_systems(Update, target_check.run_if(in_state(GameState::Game)));
+            // app.add_systems(Update, target_check.run_if(in_state(GameState::Game)));
         }
     }
 }
@@ -169,7 +193,8 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(AnimationTimer(Timer::from_seconds(
             ANIM_TIME,
             TimerMode::Repeating,
-        )));
+        )))
+        .insert(DangerTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 
     //spawn bat sprite
     commands
@@ -191,22 +216,15 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
 /// For a more detailed version, check the spec sheet
 /// The acutal movement will follow the update ticks, the logic below is simply for Target setting
 /// Swinging will follow by the target check (Whether it is close to a target)
-/// Root -> Danger Check -> Difficulty Check -> Swing Cooldown Check -> Set goal to closest ball & Aggression Mode
+/// Root -> Danger Check -> Difficulty Check -> Set goal to closest ball & Aggression Mode
 ///                      -> Sidestep & Danger Mode
-///      -> Player Close Check -> Difficulty Check -> Swing Cooldown Check -> Set goal to player & Aggression Mode
+///      -> Player Close Check -> Difficulty Check -> Set goal to player & Aggression Mode
 ///      -> Difficulty Check -> Set goal to random ball & Aggression Mode
 ///      -> Evade Check -> Set goal to behind the closest object
 ///                     -> Idle
 pub fn selection(
     mut npc: Query<
-        (
-            &Transform,
-            &mut Path,
-            &Maps,
-            &Difficulty,
-            &mut States,
-            &mut NPCTimer,
-        ),
+        (&Transform, &mut Path, &Maps, &Difficulty, &mut States),
         (With<NPC>, Without<NPCBat>, Without<Ball>, Without<Player>),
     >,
     player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>, Without<NPCBat>)>,
@@ -216,14 +234,12 @@ pub fn selection(
         (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
     >,
 ) {
-    for (npc_transform, mut path, maps, difficulty, mut state, mut swing_timer) in npc.iter_mut() {
+    for (npc_transform, mut path, maps, difficulty, mut state) in npc.iter_mut() {
         *state = States::Default;
         for player_transform in player.iter() {
             let danger = danger_check(npc_transform.translation, &time, &ball_query);
             if danger {
-                if difficulty_check(difficulty.difficulty)
-                    && swing_cooldown_check(&mut swing_timer, &time)
-                {
+                if difficulty_check(difficulty.difficulty) {
                     if set_tag_to_closest_ball(npc_transform.translation, &mut path, &ball_query) {
                         set_a_star(npc_transform.translation, &mut path, maps);
                         *state = States::Aggression;
@@ -235,9 +251,9 @@ pub fn selection(
                 info!("Danger");
                 return;
             } // if danger
-            if player_proximity_check(npc_transform.translation, player_transform.translation)
+            if tag_is_null(&path)
+                && player_proximity_check(npc_transform.translation, player_transform.translation)
                 && difficulty_check(difficulty.difficulty)
-                && swing_cooldown_check(&mut swing_timer, &time)
             {
                 set_tag_to_player(&mut path, player_transform.translation);
                 set_a_star(npc_transform.translation, &mut path, maps);

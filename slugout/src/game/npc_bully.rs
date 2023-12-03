@@ -4,7 +4,6 @@ use super::components::*;
 use crate::game::npc::*;
 use crate::game::npc_events::collision_check;
 use crate::game::pathfinding::*;
-use crate::GameState;
 
 use bevy::prelude::*;
 // use bevy::time::common_conditions::*;
@@ -85,12 +84,18 @@ pub fn approach_player(
                     Vec2::splat(0.)
                 };
 
+                let old_vel = velocity.velocity;
+                let mut collision: bool = false;
                 // Modify velocity based on whether collision happened
                 velocity.velocity = collision_check(
                     npc_transform.translation,
                     velocity.velocity,
                     player_transform.translation,
                 );
+
+                if old_vel.x != velocity.velocity.x || old_vel.y != velocity.velocity.y {
+                    collision = true;
+                }
 
                 velocity.velocity = velocity.velocity * deltat;
                 npc_transform.translation.x = (npc_transform.translation.x + velocity.velocity.x)
@@ -99,7 +104,9 @@ pub fn approach_player(
                     .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
 
                 // Fixes Misalign caused by the pathfinding grids being 4x4 pixel chunks
-                if npc_transform.translation.x != x || npc_transform.translation.y != y {
+                if (npc_transform.translation.x != x || npc_transform.translation.y != y)
+                    && !collision
+                {
                     npc_transform.translation.x = x;
                     npc_transform.translation.y = y;
                 }

@@ -65,7 +65,7 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(MultiplayerState::Game), setup)
             .add_systems(OnEnter(GameState::Game), setup)
             .add_plugins(ball::BallPlugin)
-            .add_plugins(npc::NPCPlugin { bully_mode: true })
+            .add_plugins(npc::NPCPlugin { bully_mode: false })
             .add_systems(
                 Update,
                 player_movement::move_player.run_if(in_state(GameState::Game)),
