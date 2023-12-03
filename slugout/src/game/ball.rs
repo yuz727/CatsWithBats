@@ -70,16 +70,16 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(500., 5., 2.).with_scale(Vec3::new(0.028, 0.028, 0.)),
+            transform: Transform::from_xyz(200., 5., 2.).with_scale(Vec3::new(0.028, 0.028, 0.)),
             ..Default::default()
         })
         .insert(Ball {
             radius: 2.8,
-            elasticity: 10.,
+            elasticity: 1.,
             prev_pos: Vec3::splat(0.),
             density: 4.,
         })
-        .insert(super::components::BallVelocity {
+        .insert(BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
         })
         .insert(Colliding::new());
@@ -88,7 +88,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(-400., -100., 2.)
+            transform: Transform::from_xyz(-350., -100., 2.)
                 .with_scale(Vec3::new(0.031, 0.031, 0.)),
             ..Default::default()
         })
@@ -106,7 +106,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(8., 6., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
+            transform: Transform::from_xyz(80., 60., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
             ..Default::default()
         })
         .insert(Ball {
@@ -122,7 +122,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(20., 30., 2.).with_scale(Vec3::new(0.038, 0.038, 0.)),
+            transform: Transform::from_xyz(-200., 300., 2.).with_scale(Vec3::new(0.038, 0.038, 0.)),
             ..Default::default()
         })
         .insert(Ball {
@@ -138,7 +138,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(400., 400., 2.).with_scale(Vec3::new(0.042, 0.042, 0.)),
+            transform: Transform::from_xyz(350., 350., 2.).with_scale(Vec3::new(0.042, 0.042, 0.)),
             ..Default::default()
         })
         .insert(Ball {
@@ -151,7 +151,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
         .insert(Colliding::new());
-    // added for debugging
+    /*// added for debugging
 
     commands
         .spawn(SpriteBundle {
@@ -251,8 +251,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new());
-    // */
+        .insert(Colliding::new()); */
 
     //Spawn bat hitbox for bat
     commands
@@ -403,7 +402,6 @@ pub fn bounce_balls(
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
 ) {
     // for debugging
-    static mut FRAMENUM: i32 = 0;
     let mut combinations = query.iter_combinations_mut();
     while let Some([mut ball1query, mut ball2query]) = combinations.fetch_next() {
         let (mut ball1_transform, mut ball1_velocity, mut ball1) =  ball1query;
@@ -436,32 +434,6 @@ pub fn bounce_balls(
 
             if !negchange.is_nan() && !negchange.is_infinite(){
             
-                /* println!("\n\n\n\n\n\n\n\n\n\n\n\n\n");
-                unsafe{
-                    println!("{}", FRAMENUM);
-                    FRAMENUM += 1;
-                }
-                println!("{}", negchange.to_string());
-                println!("ball1 x: {}", ball1_transform.translation.x.to_string());
-                println!("ball1 y: {}", ball1_transform.translation.y.to_string());
-                println!("ball1 velocity x: {}", ball1_velocity.velocity.x.to_string());
-                println!("ball1 velocity y: {}", ball1_velocity.velocity.y.to_string());
-                println!("ball1 radius: {}", ball1_radius.to_string());
-    
-                println!("\n");
-    
-                println!("ball2 x: {}", ball2_transform.translation.x.to_string());
-                println!("ball2 y: {}", ball2_transform.translation.y.to_string());
-                println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
-                println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
-                println!("ball2 radius: {}", ball2_radius.to_string());
-    
-                println!("\n");
-    
-                println!("a: {}", a.to_string());
-                println!("b: {}", b.to_string());
-                println!("c: {}", c.to_string());*/
-            
                 ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
                 ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
 
@@ -474,37 +446,14 @@ pub fn bounce_balls(
                 let ball1_mass = (4./3.) * PI * (ball1_radius).powf(3.) * ball1.density;
                 let ball2_mass = (4./3.) * PI * (ball2_radius).powf(3.) * ball2.density;
 
-                //new_velocity = ball1_velocity.velocity + force_on_ball1;
-                //new_velocity_2 = ball2_velocity.velocity + force_on_ball2;
-
                 
+                new_velocity = ((ball1_mass - ball2_mass) / (ball2_mass + ball1_mass)) * ball1_velocity.velocity + ((2. * ball2_mass) / (ball2_mass + ball1_mass)) * ball2_velocity.velocity;
+                new_velocity_2 = ((2. * ball1_mass) / (ball2_mass + ball1_mass)) * ball1_velocity.velocity + ((ball2_mass - ball1_mass) / (ball2_mass + ball1_mass)) * ball1_velocity.velocity;
 
-
-            
-                new_velocity.x = ball1_velocity.velocity.x + 5. * (ball1_transform.translation.x - ball2_transform.translation.x);
-                new_velocity.y = ball1_velocity.velocity.y + 5. * (ball1_transform.translation.y - ball2_transform.translation.y);
-
-                new_velocity_2.x = ball2_velocity.velocity.x; //+ ball1_mass * ball2_mass *(ball2_transform.translation.x - ball1_transform.translation.x);
-                new_velocity_2.y = ball2_velocity.velocity.y; //+ ball1_mass * ball2_mass *(ball2_transform.translation.y - ball1_transform.translation.y);
 
                 ball1_velocity.velocity = new_velocity;
 
                 ball2_velocity.velocity = new_velocity_2;
-
-
-                println!("\n\nAFTER COLLISION");
-
-                println!("ball1 x: {}", ball1_transform.translation.x.to_string());
-                println!("ball1 y: {}", ball1_transform.translation.y.to_string());
-                println!("ball1 velocity x: {}", ball1_velocity.velocity.x.to_string());
-                println!("ball1 velocity y: {}", ball1_velocity.velocity.y.to_string());
-
-                println!("\n");
-
-                println!("ball2 x: {}", ball2_transform.translation.x.to_string());
-                println!("ball2 y: {}", ball2_transform.translation.y.to_string());
-                println!("ball2 velocity x: {}", ball2_velocity.velocity.x.to_string());
-                println!("ball2 velocity y: {}", ball2_velocity.velocity.y.to_string());
 
             }
         }
