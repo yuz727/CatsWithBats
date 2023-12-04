@@ -6,6 +6,8 @@ use crate::multiplayer::{ClientSocket, SocketAddress};
 
 use super::components::{Bat, Face, Player};
 
+use crate::game::npc::*;
+
 const PLAYER_SIZE: f32 = 30.;
 // 5px/frame @60Hz == 300px/s
 const PLAYER_SPEED: f32 = 300.;
@@ -173,13 +175,35 @@ pub fn move_player(
     //bat_transform.translation.y = transform.translation.y;
 }
 
-/*pub fn player_NPC_collisions(
-    mut player: Query<(&mut Transform, &mut PlayerVelocity, (With<Player>, Without<Bat>, Without<NPC>))>,
-    mut NPCquery: Query<(&mut Transform, &mut NPCVelocity, (With<NPC>, Without<Bat>, Without<Player>))>,
+pub fn player_NPC_collisions(
+    mut player: Query<(&mut Transform, &mut PlayerVelocity), (With<Player>, Without<NPC>)>,
+    mut NPCquery: Query<(&mut Transform, &mut NPCVelocity), (With<NPC>, Without<Player>)>,
 ){
     let (mut player_transform, mut player_velocity) = player.single_mut();
     
-}*/
+    for (mut NPC_transform, mut NPC_velocity) in NPCquery.iter_mut() {
+        let collision = bevy::sprite::collide_aabb::collide(
+            NPC_transform.translation,
+            Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+            player_transform.translation,
+            Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+        );
+        if collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+            player_transform.translation.x = player_transform.translation.x - 5.;
+            NPC_transform.translation.x = NPC_transform.translation.x + 5.;
+        } else if collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+            player_transform.translation.x = player_transform.translation.x + 5.;
+            NPC_transform.translation.x = NPC_transform.translation.x - 5.;
+        } else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+            player_transform.translation.y = player_transform.translation.y - 5.;
+            NPC_transform.translation.y = NPC_transform.translation.y + 5.;
+        } else if collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+            player_transform.translation.y = player_transform.translation.y + 5.;
+            NPC_transform.translation.y = NPC_transform.translation.y - 5.;
+        }
+    }
+    
+}
 
 pub fn move_player_mult(
     input: Res<Input<KeyCode>>,
@@ -276,33 +300,33 @@ pub fn move_player_mult(
     velocity.velocity = velocity.velocity * deltat;
     /////////////////////
     if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = -1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = 1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.8;
     } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.8;
     }
 
     if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = 1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = -1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.9;
     } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.9;
     }
 
     if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1.;
+        velocity.velocity.x = 1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1.;
+        velocity.velocity.x = -1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1.;
+        velocity.velocity.y = -1. * 0.85;
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1.;
+        velocity.velocity.y = 1. * 0.85;
     }
     ///////////////////////////
 

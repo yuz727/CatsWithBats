@@ -174,8 +174,13 @@ impl Plugin for NPCPlugin {
                 Update,
                 perform_a_star.run_if(in_state(GameState::Game)), //.run_if(on_fixed_timer(Duration::from_millis(17))),
             );
+            app.add_systems(
+                Update, 
+                swing
+                .run_if(in_state(GameState::Game)),
+            );
             app.add_systems(Update, sidestep.run_if(in_state(GameState::Game)));
-            app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
+            
             // app.add_systems(Update, target_check.run_if(in_state(GameState::Game)));
         }
     }

@@ -94,6 +94,10 @@ impl Plugin for GamePlugin {
                 )
                 .add_systems(
                     Update,
+                    player_movement::player_NPC_collisions.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
                     player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
                 );
         } else if unsafe { MAP == 4 } {
