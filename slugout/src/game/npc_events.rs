@@ -336,10 +336,10 @@ pub fn swing(
                                 player_transform.translation,
                                 difficulty.difficulty,
                             );
-
-                            ball_velocity.velocity = new_velocity * ball.elasticity;
-
                             bat_transform.scale.y = -0.13;
+                            ball_velocity.velocity = new_velocity * ball.elasticity;
+                            //tick animation timer
+                            ani_timer.tick(time.delta());
                         }
                     } // for ball_query
                     if ani_timer.just_finished() {
