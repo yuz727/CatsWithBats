@@ -13,6 +13,7 @@ use std::time::Duration;
 use super::components::Ball;
 use super::components::BallVelocity;
 use super::components::Player;
+use super::DIFFICULTY;
 
 /// Constants for animation timer
 const ANIM_TIME: f32 = 0.2;
@@ -115,12 +116,6 @@ impl Path {
 }
 
 impl States {
-    // pub fn to_default(&mut self) {
-    //     *self = match std::mem::replace(self, States::Default) {
-    //         States::Danger => States::Default,
-    //         v => v,
-    //     }
-    // }
     pub fn is_danger(&self) -> bool {
         match *self {
             States::Danger => true,
@@ -140,6 +135,12 @@ impl States {
         }
     }
 }
+
+// impl Difficulty {
+//     pub fn set_difficulty(&mut self, new_difficulty: i32) {
+//         self.difficulty = new_difficulty;
+//     }
+// }
 
 /// Plugin for modular import
 pub struct NPCPlugin {
@@ -196,7 +197,9 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Default)
-        .insert(Difficulty { difficulty: 75 })
+        .insert(Difficulty {
+            difficulty: unsafe { DIFFICULTY },
+        })
         .insert(Maps::new())
         .insert(Path::new())
         .insert(AnimationTimer(Timer::from_seconds(
