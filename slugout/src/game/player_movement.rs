@@ -168,24 +168,12 @@ pub fn player_NPC_collisions(
         );
         if collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
             player_transform.translation.x = player_transform.translation.x - 10.;
-            //NPC_transform.translation.x = NPC_transform.translation.x + 15.;
-            //player_velocity.velocity.x = -.;
-            //NPC_velocity.velocity.x = 3.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
             player_transform.translation.x = player_transform.translation.x + 10.;
-            //NPC_transform.translation.x = NPC_transform.translation.x - 15.;
-            //player_velocity.velocity.x = 3.;
-            //NPC_velocity.velocity.x = -3.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
             player_transform.translation.y = player_transform.translation.y - 10.;
-            //NPC_transform.translation.y = NPC_transform.translation.y + 15.;
-            //player_velocity.velocity.y = -3.;
-            //NPC_velocity.velocity.y = 3.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             player_transform.translation.y = player_transform.translation.y + 10.;
-            //NPC_transform.translation.y = NPC_transform.translation.y - 15.;
-            //player_velocity.velocity.y = 3.;
-            //NPC_velocity.velocity.y = -3.;
         }
     }
     
