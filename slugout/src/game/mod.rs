@@ -3,7 +3,7 @@ use bevy::{app::AppExit, prelude::*, window::PresentMode};
 use crate::game::components::Aim;
 use crate::{despawn_screen, GameState, MultiplayerState, TEXT_COLOR};
 
-use self::components::{Bat, Colliding, Face, Health, Object, Player, Rug};
+use self::components::{Bat, Colliding, Health, Object, Player, Rug};
 
 mod ball;
 pub mod components;
