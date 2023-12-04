@@ -189,13 +189,17 @@ pub fn player_NPC_collisions(
             Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
         );
         if collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
-            player_transform.translation.x = player_transform.translation.x - 10.;
+            player_transform.translation.x = player_transform.translation.x - 5.;
+            NPC_transform.translation.x = NPC_transform.translation.x + 5.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
-            player_transform.translation.x = player_transform.translation.x + 10.;
+            player_transform.translation.x = player_transform.translation.x + 5.;
+            NPC_transform.translation.x = NPC_transform.translation.x - 5.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
-            player_transform.translation.y = player_transform.translation.y - 10.;
+            player_transform.translation.y = player_transform.translation.y - 5.;
+            NPC_transform.translation.y = NPC_transform.translation.y + 5.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-            player_transform.translation.y = player_transform.translation.y + 10.;
+            player_transform.translation.y = player_transform.translation.y + 5.;
+            NPC_transform.translation.y = NPC_transform.translation.y - 5.;
         }
     }
     
