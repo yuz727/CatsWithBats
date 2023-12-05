@@ -2,6 +2,7 @@
 use crate::game::npc::States;
 use crate::game::npc::*;
 use crate::game::pathfinding::*;
+use crate::MAP;
 
 use bevy::prelude::*;
 use rand::prelude::*;
@@ -93,12 +94,34 @@ pub fn sidestep(
                     Vec2::splat(0.)
                 };
 
-                velocity.velocity = collision_check(
-                    npc_transform.translation,
-                    velocity.velocity,
-                    player_transform.translation,
-                );
+                if unsafe { MAP == 1 } {
+                    velocity.velocity = collision_check_map1(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                } else if unsafe { MAP == 2 || MAP == 3 } {
+                    velocity.velocity = collision_check_no_objects(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                } else if unsafe { MAP == 4 } {
+                    velocity.velocity = collision_check_map4(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                }
                 velocity.velocity = velocity.velocity * deltat;
+
+                velocity.velocity = velocity.velocity * deltat;
+                npc_transform.translation.x = (npc_transform.translation.x + velocity.velocity.x)
+                    .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
+                npc_transform.translation.y = (npc_transform.translation.y + velocity.velocity.y)
+                    .clamp(-(720. / 2.) + NPC_SIZE / 2., 720. / 2. - NPC_SIZE / 2.);
+
+                // Fixes Misalign caused by the pathfinding grids being 4x4 pixel chunks
 
                 npc_transform.translation.x = (npc_transform.translation.x + velocity.velocity.x)
                     .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
@@ -270,13 +293,27 @@ pub fn perform_a_star(
                         Vec2::splat(0.)
                     };
 
-                    velocity.velocity = collision_check(
-                        npc_transform.translation,
-                        velocity.velocity,
-                        player_transform.translation,
-                    );
-                    velocity.velocity = velocity.velocity * deltat;
+                    if unsafe { MAP == 1 } {
+                        velocity.velocity = collision_check_map1(
+                            npc_transform.translation,
+                            velocity.velocity,
+                            player_transform.translation,
+                        );
+                    } else if unsafe { MAP == 2 || MAP == 3 } {
+                        velocity.velocity = collision_check_no_objects(
+                            npc_transform.translation,
+                            velocity.velocity,
+                            player_transform.translation,
+                        );
+                    } else if unsafe { MAP == 4 } {
+                        velocity.velocity = collision_check_map4(
+                            npc_transform.translation,
+                            velocity.velocity,
+                            player_transform.translation,
+                        );
+                    }
 
+                    velocity.velocity = velocity.velocity * deltat;
                     npc_transform.translation.x = (npc_transform.translation.x
                         + velocity.velocity.x)
                         .clamp(-(1280. / 2.) + NPC_SIZE / 2., 1280. / 2. - NPC_SIZE / 2.);
@@ -381,7 +418,7 @@ fn hit_accuracy(npc_translation: Vec3, player_translation: Vec3, difficulty: i32
 }
 
 /// Check whether collision happened, modify velocity if needed
-pub fn collision_check(
+pub fn collision_check_map1(
     npc_translation: Vec3,
     mut velocity: Vec2,
     player_translation: Vec3,
@@ -449,6 +486,119 @@ pub fn collision_check(
     } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
         velocity.y = 1. * 0.85;
     }
+
+    if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+        velocity.x = -1. * 0.85;
+        velocity.y = -1. * 0.85;
+    }
+
+    return velocity;
+}
+
+pub fn collision_check_map4(
+    npc_translation: Vec3,
+    mut velocity: Vec2,
+    player_translation: Vec3,
+) -> Vec2 {
+    let recliner_size = Vec2::new(109., 184.);
+    let recliner_translation = Vec3::new(-60., 210., 1.);
+    let recliner = bevy::sprite::collide_aabb::collide(
+        recliner_translation,
+        recliner_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let tv_size = Vec2::new(164., 103.);
+    let tv_translation = Vec3::new(0., -250., 1.);
+    let tv_stand = bevy::sprite::collide_aabb::collide(
+        tv_translation,
+        tv_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let table_size = Vec2::new(103., 107.);
+    let table_translation = Vec3::new(120., 170., 1.);
+    let side_table = bevy::sprite::collide_aabb::collide(
+        table_translation,
+        table_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let player_collision = bevy::sprite::collide_aabb::collide(
+        player_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.8;
+    }
+
+    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    }
+
+    if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+        velocity.x = -1. * 0.85;
+        velocity.y = -1. * 0.85;
+    }
+
+    return velocity;
+}
+
+pub fn collision_check_no_objects(
+    npc_translation: Vec3,
+    mut velocity: Vec2,
+    player_translation: Vec3,
+) -> Vec2 {
+    let player_collision = bevy::sprite::collide_aabb::collide(
+        player_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
 
     if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
         velocity.x = 1. * 0.85;

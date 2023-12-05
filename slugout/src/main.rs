@@ -51,6 +51,7 @@ fn main() {
         .run();
 }
 
+/// Spawning In Background, Map image is decided depending on the map selected.
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     if unsafe { MAP } == 1 {
         commands.spawn(Camera2dBundle::default());
@@ -98,6 +99,7 @@ fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands
     }
 }
 
+// Prompt User Input in Console to Pick a Map
 fn map_picking() {
     loop {
         let mut input = String::new();

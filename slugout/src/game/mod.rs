@@ -101,6 +101,23 @@ impl Plugin for GamePlugin {
                     player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
                 );
         } else if unsafe { MAP == 4 } {
+            app.add_systems(OnEnter(GameState::Game), setup)
+                .add_plugins(ball::BallPlugin)
+                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_systems(OnEnter(GameState::Game), setup_map4)
+                .add_systems(OnEnter(MultiplayerState::Game), setup_map4)
+                .add_systems(
+                    Update,
+                    player_movement::move_player.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::player_NPC_collisions.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
+                );
         }
     }
 }
@@ -202,6 +219,51 @@ fn setup_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Rug { friction: 1.4 });
+}
+
+fn setup_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(0., 180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(0., -180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(-320., 180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(-320., -180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(320., 180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(320., -180., 2.),
+            ..default()
+        })
+        .insert(Object);
 }
 
 //This system handles changing all buttons color based on mouse interaction
