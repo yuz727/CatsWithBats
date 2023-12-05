@@ -360,11 +360,9 @@ pub fn swing(
             for mut bat_transform in bat.iter_mut() {
                 for player_transform in player.iter() {
                     for (ball_transform, mut ball_velocity, ball) in ball_query.iter_mut() {
-                        
                         let ball_x = ball_transform.translation.x;
                         let npc_x = npc_transform.translation.x;
                         let bat_x = bat_transform.translation.x;
-                        
 
                         if ball_transform
                             .translation
@@ -379,13 +377,12 @@ pub fn swing(
                                 player_transform.translation,
                                 difficulty.difficulty,
                             );
-                            if ball_x > npc_x{ 
-                               bat_transform.scale.x = -0.13;
-                             
+                            if ball_x > npc_x {
+                                bat_transform.scale.x = -0.13;
                             }
-                            if ball_x < npc_x{ 
-                               bat_transform.scale.x = 0.13;
-                               println!("To the left");
+                            if ball_x < npc_x {
+                                bat_transform.scale.x = 0.13;
+                                println!("To the left");
                             }
 
                             bat_transform.scale.y = -0.13;
@@ -523,29 +520,45 @@ pub fn collision_check_map4(
     mut velocity: Vec2,
     player_translation: Vec3,
 ) -> Vec2 {
-    let recliner_size = Vec2::new(109., 184.);
-    let recliner_translation = Vec3::new(-60., 210., 1.);
-    let recliner = bevy::sprite::collide_aabb::collide(
-        recliner_translation,
-        recliner_size,
+    let coral_size = Vec2::new(250., 250.);
+    let coral1 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
         npc_translation,
         Vec2::new(NPC_SIZE, NPC_SIZE),
     );
 
-    let tv_size = Vec2::new(164., 103.);
-    let tv_translation = Vec3::new(0., -250., 1.);
-    let tv_stand = bevy::sprite::collide_aabb::collide(
-        tv_translation,
-        tv_size,
+    let coral2 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
         npc_translation,
         Vec2::new(NPC_SIZE, NPC_SIZE),
     );
 
-    let table_size = Vec2::new(103., 107.);
-    let table_translation = Vec3::new(120., 170., 1.);
-    let side_table = bevy::sprite::collide_aabb::collide(
-        table_translation,
-        table_size,
+    let coral3 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral4 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral5 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral6 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
         npc_translation,
         Vec2::new(NPC_SIZE, NPC_SIZE),
     );
@@ -557,34 +570,64 @@ pub fn collision_check_map4(
         Vec2::new(NPC_SIZE, NPC_SIZE),
     );
 
-    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.x = -1. * 0.8;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.x = 1. * 0.8;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.y = -1. * 0.8;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.y = 1. * 0.8;
-    }
-
-    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
+    if coral1 == Some(bevy::sprite::collide_aabb::Collision::Left) {
         velocity.x = 1. * 0.9;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+    } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
         velocity.x = -1. * 0.9;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
+    } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
         velocity.y = -1. * 0.9;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+    } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
         velocity.y = 1. * 0.9;
     }
 
-    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.x = 1. * 0.85;
-    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.x = -1. * 0.85;
-    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.y = -1. * 0.85;
-    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.y = 1. * 0.85;
+    if coral2 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral3 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral4 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral5 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral6 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
     }
 
     if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
@@ -599,7 +642,6 @@ pub fn collision_check_map4(
         velocity.x = -1. * 0.85;
         velocity.y = -1. * 0.85;
     }
-
     return velocity;
 }
 
