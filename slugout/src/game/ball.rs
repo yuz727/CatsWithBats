@@ -47,8 +47,7 @@ impl Plugin for BallPlugin {
             aim_follows_cursor.run_if(in_state(MultiplayerState::Game)),
         )
         .insert_resource(Input::<KeyCode>::default());  
-        app.add_systems(Update, health_hitbox.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, health_hitbox.run_if(in_state(MultiplayerState::Game)));
+        
     }
 }
 
