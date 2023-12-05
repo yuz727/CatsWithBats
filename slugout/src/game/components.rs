@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player{
+    pub powerup: String,
+    pub powerup_timer: f32,
+}
 
 #[derive(Component)]
 pub struct Bat;
@@ -26,6 +29,7 @@ pub struct Ball {
     pub elasticity: f32,
     pub prev_pos: Vec3,
     pub density: f32,
+    pub angular_velocity: f32,
 }
 
 #[derive(Component)]
@@ -62,3 +66,8 @@ pub struct HealthHitbox {
 
 #[derive(Component)]
 pub struct Health;
+
+#[derive(Component)]
+pub struct PowerUp{
+    pub powerup: String,
+}

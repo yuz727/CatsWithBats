@@ -82,6 +82,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.95,
             prev_pos: Vec3::splat(0.),
             density: 2.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -100,6 +101,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 1.,
             prev_pos: Vec3::splat(0.),
             density: 4.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
@@ -119,6 +121,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.975,
             prev_pos: Vec3::splat(0.),
             density: 6.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(-500., 3., 2.),
@@ -136,6 +139,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.9,
             prev_pos: Vec3::splat(0.),
             density: 8.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -152,6 +156,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.875,
             prev_pos: Vec3::splat(0.),
             density: 10.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -167,7 +172,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             radius: 4.2,
             elasticity: 0.85,
             prev_pos: Vec3::splat(0.),
-            density: 3.,
+            density: 3., 
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -287,7 +293,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Hitbox {
-            size: Vec2::new(45., 75.), //30 52
+            size: Vec2::new(45., 75.), //
         });
     //Spawn health hitbox for player
     commands
@@ -497,54 +503,66 @@ pub fn bounce(
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
             new_translation_x = recliner_translation.x - recliner_size.x / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
             new_translation_x = recliner_translation.x + recliner_size.x / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
             new_translation_y = recliner_translation.y - recliner_size.y / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
             new_translation_y = recliner_translation.y + recliner_size.y / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         }
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.9 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.9 * ball.elasticity;
             new_translation_x = tv_translation.x + tv_size.x / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.9 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.9 * ball.elasticity;
             new_translation_x = tv_translation.x - tv_size.x / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.9 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.9 * ball.elasticity;
             new_translation_y = tv_translation.y - tv_size.y / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.9 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.9 * ball.elasticity;
             new_translation_y = tv_translation.y + tv_size.y / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.85 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.85 * ball.elasticity;
             new_translation_x = table_translation.x + table_size.x / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.85 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.85 * ball.elasticity;
             new_translation_x = table_translation.x - table_size.x / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.85 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y - table_size.y / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.85 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y + table_size.y / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         }
 
         ball.prev_pos = transform.translation;
@@ -557,10 +575,12 @@ pub fn bounce(
         if transform.translation.x.abs() == WIN_W / 2.0 - ball_radius {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
+            ball.angular_velocity = 0.;
         }
         if transform.translation.y.abs() == WIN_H / 2.0 - ball_radius {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
+            ball.angular_velocity = 0.;
         }
     }
 }
@@ -669,10 +689,12 @@ pub fn bounce_balls(
             let negchange = (-b - (b * b - 4. * a * c).sqrt()) / (2. * a);
 
             if !negchange.is_nan() && !negchange.is_infinite() && b < (-0.000001) && d > 0. {
-                ball1_transform.translation.x =
-                    ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
-                ball1_transform.translation.y =
-                    ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
+            
+                ball1_transform.translation.x = ball1_velocity.velocity.x * negchange + ball1_transform.translation.x;
+                ball1_transform.translation.y = ball1_velocity.velocity.y * negchange + ball1_transform.translation.y;
+
+                ball2_transform.translation.x = ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
+                ball2_transform.translation.y = ball2_velocity.velocity.y * negchange + ball2_transform.translation.y;
 
                 ball2_transform.translation.x =
                     ball2_velocity.velocity.x * negchange + ball2_transform.translation.x;
@@ -695,6 +717,10 @@ pub fn bounce_balls(
 
                 ball1_velocity.velocity = new_velocity;
                 ball2_velocity.velocity = new_velocity_2;
+
+                ball1.angular_velocity = 0.;
+                ball2.angular_velocity = 0.;
+
             }
         }
     }
@@ -702,7 +728,6 @@ pub fn bounce_balls(
 
 fn bat_hitbox(
     mut hitbox: Query<&mut Sprite, (With<Hitbox>, Without<Bat>)>,
-    bat: Query<&Transform, (With<Bat>, Without<Hitbox>)>,
     input_mouse: Res<Input<MouseButton>>,
 ) {
     let mut color_hitbox = hitbox.single_mut();
@@ -716,7 +741,7 @@ fn bat_hitbox(
 }
 
 fn friction(
-    mut query: Query<(&Transform, &mut BallVelocity, &Ball), With<Ball>>,
+    mut query: Query<(&Transform, &mut BallVelocity), With<Ball>>,
     rug: Query<(&Transform, &Rug), With<Rug>>,
     time: Res<Time>,
 ) {
@@ -724,7 +749,7 @@ fn friction(
     let rug_size = Vec2::new(720., 500.);
     let deltat = time.delta_seconds();
 
-    for (ball_transform, mut ball_velocity, ball) in query.iter_mut() {
+    for (ball_transform, mut ball_velocity) in query.iter_mut() {
         // If the ball is on the rug, slow it down using the rugs coefficient of friction
         let rug_collision = bevy::sprite::collide_aabb::collide(
             rug_transform.translation,
@@ -860,9 +885,9 @@ fn swing(
     //for (bat, mut bat_transform) in query_bat.iter_mut() {
     if unsafe { MOUSE_BUTTON_PRESSED } {
         // Left mouse button is pressed, set the bat to horizontal
-        bat_transform.scale.y = -0.175;
+        bat_transform.scale.y = -bat_transform.scale.y.abs();
     } else if unsafe { BAT_TRANSFORMED } {
-        bat_transform.scale.y = 0.175;
+        bat_transform.scale.y = bat_transform.scale.y.abs();
     }
     //}
 
@@ -872,18 +897,18 @@ fn swing(
         if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x {
             bat_transform.translation = player_transform.translation;
             bat_transform.translation.x = bat_transform.translation.x + 8.;
-            bat_transform.scale.x = -0.175;
+            bat_transform.scale.x = -bat_transform.scale.x.abs();
 
             hitbox_transform.translation = bat_transform.translation;
-            hitbox_transform.translation.x = hitbox_transform.translation.x + 20.;
+            hitbox_transform.translation.x = hitbox_transform.translation.x + hitbox.size.x/2.;
             hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
         } else {
             bat_transform.translation = player_transform.translation;
             bat_transform.translation.x = bat_transform.translation.x - 5.;
-            bat_transform.scale.x = 0.175;
+            bat_transform.scale.x = bat_transform.scale.x.abs();
 
             hitbox_transform.translation = bat_transform.translation;
-            hitbox_transform.translation.x = hitbox_transform.translation.x - 20.;
+            hitbox_transform.translation.x = hitbox_transform.translation.x - hitbox.size.x/2.;
             hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
         }
         if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
@@ -929,11 +954,181 @@ fn swing(
                     // if Q is pressed, backspin -> ball moves slower
                     if input.pressed(KeyCode::Q) {
                         new_velocity *= 0.5;
+                        ball.angular_velocity = 5.; // positive implies topspin
                     }
 
                     // if E is pressed, topspin -> ball moves faster
                     if input.pressed(KeyCode::E) {
                         new_velocity *= 1.5;
+                        ball.angular_velocity = -5.; // positive implies backspin
+                    }
+
+                    ball_velocity.velocity = new_velocity * ball.elasticity;
+                }
+
+                // let ball_position = ball_velocity.velocity.truncate();
+                // println!("Ball position: {:?}", ball_position);
+
+                /*let direction =  MOUSE_POSITION - ball_velocity.velocity.truncate();;
+                println!("Direction: {:?}", direction);
+
+
+                // Normalize the direction and set the ball's velocity
+                let normalized_direction = direction.normalize_or_zero();
+                //println!("Normalized direction: {:?}", normalized_direction);
+
+                ball_velocity.velocity = Vec3::new(
+                    normalized_direction.x * HIT_POWER.x,
+                    normalized_direction.y * HIT_POWER.y,
+                    0.0,
+                );
+                println!("Ball velocity: {:?}", ball_velocity.velocity);*/
+            }
+
+            // Reset the flags for the next interaction
+            unsafe {
+                MOUSE_BUTTON_JUST_RELEASED = false;
+                BAT_TRANSFORMED = false;
+            }
+        }
+    }
+}
+
+fn swing_m4(
+    //mut commands: Commands,
+    input_mouse: Res<Input<MouseButton>>,
+    input: Res<Input<KeyCode>>,
+    mut query: Query<
+        (&mut Ball, &mut BallVelocity, &mut Transform),
+        (With<Ball>, Without<Hitbox>, Without<Bat>, Without<Player>),
+    >,
+    mut query_bat: Query<
+        &mut Transform,
+        (With<Bat>, Without<Hitbox>, Without<Ball>, Without<Player>),
+    >,
+    //cursor_events: ResMut<Events<CursorMoved>>,
+    mut hitbox: Query<
+        (&mut Transform, &mut Hitbox),
+        (With<Hitbox>, Without<Ball>, Without<Ball>, Without<Player>),
+    >,
+    window: Query<&Window>,
+    player: Query<&Transform, (With<Player>, Without<Hitbox>, Without<Bat>, Without<Ball>)>,
+) {
+    let (mut hitbox_transform, hitbox) = hitbox.single_mut();
+
+    static mut MOUSE_BUTTON_PRESSED: bool = false;
+    static mut BAT_TRANSFORMED: bool = false;
+    static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
+    //let mut mouse_position: Vec2;
+    let mut bat_transform = query_bat.single_mut();
+    let player_transform = player.single();
+
+    if input_mouse.just_pressed(MouseButton::Left) {
+        // Mouse button was just pressed
+        unsafe {
+            MOUSE_BUTTON_PRESSED = true;
+            BAT_TRANSFORMED = false;
+            MOUSE_BUTTON_JUST_RELEASED = false;
+        }
+        //println!("Mouse button pressed");
+    } else if input_mouse.just_released(MouseButton::Left) {
+        // Mouse button was just released
+        unsafe {
+            if MOUSE_BUTTON_PRESSED {
+                MOUSE_BUTTON_PRESSED = false;
+                BAT_TRANSFORMED = true;
+                MOUSE_BUTTON_JUST_RELEASED = true;
+                //println!("Mouse button released");
+            }
+        }
+    }
+
+    /*let mut cursor_event_reader = cursor_events.get_reader();
+    for event in cursor_event_reader.iter(&cursor_events) {
+        // Update the mouse position
+        mouse_position = event.position;
+        //println!("Mouse position changed");
+    }*/
+
+    //for (bat, mut bat_transform) in query_bat.iter_mut() {
+    if unsafe { MOUSE_BUTTON_PRESSED } {
+        // Left mouse button is pressed, set the bat to horizontal
+        bat_transform.scale.y = -bat_transform.scale.y.abs();
+    } else if unsafe { BAT_TRANSFORMED } {
+        bat_transform.scale.y = bat_transform.scale.y.abs();
+    }
+    //}
+
+    if let Some(mouse_position) = window.single().physical_cursor_position() {
+        //println!("Cursor is inside window {:?}", mouse_position);
+        // Move bat to the same side of the player as the mouse
+        if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x {
+            bat_transform.translation = player_transform.translation;
+            bat_transform.translation.x = bat_transform.translation.x + 8.;
+            bat_transform.scale.x = -bat_transform.scale.x.abs();
+
+            hitbox_transform.translation = bat_transform.translation;
+            hitbox_transform.translation.x = hitbox_transform.translation.x + hitbox.size.x/2.;
+            hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
+        } else {
+            bat_transform.translation = player_transform.translation;
+            bat_transform.translation.x = bat_transform.translation.x - 5.;
+            bat_transform.scale.x = bat_transform.scale.x.abs();
+
+            hitbox_transform.translation = bat_transform.translation;
+            hitbox_transform.translation.x = hitbox_transform.translation.x - hitbox.size.x/2.;
+            hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
+        }
+        if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+            for (mut ball, mut ball_velocity, mut ball_transform) in query.iter_mut() {
+                let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(
+                    hitbox_transform.translation,
+                    hitbox.size,
+                    ball_transform.translation,
+                    Vec2::new(BALL_SIZE, BALL_SIZE),
+                );
+
+                if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+                    || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+                    || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+                    || (bat_to_ball_collision
+                        == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+                    || (bat_to_ball_collision
+                        == Some(bevy::sprite::collide_aabb::Collision::Inside))
+                {
+                    ball_velocity.velocity = Vec3::splat(0.);
+                    let change_x =
+                        (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
+                    let change_y =
+                        ((-(mouse_position.y - WIN_H) / 2.) - ball_transform.translation.y).abs();
+                    let mut new_velocity = Vec3::new(change_x, change_y, 0.);
+                    new_velocity = new_velocity.normalize_or_zero();
+
+                    if ((mouse_position.x - WIN_W) / 2.) > ball_transform.translation.x {
+                        new_velocity.x = new_velocity.x;
+                    } else {
+                        new_velocity.x = -1. * new_velocity.x;
+                    }
+
+                    if (-(mouse_position.y - WIN_H) / 2.) > ball_transform.translation.y {
+                        new_velocity.y = new_velocity.y;
+                    } else {
+                        new_velocity.y = -1. * new_velocity.y;
+                    }
+
+                    new_velocity.x = new_velocity.x * 100.;
+                    new_velocity.y = new_velocity.y * 100.;
+
+                    // if Q is pressed, backspin -> ball moves slower
+                    if input.pressed(KeyCode::Q) {
+                        new_velocity *= 0.5;
+                        ball.angular_velocity = 5.; // positive implies topspin
+                    }
+
+                    // if E is pressed, topspin -> ball moves faster
+                    if input.pressed(KeyCode::E) {
+                        new_velocity *= 1.5;
+                        ball.angular_velocity = -5.; // positive implies backspin
                     }
 
                     ball_velocity.velocity = new_velocity * ball.elasticity;

@@ -15,6 +15,7 @@ mod npc_events;
 // mod npc_tree;
 mod pathfinding;
 mod player_movement;
+mod powerups;
 // mod tree;
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
@@ -132,7 +133,10 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(0., 0., 10.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(Player)
+        .insert(Player{
+            powerup: "none".to_string(),
+            powerup_timer: 0.,
+        })
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
 
