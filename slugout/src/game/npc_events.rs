@@ -323,6 +323,12 @@ pub fn swing(
             for mut bat_transform in bat.iter_mut() {
                 for player_transform in player.iter() {
                     for (ball_transform, mut ball_velocity, ball) in ball_query.iter_mut() {
+                        
+                        let ball_x = ball_transform.translation.x;
+                        let npc_x = npc_transform.translation.x;
+                        let bat_x = bat_transform.translation.x;
+                        
+
                         if ball_transform
                             .translation
                             .distance(npc_transform.translation)
@@ -336,6 +342,15 @@ pub fn swing(
                                 player_transform.translation,
                                 difficulty.difficulty,
                             );
+                            if ball_x > npc_x{ 
+                               bat_transform.scale.x = -0.13;
+                             
+                            }
+                            if ball_x < npc_x{ 
+                               bat_transform.scale.x = 0.13;
+                               println!("To the left");
+                            }
+
                             bat_transform.scale.y = -0.13;
                             ball_velocity.velocity = new_velocity * ball.elasticity;
                             //tick animation timer
