@@ -55,6 +55,7 @@ pub struct Hitbox {
 pub struct Aim;
 
 #[derive(Component)]
+
 pub struct HealthHitbox {
     pub size: Vec2,
 }
