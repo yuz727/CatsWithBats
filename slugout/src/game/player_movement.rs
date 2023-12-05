@@ -42,7 +42,6 @@ pub fn move_player(
         (With<Player>, Without<Face>, Without<Bat>),
     >,
     //  mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
-    mut bat: Query<&mut Transform, (With<Bat>, Without<Player>, Without<Face>)>,
     time: Res<Time>,
 ) {
     let (mut transform, mut velocity) = player.single_mut();
@@ -175,31 +174,31 @@ pub fn move_player(
     //bat_transform.translation.y = transform.translation.y;
 }
 
-pub fn player_NPC_collisions(
-    mut player: Query<(&mut Transform, &mut PlayerVelocity), (With<Player>, Without<NPC>)>,
-    mut NPCquery: Query<(&mut Transform, &mut NPCVelocity), (With<NPC>, Without<Player>)>,
+pub fn player_npc_collisions(
+    mut player: Query<&mut Transform, (With<Player>, Without<NPC>)>,
+    mut NPCquery: Query<&mut Transform, (With<NPC>, Without<Player>)>,
 ){
-    let (mut player_transform, mut player_velocity) = player.single_mut();
+    let mut player_transform = player.single_mut();
     
-    for (mut NPC_transform, mut NPC_velocity) in NPCquery.iter_mut() {
+    for mut npc_transform in NPCquery.iter_mut() {
         let collision = bevy::sprite::collide_aabb::collide(
-            NPC_transform.translation,
+            npc_transform.translation,
             Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
             player_transform.translation,
             Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
         );
         if collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
             player_transform.translation.x = player_transform.translation.x - 5.;
-            NPC_transform.translation.x = NPC_transform.translation.x + 5.;
+            npc_transform.translation.x = npc_transform.translation.x + 5.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
             player_transform.translation.x = player_transform.translation.x + 5.;
-            NPC_transform.translation.x = NPC_transform.translation.x - 5.;
+            npc_transform.translation.x = npc_transform.translation.x - 5.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
             player_transform.translation.y = player_transform.translation.y - 5.;
-            NPC_transform.translation.y = NPC_transform.translation.y + 5.;
+            npc_transform.translation.y = npc_transform.translation.y + 5.;
         } else if collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             player_transform.translation.y = player_transform.translation.y + 5.;
-            NPC_transform.translation.y = NPC_transform.translation.y - 5.;
+            npc_transform.translation.y = npc_transform.translation.y - 5.;
         }
     }
     
@@ -212,7 +211,6 @@ pub fn move_player_mult(
         (With<Player>, Without<Face>, Without<Bat>),
     >,
     //    mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
-    mut bat: Query<&mut Transform, (With<Bat>, Without<Player>, Without<Face>)>,
     mut client_socket: ResMut<ClientSocket>,
     socket_address: Res<SocketAddress>,
     time: Res<Time>,
