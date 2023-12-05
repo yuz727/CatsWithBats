@@ -2,7 +2,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::multiplayer::{ClientSocket, SocketAddress};
+use crate::{
+    multiplayer::{ClientSocket, SocketAddress},
+    MAP,
+};
 
 use super::components::{Bat, Face, Player};
 
@@ -14,6 +17,8 @@ const PLAYER_SPEED: f32 = 300.;
 const RUG_SPEED: f32 = 200.;
 // 1px/frame^2 @60Hz == 3600px/s^2
 const ACCEL_RATE: f32 = 58000.;
+const NPC_SIZE: f32 = 30.;
+
 #[derive(Serialize, Deserialize)]
 struct PlayerInfo {
     position: (f32, f32),
@@ -48,36 +53,6 @@ pub fn move_player(
     //  let mut face_transform = face.single_mut();
     //let mut bat_transform = bat.single_mut();
 
-    /////////////////////////////////////////////////////////////// with objects
-    let recliner_size = Vec2::new(109., 184.);
-    let recliner_translation = Vec3::new(-60., 210., 1.);
-    let recliner = bevy::sprite::collide_aabb::collide(
-        recliner_translation,
-        recliner_size,
-        transform.translation,
-        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
-    );
-
-    let tv_size = Vec2::new(164., 103.);
-    let tv_translation = Vec3::new(0., -245., 1.);
-    let tv_stand = bevy::sprite::collide_aabb::collide(
-        tv_translation,
-        tv_size,
-        transform.translation,
-        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
-    );
-
-    let table_size = Vec2::new(103., 107.);
-    let table_translation = Vec3::new(120., 170., 1.);
-    let side_table = bevy::sprite::collide_aabb::collide(
-        table_translation,
-        table_size,
-        transform.translation,
-        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
-    );
-
-    /////////////////////////////////////////////////////////////////////
-
     let mut deltav = Vec2::splat(0.);
     if input.pressed(KeyCode::A) {
         deltav.x -= 1000.;
@@ -96,26 +71,41 @@ pub fn move_player(
 
     // Calculate change in vector
     let acc = ACCEL_RATE * deltat;
-    let rug_collision = bevy::sprite::collide_aabb::collide(
-        Vec3::new(0., 0.,1.),
-        Vec2::new(732.6, 507.6),
-        transform.translation,
-        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
-    );
-    if(rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
-        velocity.velocity = if deltav.length() > 0. {
-            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(RUG_SPEED)
-        } else if velocity.velocity.length() > acc {
-            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+
+    if unsafe { MAP == 1 } {
+        let rug_collision = bevy::sprite::collide_aabb::collide(
+            Vec3::new(0., 0., 1.),
+            Vec2::new(732.6, 507.6),
+            transform.translation,
+            Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+        );
+        if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+            || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+            || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+            || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+            || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside))
+        {
+            velocity.velocity = if deltav.length() > 0. {
+                (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(RUG_SPEED)
+            } else if velocity.velocity.length() > acc {
+                velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+            } else {
+                Vec2::splat(0.)
+            };
         } else {
-            Vec2::splat(0.)
-        };
-    }
-    else{
+            velocity.velocity = if deltav.length() > 0. {
+                (velocity.velocity + (deltav.normalize_or_zero() * acc))
+                    .clamp_length_max(PLAYER_SPEED)
+            } else if velocity.velocity.length() > acc {
+                velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+            } else {
+                Vec2::splat(0.)
+            };
+        }
+        velocity.velocity = velocity.velocity * deltat;
+        velocity.velocity =
+            collision_check_map1(transform.translation, velocity.velocity, Vec3::splat(-1.));
+    } else if unsafe { MAP == 2 || MAP == 3 } {
         velocity.velocity = if deltav.length() > 0. {
             (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
         } else if velocity.velocity.length() > acc {
@@ -123,39 +113,22 @@ pub fn move_player(
         } else {
             Vec2::splat(0.)
         };
+        velocity.velocity = velocity.velocity * deltat;
+    } else if unsafe { MAP == 4 } {
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+        velocity.velocity = velocity.velocity * deltat;
+        velocity.velocity = collision_check_map4(
+            transform.translation,
+            velocity.velocity,
+            Vec3::splat(10000.),
+        );
     }
-    velocity.velocity = velocity.velocity * deltat;
-    /////////////////////
-    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1. * 0.8;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1. * 0.8;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1. * 0.8;
-    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1. * 0.8;
-    }
-
-    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1. * 0.9;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1. * 0.9;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1. * 0.9;
-    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1. * 0.9;
-    }
-
-    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
-        velocity.velocity.x = 1. * 0.85;
-    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
-        velocity.velocity.x = -1. * 0.85;
-    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
-        velocity.velocity.y = -1. * 0.85;
-    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
-        velocity.velocity.y = 1. * 0.85;
-    }
-    ///////////////////////////
 
     // movement
     transform.translation.x = (transform.translation.x + velocity.velocity.x).clamp(
@@ -176,11 +149,11 @@ pub fn move_player(
 
 pub fn player_npc_collisions(
     mut player: Query<&mut Transform, (With<Player>, Without<NPC>)>,
-    mut NPCquery: Query<&mut Transform, (With<NPC>, Without<Player>)>,
-){
+    mut npc_query: Query<&mut Transform, (With<NPC>, Without<Player>)>,
+) {
     let mut player_transform = player.single_mut();
-    
-    for mut npc_transform in NPCquery.iter_mut() {
+
+    for mut npc_transform in npc_query.iter_mut() {
         let collision = bevy::sprite::collide_aabb::collide(
             npc_transform.translation,
             Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
@@ -201,7 +174,6 @@ pub fn player_npc_collisions(
             npc_transform.translation.y = npc_transform.translation.y - 5.;
         }
     }
-    
 }
 
 pub fn move_player_mult(
@@ -268,16 +240,17 @@ pub fn move_player_mult(
     // Calculate change in vector
     let acc = ACCEL_RATE * deltat;
     let rug_collision = bevy::sprite::collide_aabb::collide(
-        Vec3::new(0., 0.,1.),
+        Vec3::new(0., 0., 1.),
         Vec2::new(732.6, 507.6),
         transform.translation,
         Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
     );
-    if(rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
-    || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)){
+    if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside))
+    {
         velocity.velocity = if deltav.length() > 0. {
             (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(RUG_SPEED)
         } else if velocity.velocity.length() > acc {
@@ -285,8 +258,7 @@ pub fn move_player_mult(
         } else {
             Vec2::splat(0.)
         };
-    }
-    else{
+    } else {
         velocity.velocity = if deltav.length() > 0. {
             (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
         } else if velocity.velocity.length() > acc {
@@ -384,4 +356,247 @@ pub fn move_player_mult(
         // Update the previous position
         velocity.prev_position = (transform.translation.x, transform.translation.y);
     }
+}
+
+pub fn collision_check_map1(
+    npc_translation: Vec3,
+    mut velocity: Vec2,
+    player_translation: Vec3,
+) -> Vec2 {
+    let recliner_size = Vec2::new(109., 184.);
+    let recliner_translation = Vec3::new(-60., 210., 1.);
+    let recliner = bevy::sprite::collide_aabb::collide(
+        recliner_translation,
+        recliner_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let tv_size = Vec2::new(164., 103.);
+    let tv_translation = Vec3::new(0., -250., 1.);
+    let tv_stand = bevy::sprite::collide_aabb::collide(
+        tv_translation,
+        tv_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let table_size = Vec2::new(103., 107.);
+    let table_translation = Vec3::new(120., 170., 1.);
+    let side_table = bevy::sprite::collide_aabb::collide(
+        table_translation,
+        table_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let player_collision = bevy::sprite::collide_aabb::collide(
+        player_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.8;
+    }
+
+    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    }
+
+    if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+        velocity.x = -1. * 0.85;
+        velocity.y = -1. * 0.85;
+    }
+
+    return velocity;
+}
+
+pub fn collision_check_map4(
+    npc_translation: Vec3,
+    mut velocity: Vec2,
+    player_translation: Vec3,
+) -> Vec2 {
+    let coral_size = Vec2::new(150., 150.);
+    let coral1 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral2 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., -180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral3 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(-320., 180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral4 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(-320., -180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral5 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(320., 180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let coral6 = bevy::sprite::collide_aabb::collide(
+        Vec3::new(320., -180., 2.),
+        coral_size,
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    let player_collision = bevy::sprite::collide_aabb::collide(
+        player_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    if coral1 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral2 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral3 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral4 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral5 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if coral6 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.9;
+    } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.9;
+    } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.9;
+    } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.9;
+    }
+
+    if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+        velocity.x = -1. * 0.85;
+        velocity.y = -1. * 0.85;
+    }
+    return velocity;
+}
+
+pub fn collision_check_no_objects(
+    npc_translation: Vec3,
+    mut velocity: Vec2,
+    player_translation: Vec3,
+) -> Vec2 {
+    let player_collision = bevy::sprite::collide_aabb::collide(
+        player_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+        npc_translation,
+        Vec2::new(NPC_SIZE, NPC_SIZE),
+    );
+
+    if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.x = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.x = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.y = -1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.y = 1. * 0.85;
+    } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside) {
+        velocity.x = -1. * 0.85;
+        velocity.y = -1. * 0.85;
+    }
+
+    return velocity;
 }

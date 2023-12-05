@@ -173,7 +173,7 @@ impl Plugin for NPCPlugin {
                 FixedUpdate,
                 selection
                     .run_if(in_state(GameState::Game))
-                    .run_if(on_fixed_timer(Duration::from_millis(500)))
+                    .run_if(on_fixed_timer(Duration::from_millis(200)))
                     .after(perform_a_star),
             );
             app.add_systems(
@@ -326,7 +326,7 @@ pub fn load_npc_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .insert(Maps {
             path_map: load_map_path(),
-            walkable: load_walkable_map_1(),
+            walkable: load_walkable_map_4(),
         })
         .insert(Path::new())
         .insert(AnimationTimer(Timer::from_seconds(
@@ -363,7 +363,14 @@ pub fn load_npc_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
 //                     -> Idle
 pub fn selection(
     mut npc: Query<
-        (&Transform, &mut Path, &Maps, &Difficulty, &mut States),
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut States,
+        ),
         (With<NPC>, Without<NPCBat>, Without<Ball>, Without<Player>),
     >,
     player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>, Without<NPCBat>)>,
@@ -373,7 +380,7 @@ pub fn selection(
         (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
     >,
 ) {
-    for (npc_transform, mut path, maps, difficulty, mut state) in npc.iter_mut() {
+    for (npc_transform, _velocity, mut path, maps, difficulty, mut state) in npc.iter_mut() {
         for player_transform in player.iter() {
             let danger = danger_check(npc_transform.translation, &time, &ball_query);
             if danger {

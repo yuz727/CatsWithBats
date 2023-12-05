@@ -2,10 +2,10 @@
 use super::components::*;
 
 use crate::game::npc::*;
-use crate::game::npc_events::{
+use crate::game::pathfinding::*;
+use crate::game::player_movement::{
     collision_check_map1, collision_check_map4, collision_check_no_objects,
 };
-use crate::game::pathfinding::*;
 use crate::MAP;
 
 use bevy::prelude::*;

@@ -2,7 +2,7 @@ use crate::game::components::Aim;
 
 use crate::{despawn_screen, GameState, MultiplayerState, MAP, TEXT_COLOR};
 
-use bevy::{app::AppExit, prelude::*, window::PresentMode};
+use bevy::{prelude::*, window::PresentMode};
 use std::io::{stdin, stdout, Write};
 
 use self::components::{Bat, Colliding, Health, Object, Player, Rug};
@@ -169,9 +169,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(0., 0., 10.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(Player{
+        .insert(Player {
             powerup: "none".to_string(),
-             powerup_timer: 0.,
+            powerup_timer: 0.,
         })
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());

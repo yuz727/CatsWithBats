@@ -1,3 +1,4 @@
+/// Import
 use crate::game::npc::*;
 use bevy::prelude::*;
 use std::cmp::Ordering;
@@ -10,23 +11,20 @@ struct Vertex {
     cost: i32,
 }
 
-// For min-heap implementation
+/// For min-heap implementation
 impl Ord for Vertex {
     fn cmp(&self, other: &Self) -> Ordering {
         other.cost.cmp(&self.cost)
     }
 }
 
-// // For min-heap implementation
 impl PartialOrd for Vertex {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-/*  Create a 2-d vector of tiles, each tile has the actual coordinates associated to it
- *  Each tile will be a 4x4 pixel chunk
- */
+/// 2-D Vector for storing information for A*
 pub fn load_map_path() -> Vec<Vec<Vec2>> {
     let mut path_map: Vec<Vec<Vec2>> = Vec::new();
     let mut curr_x = 0.;
@@ -44,9 +42,9 @@ pub fn load_map_path() -> Vec<Vec<Vec2>> {
     return path_map;
 }
 
+/// 2-D Vector for storing walkable tiles in map1
 pub fn load_walkable_map_1() -> Vec<Vec<bool>> {
     let mut walkable_map: Vec<Vec<bool>> = Vec::new();
-    //  let mut records = reader.records();
     let mut curr_x = 0.;
     let mut curr_y;
     while curr_x < 1280. {
@@ -78,9 +76,9 @@ pub fn load_walkable_map_1() -> Vec<Vec<bool>> {
     return walkable_map;
 }
 
+/// 2-D Vector for storing walkable tiles in map2 and map3
 pub fn load_walkable_map_no_objects() -> Vec<Vec<bool>> {
     let mut walkable_map: Vec<Vec<bool>> = Vec::new();
-    //  let mut records = reader.records();
     let mut curr_x = 0.;
     let mut curr_y;
     while curr_x < 1280. {
@@ -96,10 +94,55 @@ pub fn load_walkable_map_no_objects() -> Vec<Vec<bool>> {
     return walkable_map;
 }
 
-pub fn load_walkable_map_4() {}
+/// 2-D Vector for storing walkable tiles in map4
+pub fn load_walkable_map_4() -> Vec<Vec<bool>> {
+    let mut walkable_map: Vec<Vec<bool>> = Vec::new();
+    let mut curr_x = 0.;
+    let mut curr_y;
+    while curr_x < 1280. {
+        curr_y = 0.;
+        let mut row: Vec<bool> = Vec::new();
+        while curr_y < 720. {
+            if (curr_x >= 884. && curr_x <= 1036.) && (curr_y <= 256. && curr_y >= 104.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 244. && curr_x <= 396.) && (curr_y <= 256. && curr_y >= 104.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 564. && curr_x <= 716.) && (curr_y <= 256. && curr_y >= 104.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 884. && curr_x <= 1036.) && (curr_y <= 616. && curr_y >= 464.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 224. && curr_x <= 396.) && (curr_y <= 616. && curr_y >= 464.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            if (curr_x >= 564. && curr_x <= 716.) && (curr_y <= 616. && curr_y >= 464.) {
+                row.push(false);
+                curr_y += 4.;
+                continue;
+            }
+            row.push(true);
+            curr_y += 4.;
+        }
+        walkable_map.push(row);
+        curr_x += 4.;
+    }
+    return walkable_map;
+}
 
-/*  Return a vector for the neighbouring tiles of a given tile
- */
+/// Return the neighours of a given tile
 fn get_neighbours(map: &Vec<Vec<Vec2>>, coords: Vec2) -> Vec<Vec2> {
     let mut ret = Vec::new();
     let x = coords.x as usize / 4;
@@ -127,12 +170,12 @@ fn get_neighbours(map: &Vec<Vec<Vec2>>, coords: Vec2) -> Vec<Vec2> {
     return ret;
 }
 
-/*  Returns the Manhattan Distance between two points
- */
+/// Returns Manhattan Distance between 2 points
 fn manhattan_distance(a: Vec2, b: Vec2) -> f32 {
     return (a.x - b.x).abs() + (a.y - b.y).abs();
 }
 
+/// A* Pathfinding, returns a list of coordinates that represents the path
 pub fn a_star(start: Vec2, goal: Vec2, maps: &Maps) -> Vec<Vec2> {
     // Initialise
     let mut worklist = BinaryHeap::new();
