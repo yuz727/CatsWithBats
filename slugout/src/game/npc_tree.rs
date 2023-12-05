@@ -1,21 +1,42 @@
+use std::sync::Arc;
+use std::sync::Mutex;
+
 use crate::game::npc::*;
 use crate::game::npc_events::*;
 use crate::game::pathfinding::*;
 use crate::GameState;
 use bevy::prelude::*;
+use bevy::utils::synccell::SyncCell;
 //use bevy::time::Stopwatch;
 
 use super::components::Ball;
 use super::components::Object;
 use super::components::Player;
+use super::npc;
 
-enum Node {
+/*  In rememberance of the Box version tree
+ *  Ran into synchronisation issues with bevy's concurrency and variable lifetime so didn't workout
+ *  Maybe Someday, Welp we Tried D:
+ */
+
+pub enum Node {
     Sequence(Vec<Node>),
     Fallback(Vec<Node>),
     Condition(
         Box<
             dyn Fn(
-                Query<&Transform, With<NPC>>,
+                Query<
+                    // NPC Query
+                    (
+                        &mut Transform,
+                        &mut NPCVelocity,
+                        &mut Path,
+                        &Maps,
+                        &Difficulty,
+                        &mut AnimationTimer,
+                    ),
+                    With<NPC>,
+                >,
                 Query<&Transform, With<Ball>>,
                 Query<&Transform, With<Player>>,
                 Query<&Transform, With<Object>>,
@@ -25,8 +46,17 @@ enum Node {
     Action(
         Box<
             dyn Fn(
-                Query<&Transform, With<NPC>>,
-                &mut Commands,
+                Query<
+                    (
+                        &mut Transform,
+                        &mut NPCVelocity,
+                        &mut Path,
+                        &Maps,
+                        &Difficulty,
+                        &mut AnimationTimer,
+                    ),
+                    With<NPC>,
+                >,
                 Query<&Transform, With<Ball>>,
                 Query<&Transform, With<Player>>,
                 Query<&Transform, With<Object>>,
@@ -36,7 +66,17 @@ enum Node {
     Decorator(
         Box<
             dyn Fn(
-                Query<&Transform, With<NPC>>,
+                Query<
+                    (
+                        &mut Transform,
+                        &mut NPCVelocity,
+                        &mut Path,
+                        &Maps,
+                        &Difficulty,
+                        &mut AnimationTimer,
+                    ),
+                    With<NPC>,
+                >,
                 Query<&Transform, With<Ball>>,
                 Query<&Transform, With<Player>>,
                 Query<&Transform, With<Object>>,
@@ -46,18 +86,54 @@ enum Node {
     ),
 }
 
+#[derive(Component, PartialEq, Eq, Debug, Clone)]
 enum NodeStatus {
     Success,
     Failure,
     Running,
 }
 
-fn behavior_tree(
-    npc: Query<(&mut Transform, &mut NPCVelocity, &mut States), With<NPC>>,
-    commands: &mut Commands,
-    ball_query: Query<&Transform, With<Ball>>,
-    player_query: Query<&Transform, With<Player>>,
-    object_query: Query<&Transform, With<Object>>,
+// unsafe impl Send for Node {}
+/*
+ */
+
+// fn behaviour_tree_setup(mut commands: Commands) {
+//     let npc_entity = commands.spawn(NPC).id();
+//     let sequence_node = commands.spawn(Sequence).id();
+//     let fallback_node = commands.spawn(Fallback).id();
+//     let decorator_node = commands.spawn(Decorator).id();
+//     let condition_node = commands.spawn(Decorator).id();
+
+//     commands
+//         .entity(npc_entity)
+//         .insert(NPC)
+//         .insert(Fallback)
+//         .with_children(|npc_entity| {
+//             npc_entity
+//                 .spawn(sequence_node)
+//                 .insert(Sequence)
+//                 .with_children(|sequence| {
+//                     sequence.spawn().insert(MoveToDonut { agent });
+//                     sequence.spawn().insert(EatDonut { agent });
+//                 });
+//         });
+// }
+
+pub fn behavior_tree(
+    mut npc: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+    ball_query: &Query<&Transform, With<Ball>>,
+    player_query: &Query<&Transform, With<Player>>,
+    object_query: &Query<&Transform, With<Object>>,
 ) {
     let root_node = Node::Fallback(vec![
         Node::Sequence(vec![
@@ -68,26 +144,22 @@ fn behavior_tree(
                 Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
                 Node::Condition(Box::new(|npc, _, _, _| swing_cooldown_check(npc))),
                 Node::Sequence(vec![
-                    Node::Action(Box::new(
-                        |npc, commands, ball_query, player_query, object_query| {
-                            swing(&mut npc, commands, ball_query)
-                        },
-                    )),
+                    Node::Action(Box::new(|npc, ball_query, player_query, object_query| {
+                        swing(npc, ball_query)
+                    })),
                     // Add more nodes for SWING subtree
                 ]),
             ]),
-            Node::Action(Box::new(|npc, commands, _, _, _| sidestep(npc, commands))),
+            Node::Action(Box::new(|npc, _, _, _| sidestep(npc))),
         ]),
         Node::Sequence(vec![
             Node::Decorator(
-                Box::new(|npc, _, _, _| player_proximity_check(npc)),
+                Box::new(|npc, _, _, _| player_proximity_check(npc, *player_query)),
                 Box::new(Node::Fallback(vec![Node::Sequence(vec![
                     Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
-                    Node::Action(Box::new(
-                        |npc, commands, ball_query, player_query, object_query| {
-                            swing(npc, commands, ball_query)
-                        },
-                    )),
+                    Node::Action(Box::new(|npc, ball_query, player_query, object_query| {
+                        swing(npc, ball_query)
+                    })),
                     // Add more nodes for SWING subtree
                 ])])),
             ),
@@ -96,34 +168,33 @@ fn behavior_tree(
                 Box::new(Node::Fallback(vec![
                     Node::Sequence(vec![
                         Node::Condition(Box::new(|npc, _, _, _| aggression_check(npc))),
-                        Node::Action(Box::new(
-                            |npc, commands, ball_query, player_query, object_query| {
-                                set_tag_to_closest_ball(npc, commands, ball_query)
-                            },
-                        )),
+                        Node::Action(Box::new(|npc, ball_query, player_query, object_query| {
+                            set_tag_to_closest_ball(npc, ball_query)
+                        })),
                     ]),
-                    Node::Action(Box::new(|npc, commands, _, _, _| {
-                        set_tag_to_closest_object(npc, object_query)
+                    Node::Action(Box::new(|npc, _, _, _| {
+                        set_tag_to_closest_object(npc, *object_query)
                     })),
                 ])),
             ),
-            Node::Action(Box::new(|npc, commands, _, _, _| perform_a_star(npc))),
+            Node::Action(Box::new(|npc, _, _, _| perform_a_star(npc))),
         ]),
     ]);
-
-    execute_node(
-        root_node,
-        npc,
-        commands,
-        ball_query,
-        player_query,
-        object_query,
-    );
 }
 
-fn execute_node(
+pub fn execute_node(
     node: Node,
-    npc: Query<&Transform, With<NPC>>,
+    mut npc: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
     commands: &mut Commands,
     ball_query: Query<&Transform, With<Ball>>,
     player_query: Query<&Transform, With<Player>>,
@@ -175,7 +246,7 @@ fn execute_node(
                 return NodeStatus::Failure;
             }
         }
-        Node::Action(action) => action(npc, commands, ball_query, player_query, object_query),
+        Node::Action(action) => action(npc, ball_query, player_query, object_query),
         Node::Decorator(decorator_condition, child) => {
             if decorator_condition(npc, ball_query, player_query, object_query) {
                 execute_node(
@@ -194,7 +265,17 @@ fn execute_node(
 }
 
 fn danger_check(
-    npc: &NPC,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
     ball_query: Query<&Transform, With<Ball>>,
     // _: &QuerySet<(Entity, &Player)>,
     // _: &QuerySet<(Entity, &GameObject)>,
@@ -202,61 +283,118 @@ fn danger_check(
     true
 }
 
-fn aggression_check(npc: &NPC) -> bool {
-    return true;
-}
-
-fn swing_cooldown_check(npc: &NPC) -> bool {
-    return true;
-}
-
 fn sidestep(
-    npc: &mut NPC,
-    commands: &mut Commands,
-    // _: &QuerySet<(Entity, &Ball)>,
-    // _: &QuerySet<(Entity, &Player)>,
-    // _: &QuerySet<(Entity, &GameObject)>,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
 ) -> NodeStatus {
     // Implement sidestep logic
     return NodeStatus::Success;
 }
 
 fn player_proximity_check(
-    npc: &NPC,
-    //  _: &QuerySet<(Entity, &Ball)>,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
     player_query: Query<&Transform, With<Player>>,
-    //  _: &QuerySet<(Entity, &GameObject)>,
 ) -> bool {
     // Implement player proximity check logic
     return true;
 }
 
 fn tag_is_null(
-    npc: &NPC,
-    // _: &QuerySet<(Entity, &Ball)>,
-    // _: &QuerySet<(Entity, &Player)>,
-    // _: &QuerySet<(Entity, &GameObject)>,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
 ) -> bool {
     // Implement TAG null check logic
     return true;
 }
 
 fn set_tag_to_closest_ball(
-    npc: &mut NPC,
-    commands: &mut Commands,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
     ball_query: Query<&Transform, With<Ball>>,
-    // _: &QuerySet<(Entity, &Player)>,
-    // _: &QuerySet<(Entity, &GameObject)>,
 ) -> NodeStatus {
     // Implement setting TAG to the closest ball logic
     return NodeStatus::Success;
 }
+fn aggression_check(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> bool {
+    return true;
+}
 
+fn swing_cooldown_check(
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
+) -> bool {
+    return true;
+}
 fn set_tag_to_closest_object(
-    npc: &mut NPC,
-    //  commands: &mut Commands,
-    // _: &QuerySet<(Entity, &Ball)>,
-    // _: &QuerySet<(Entity, &Player)>,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
     object_query: Query<&Transform, With<Object>>,
 ) -> NodeStatus {
     // Implement setting TAG to the closest object logic
@@ -264,16 +402,25 @@ fn set_tag_to_closest_object(
 }
 
 fn perform_a_star(
-    mut npcs: Query<(&Transform, &Maps, &mut Path), (With<NPC>, Without<Player>)>,
-    // _: &QuerySet<(Entity, &Ball)>,
-    // _: &QuerySet<(Entity, &Player)>,
-    // _: &QuerySet<(Entity, &GameObject)>,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
 ) -> NodeStatus {
     // Implement A* pathfinding logic
-    for (npc_transform, maps, mut path) in npcs.iter_mut() {
+    for (npc_transform, _velocity, mut path, maps, _diffculty, _animation_timer) in npcs.iter_mut()
+    {
+        let goal = path.goal;
         path.set_new_path(a_star(
             coords_conversion_astar(npc_transform.translation.truncate().floor()),
-            coords_conversion_astar(path.goal),
+            coords_conversion_astar(goal),
             maps,
         ));
     }
@@ -281,8 +428,17 @@ fn perform_a_star(
 }
 
 fn swing(
-    npc: &mut NPC,
-    commands: &mut Commands,
+    mut npcs: Query<
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut Path,
+            &Maps,
+            &Difficulty,
+            &mut AnimationTimer,
+        ),
+        With<NPC>,
+    >,
     ball_query: Query<&Transform, With<Ball>>,
     // _: &QuerySet<(Entity, &Player)>,
     // _: &QuerySet<(Entity, &GameObject)>,
