@@ -1,7 +1,7 @@
-use bevy::{app::AppExit, prelude::*, window::PresentMode};
-
 use crate::game::components::Aim;
-use crate::{despawn_screen, GameState, MultiplayerState, TEXT_COLOR};
+use crate::{despawn_screen, GameState, MultiplayerState, MAP, TEXT_COLOR};
+use bevy::{app::AppExit, prelude::*, window::PresentMode};
+use std::io::{stdin, stdout, Write};
 
 use self::components::{Bat, Colliding, Object, Player, Rug};
 
@@ -21,6 +21,8 @@ const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const HOVERED_PRESSED_BUTTON: Color = Color::rgb(0.25, 0.65, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
+
+pub static mut DIFFICULTY: i32 = -1;
 
 #[derive(Component)]
 struct SelectedOption;
@@ -59,25 +61,64 @@ impl Plugin for GamePlugin {
                 difficulty_select_setup,
             )
             .add_systems(
+                OnEnter(GameState::DifficultySelect),
+                difficulty_select.after(difficulty_select_setup),
+            )
+            .add_systems(
                 OnExit(GameState::DifficultySelect),
                 despawn_screen::<OnDifficultySelectScreen>,
-            )
-            .add_systems(OnEnter(MultiplayerState::Game), setup)
-            .add_systems(OnEnter(GameState::Game), setup)
-            .add_plugins(ball::BallPlugin)
-            .add_plugins(npc::NPCPlugin { bully_mode: false })
-            .add_systems(
-                Update,
-                player_movement::move_player.run_if(in_state(GameState::Game)),
-            )
-            .add_systems(
-                Update,
-                player_movement::player_NPC_collisions.run_if(in_state(GameState::Game)),
-            )
-            .add_systems(
-                Update,
-                player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
             );
+        if unsafe { MAP == 1 } {
+            app.add_systems(OnEnter(MultiplayerState::Game), setup)
+                .add_systems(OnEnter(GameState::Game), setup)
+                .add_systems(OnEnter(GameState::Game), setup_map1)
+                .add_systems(OnEnter(MultiplayerState::Game), setup_map1)
+                .add_plugins(ball::BallPlugin)
+                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_systems(
+                    Update,
+                    player_movement::move_player.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
+                );
+        } else if unsafe { MAP == 2 || MAP == 3 } {
+            app.add_systems(OnEnter(MultiplayerState::Game), setup)
+                .add_systems(OnEnter(GameState::Game), setup)
+                .add_plugins(ball::BallPlugin)
+                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_systems(
+                    Update,
+                    player_movement::move_player.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::player_NPC_collisions.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
+                );
+        } else if unsafe { MAP == 4 } {
+            app.add_systems(OnEnter(GameState::Game), setup)
+                .add_plugins(ball::BallPlugin)
+                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_systems(OnEnter(GameState::Game), setup_map4)
+                .add_systems(OnEnter(MultiplayerState::Game), setup_map4)
+                .add_systems(
+                    Update,
+                    player_movement::move_player.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::player_NPC_collisions.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
+                    player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
+                );
+        }
     }
 }
 
@@ -93,14 +134,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
 
-    // commands
-    //     .spawn(SpriteBundle {
-    //         texture: asset_server.load("Face.png"),
-    //         transform: Transform::with_scale(Transform::from_xyz(0., 0., 20.), Vec3::splat(0.13)),
-    //         ..default()
-    //     })
-    //     .insert(Face);
-
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
@@ -112,6 +145,37 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .insert(Bat);
 
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("newAim.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-2., 0., 4.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(Aim);
+    commands.insert_resource(Events::<CursorMoved>::default());
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("FullHealth.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 2.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("FullHealthNPC.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-525., 280., 2.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+}
+
+fn setup_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load Objects
     commands
         .spawn(SpriteBundle {
@@ -155,14 +219,51 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Rug { friction: 1.4 });
+}
+
+fn setup_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
-            texture: asset_server.load("newAim.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-2., 0., 4.), Vec3::splat(0.13)),
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(0., 180., 2.),
             ..default()
         })
-        .insert(Aim);
-    commands.insert_resource(Events::<CursorMoved>::default());
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(0., -180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(-320., 180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(-320., -180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(320., 180., 2.),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Coral.png"),
+            transform: Transform::from_xyz(320., -180., 2.),
+            ..default()
+        })
+        .insert(Object);
 }
 
 //This system handles changing all buttons color based on mouse interaction
@@ -238,7 +339,7 @@ fn difficulty_select_setup(mut commands: Commands) {
                     SingleplayerButtonAction::Game,
                 ))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section("Yes.", button_text_style.clone()));
+                    parent.spawn(TextBundle::from_section("Run.", button_text_style.clone()));
                 });
             parent
                 .spawn((
@@ -250,9 +351,32 @@ fn difficulty_select_setup(mut commands: Commands) {
                     SingleplayerButtonAction::Back,
                 ))
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section("No.", button_text_style.clone()));
+                    parent.spawn(TextBundle::from_section("Back", button_text_style.clone()));
                 });
         });
+}
+
+fn difficulty_select(_kbd: Res<Input<KeyCode>>) {
+    loop {
+        let mut input = String::new();
+        print!("Pick a Difficulty from 1 - 5: ");
+        let _ = stdout().flush();
+        stdin()
+            .read_line(&mut input)
+            .expect("Did not enter a correct string");
+        let trimmed = input.trim();
+        match trimmed.parse::<i32>() {
+            Ok(i) => {
+                if i > 0 && i <= 5 {
+                    unsafe { DIFFICULTY = i * 20 };
+                    break;
+                } else {
+                    println!("Invalid difficulty, try again");
+                }
+            }
+            Err(..) => println!("Invalid difficulty, try again"),
+        };
+    }
 }
 
 fn single_player_menu_action(
