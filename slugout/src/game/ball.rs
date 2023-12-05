@@ -298,7 +298,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             transform: Transform::from_xyz(0., 0., 2.),
-            visibility: Visibility::Hidden,
+            visibility: Visibility::Visible,
             ..Default::default()
         })
         .insert(HealthHitbox {
