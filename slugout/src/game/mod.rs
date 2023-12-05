@@ -13,6 +13,7 @@ mod npc_events;
 // mod npc_tree;
 mod pathfinding;
 mod player_movement;
+mod powerups;
 // mod tree;
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
@@ -70,9 +71,12 @@ impl Plugin for GamePlugin {
                 Update,
                 player_movement::move_player.run_if(in_state(GameState::Game)),
             )
+            .add_systems(OnEnter(GameState::Game), powerups::spawn_powerups.run_if(in_state(GameState::Game)))
+            .add_systems(Update, powerups::player_powerups.run_if(in_state(GameState::Game)))
+            .add_systems(Update, powerups::apply_powerups.run_if(in_state(GameState::Game)))
             .add_systems(
                 Update,
-                player_movement::player_NPC_collisions.run_if(in_state(GameState::Game)),
+                player_movement::player_npc_collisions.run_if(in_state(GameState::Game)),
             )
             .add_systems(
                 Update,
@@ -89,9 +93,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(0., 0., 10.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(Player)
+        .insert(Player{
+            powerup: "none".to_string(),
+            powerup_timer: 0.,
+        })
         .insert(player_movement::PlayerVelocity::new())
-        .insert(Colliding::new());
+        .insert(Colliding::new())
+        ;
 
     // commands
     //     .spawn(SpriteBundle {

@@ -272,7 +272,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Hitbox {
-            size: Vec2::new(45., 75.), //30 52
+            size: Vec2::new(45., 75.), //
         });
 }
 
@@ -485,7 +485,6 @@ pub fn bounce_balls(
 
 fn bat_hitbox(
     mut hitbox: Query<&mut Sprite, (With<Hitbox>, Without<Bat>)>,
-    bat: Query<&Transform, (With<Bat>, Without<Hitbox>)>,
     input_mouse: Res<Input<MouseButton>>,
 ) {
     let mut color_hitbox = hitbox.single_mut();
@@ -499,7 +498,7 @@ fn bat_hitbox(
 }
 
 fn friction(
-    mut query: Query<(&Transform, &mut BallVelocity, &Ball), With<Ball>>,
+    mut query: Query<(&Transform, &mut BallVelocity), With<Ball>>,
     rug: Query<(&Transform, &Rug), With<Rug>>,
     time: Res<Time>,
 ) {
@@ -507,7 +506,7 @@ fn friction(
     let rug_size = Vec2::new(720., 500.);
     let deltat = time.delta_seconds();
 
-    for (ball_transform, mut ball_velocity, ball) in query.iter_mut() {
+    for (ball_transform, mut ball_velocity) in query.iter_mut() {
         // If the ball is on the rug, slow it down using the rugs coefficient of friction
         let rug_collision = bevy::sprite::collide_aabb::collide(
             rug_transform.translation,
@@ -644,9 +643,9 @@ fn swing(
     //for (bat, mut bat_transform) in query_bat.iter_mut() {
     if unsafe { MOUSE_BUTTON_PRESSED } {
         // Left mouse button is pressed, set the bat to horizontal
-        bat_transform.scale.y = -0.175;
+        bat_transform.scale.y = -bat_transform.scale.y.abs();
     } else if unsafe { BAT_TRANSFORMED } {
-        bat_transform.scale.y = 0.175;
+        bat_transform.scale.y = bat_transform.scale.y.abs();
     }
     //}
 
@@ -656,18 +655,18 @@ fn swing(
         if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x{
             bat_transform.translation = player_transform.translation;
             bat_transform.translation.x = bat_transform.translation.x + 8.;
-            bat_transform.scale.x = -0.175;
+            bat_transform.scale.x = -bat_transform.scale.x.abs();
 
             hitbox_transform.translation = bat_transform.translation;
-            hitbox_transform.translation.x = hitbox_transform.translation.x + 20.;
+            hitbox_transform.translation.x = hitbox_transform.translation.x + hitbox.size.x/2.;
             hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
         } else {
             bat_transform.translation = player_transform.translation;
             bat_transform.translation.x = bat_transform.translation.x - 5.;
-            bat_transform.scale.x = 0.175;
+            bat_transform.scale.x = bat_transform.scale.x.abs();
 
             hitbox_transform.translation = bat_transform.translation;
-            hitbox_transform.translation.x = hitbox_transform.translation.x - 20.;
+            hitbox_transform.translation.x = hitbox_transform.translation.x - hitbox.size.x/2.;
             hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
         }
         if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
