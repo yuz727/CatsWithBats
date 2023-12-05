@@ -25,6 +25,7 @@ const BALL_SIZE: f32 = 10.;
 const BASE_FRICTION: f32 = 0.4;
 const G: f32 = 9.81;
 const MIN_BALL_VELOCITY: f32 = 30.;
+const PLAYER_SIZE: f32 = 30.;
 
 pub struct BallPlugin;
 
@@ -74,7 +75,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
+            transform: Transform::from_xyz(100., 100., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
             ..Default::default()
         })
         .insert(Ball {
@@ -128,7 +129,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(80., 60., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
+            transform: Transform::from_xyz(100., 105., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
             ..Default::default()
         })
         .insert(Ball {
@@ -290,7 +291,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             size: Vec2::new(45., 75.), //30 52
         });
     //Spawn health hitbox for player
-    commands
+    /*commands
         .spawn(SpriteBundle {
             sprite: Sprite {
                 color: Color::rgba(240., 140., 100., 0.2),
@@ -303,7 +304,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .insert(HealthHitbox {
             size: Vec2::new(30., 35.), //30 52
-        });
+        });*/
 
     // Player 1 health
     commands
@@ -315,7 +316,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Health);
+        .insert(Health{
+            lives: -1,
+        });
 
     commands
         .spawn(SpriteBundle {
@@ -326,7 +329,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Health);
+        .insert(Health{
+            lives: 1,
+        });
 
     commands
         .spawn(SpriteBundle {
@@ -337,7 +342,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Health);
+        .insert(Health{
+            lives: 2,
+        });
 
     commands
         .spawn(SpriteBundle {
@@ -348,9 +355,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Health);
+        .insert(Health{
+            lives: 3,
+        });
 
-    //NPC player health
+    /*//NPC player health
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("deadNPC.png"),
@@ -393,7 +402,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Health);
+        .insert(Health);*/
 }
 
 //bounce the ball
@@ -401,7 +410,8 @@ pub fn bounce(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
     //health hitbox
-    player_hitbox: Query<(&Transform, &HealthHitbox), With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Ball>)>,
+    mut healthbar_query: Query<(&mut Visibility, &mut Health), (With<Health>, Without<Ball>, Without<Player>)>,
 ) {
     for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
         //ball radius on screen
@@ -423,44 +433,33 @@ pub fn bounce(
         );
 
         // Check for collision with player
-        for (player_transform, hitbox) in player_hitbox.iter() {
+        for (mut player_transform, mut player) in player_query.iter_mut() {
             let player_collision = bevy::sprite::collide_aabb::collide(
                 player_transform.translation,
-                hitbox.size,
+                Vec2::splat(PLAYER_SIZE),
                 new_translation,
                 Vec2::new(ball_radius * 2., ball_radius * 2.),
             );
 
-            if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
-                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
-                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
-                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
-                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)
-            {
-                // Bounce off the player
-                ball_velocity.velocity = Vec3::splat(0.);
-                let change_x =
-                    (((player_transform.translation.x - WIN_W) / 2.) - new_translation.x).abs();
-                let change_y =
-                    ((-(player_transform.translation.y - WIN_H) / 2.) - new_translation.y).abs();
-                let mut new_velocity = Vec3::new(change_x, change_y, 0.);
-                new_velocity = new_velocity.normalize_or_zero();
-
-                if (player_transform.translation.x - WIN_W) / 2. > new_translation.x {
-                    new_velocity.x = new_velocity.x;
-                } else {
-                    new_velocity.x = -1. * new_velocity.x;
+            if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || player_collision == Some(bevy::sprite::collide_aabb::Collision::Left){
+                ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
+                ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
+                for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
+                    if healthbar.lives == player.health{
+                        *health_visibility = Visibility::Hidden;
+                    }
                 }
+                player.health = player.health - 1;
 
-                if (-(player_transform.translation.y - WIN_H) / 2.) > new_translation.y {
-                    new_velocity.y = new_velocity.y;
-                } else {
-                    new_velocity.y = -1. * new_velocity.y;
+            }else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+                ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
+                ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
+                for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
+                    if healthbar.lives == player.health{
+                        *health_visibility = Visibility::Hidden;
+                    }
                 }
-
-                new_velocity.x = new_velocity.x * 500.;
-                new_velocity.y = new_velocity.y * 500.;
-                ball_velocity.velocity = new_velocity * ball.elasticity;
+                player.health = player.health - 1;
             }
         }
 
