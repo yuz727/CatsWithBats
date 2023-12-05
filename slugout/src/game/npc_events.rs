@@ -381,11 +381,9 @@ pub fn swing(
                             );
                             if ball_x > npc_x{ 
                                bat_transform.scale.x = -0.13;
-                             
                             }
                             if ball_x < npc_x{ 
                                bat_transform.scale.x = 0.13;
-                               println!("To the left");
                             }
 
                             bat_transform.scale.y = -0.13;
