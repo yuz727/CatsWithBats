@@ -1,0 +1,94 @@
+Alex: I left the old collision code in player_movement here, in case if anyone need this for reference or need to revert to this version.
+
+
+/////////////////////////////////////////////////////////////// with objects
+    let recliner_size = Vec2::new(109., 184.);
+    let recliner_translation = Vec3::new(-60., 210., 1.);
+    let recliner = bevy::sprite::collide_aabb::collide(
+        recliner_translation,
+        recliner_size,
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
+
+    let tv_size = Vec2::new(164., 103.);
+    let tv_translation = Vec3::new(0., -245., 1.);
+    let tv_stand = bevy::sprite::collide_aabb::collide(
+        tv_translation,
+        tv_size,
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
+
+    let table_size = Vec2::new(103., 107.);
+    let table_translation = Vec3::new(120., 170., 1.);
+    let side_table = bevy::sprite::collide_aabb::collide(
+        table_translation,
+        table_size,
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
+
+    /////////////////////////////////////////////////////////////////////
+
+    /////////////////////
+    if recliner == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.velocity.x = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.velocity.x = 1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.velocity.y = -1. * 0.8;
+    } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.velocity.y = 1. * 0.8;
+    }
+
+    if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.velocity.x = 1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.velocity.x = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.velocity.y = -1. * 0.9;
+    } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.velocity.y = 1. * 0.9;
+    }
+
+    if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
+        velocity.velocity.x = 1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
+        velocity.velocity.x = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
+        velocity.velocity.y = -1. * 0.85;
+    } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+        velocity.velocity.y = 1. * 0.85;
+    }
+    ///////////////////////////
+
+
+      let rug_collision = bevy::sprite::collide_aabb::collide(
+        Vec3::new(0., 0., 1.),
+        Vec2::new(732.6, 507.6),
+        transform.translation,
+        Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
+    );
+    if (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+        || (rug_collision == Some(bevy::sprite::collide_aabb::Collision::Inside))
+    {
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(RUG_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+    } else {
+        velocity.velocity = if deltav.length() > 0. {
+            (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
+        } else if velocity.velocity.length() > acc {
+            velocity.velocity + (velocity.velocity.normalize_or_zero() * -acc)
+        } else {
+            Vec2::splat(0.)
+        };
+    }
