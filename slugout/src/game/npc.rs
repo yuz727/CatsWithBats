@@ -214,7 +214,7 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.20)),
             ..default()
         })
         .insert(NPCBat)
