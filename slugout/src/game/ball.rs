@@ -10,8 +10,10 @@ use super::components::Ball;
 use super::components::BallVelocity;
 use super::components::Bat;
 use super::components::Colliding;
+use super::components::Health;
 use super::components::Player;
 use super::components::Rug;
+use crate::game::components::HealthHitbox;
 use crate::game::components::Hitbox;
 
 const WIN_W: f32 = 1280.;
@@ -267,12 +269,119 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Hitbox {
             size: Vec2::new(45., 75.), //30 52
         });
+    //Spawn health hitbox for player
+    commands
+        .spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgba(240., 140., 100., 0.2),
+                custom_size: Some(Vec2::new(30., 35.)),
+                ..default()
+            },
+            transform: Transform::from_xyz(0., 0., 2.),
+            visibility: Visibility::Hidden,
+            ..Default::default()
+        })
+        .insert(HealthHitbox {
+            size: Vec2::new(30., 35.), //30 52
+        });
+
+    // Player 1 health
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Dead.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 2.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("1Health.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 3.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("2Health.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 4.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("FullHealth.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 5.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    //NPC player health
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("deadNPC.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-525., 280., 2.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("1healthNPC.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-525., 280., 3.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("2healthNPC.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-525., 280., 4.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("FullHealthNPC.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-525., 280., 5.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health);
 }
 
 //bounce the ball
 pub fn bounce(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
+    //health hitbox
+    player_hitbox: Query<(&Transform, &HealthHitbox), With<Player>>,
 ) {
     for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
         //ball radius on screen
@@ -294,6 +403,46 @@ pub fn bounce(
         );
 
         // Check for collision with player
+        for (player_transform, hitbox) in player_hitbox.iter() {
+            let player_collision = bevy::sprite::collide_aabb::collide(
+                player_transform.translation,
+                hitbox.size,
+                new_translation,
+                Vec2::new(ball_radius * 2., ball_radius * 2.),
+            );
+
+            if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
+                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
+                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+                || player_collision == Some(bevy::sprite::collide_aabb::Collision::Inside)
+            {
+                // Bounce off the player
+                ball_velocity.velocity = Vec3::splat(0.);
+                let change_x =
+                    (((player_transform.translation.x - WIN_W) / 2.) - new_translation.x).abs();
+                let change_y =
+                    ((-(player_transform.translation.y - WIN_H) / 2.) - new_translation.y).abs();
+                let mut new_velocity = Vec3::new(change_x, change_y, 0.);
+                new_velocity = new_velocity.normalize_or_zero();
+
+                if (player_transform.translation.x - WIN_W) / 2. > new_translation.x {
+                    new_velocity.x = new_velocity.x;
+                } else {
+                    new_velocity.x = -1. * new_velocity.x;
+                }
+
+                if (-(player_transform.translation.y - WIN_H) / 2.) > new_translation.y {
+                    new_velocity.y = new_velocity.y;
+                } else {
+                    new_velocity.y = -1. * new_velocity.y;
+                }
+
+                new_velocity.x = new_velocity.x * 500.;
+                new_velocity.y = new_velocity.y * 500.;
+                ball_velocity.velocity = new_velocity * ball.elasticity;
+            }
+        }
 
         let recliner_size = Vec2::new(100., 180.);
         let recliner_translation = Vec3::new(-60., 210., 1.);

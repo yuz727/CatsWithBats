@@ -1,5 +1,7 @@
 use crate::game::components::Aim;
+
 use crate::{despawn_screen, GameState, MultiplayerState, MAP, TEXT_COLOR};
+
 use bevy::{app::AppExit, prelude::*, window::PresentMode};
 use std::io::{stdin, stdout, Write};
 
