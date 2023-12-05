@@ -11,12 +11,11 @@ use super::components::BallVelocity;
 use super::components::Bat;
 use super::components::Colliding;
 use super::components::Health;
-use super::components::Health;
 use super::components::Player;
 use super::components::Rug;
 use crate::game::components::HealthHitbox;
 use crate::game::components::Hitbox;
-use crate::game::components::Hitbox;
+
 use crate::MAP;
 
 const WIN_W: f32 = 1280.;
