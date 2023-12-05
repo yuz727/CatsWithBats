@@ -441,7 +441,10 @@ pub fn bounce(
                 Vec2::new(ball_radius * 2., ball_radius * 2.),
             );
 
-            if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || player_collision == Some(bevy::sprite::collide_aabb::Collision::Left){
+            
+        
+
+            if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) || player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) && player.health > 0{
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
                 for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
@@ -450,8 +453,9 @@ pub fn bounce(
                     }
                 }
                 player.health = player.health - 1;
+                //println!("HIDING");
 
-            }else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
+            }else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) || player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) && player.health > 0{
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
                 for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
@@ -460,6 +464,7 @@ pub fn bounce(
                     }
                 }
                 player.health = player.health - 1;
+                //println!("HIDING");
             }
         }
 
