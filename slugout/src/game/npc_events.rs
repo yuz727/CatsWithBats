@@ -269,7 +269,7 @@ pub fn perform_a_star(
     >,
     player: Query<&mut Transform, (With<Player>, Without<NPC>, Without<Ball>, Without<NPCBat>)>,
     time: Res<Time>,
-    ball_query: Query<
+    _ball_query: Query<
         (&Transform, &BallVelocity, &Ball),
         (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
     >,
