@@ -44,7 +44,7 @@ pub fn load_map_path() -> Vec<Vec<Vec2>> {
     return path_map;
 }
 
-pub fn load_walkable() -> Vec<Vec<bool>> {
+pub fn load_walkable_map_1() -> Vec<Vec<bool>> {
     let mut walkable_map: Vec<Vec<bool>> = Vec::new();
     //  let mut records = reader.records();
     let mut curr_x = 0.;
@@ -77,6 +77,26 @@ pub fn load_walkable() -> Vec<Vec<bool>> {
     }
     return walkable_map;
 }
+
+pub fn load_walkable_map_no_objects() -> Vec<Vec<bool>> {
+    let mut walkable_map: Vec<Vec<bool>> = Vec::new();
+    //  let mut records = reader.records();
+    let mut curr_x = 0.;
+    let mut curr_y;
+    while curr_x < 1280. {
+        curr_y = 0.;
+        let mut row: Vec<bool> = Vec::new();
+        while curr_y < 720. {
+            row.push(true);
+            curr_y += 4.;
+        }
+        walkable_map.push(row);
+        curr_x += 4.;
+    }
+    return walkable_map;
+}
+
+pub fn load_walkable_map_4() {}
 
 /*  Return a vector for the neighbouring tiles of a given tile
  */

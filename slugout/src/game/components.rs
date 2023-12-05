@@ -13,7 +13,7 @@ pub struct Face;
 pub struct Object;
 
 #[derive(Component)]
-pub struct Rug{
+pub struct Rug {
     pub friction: f32,
 }
 
@@ -21,7 +21,7 @@ pub struct Rug{
 pub struct Background;
 
 #[derive(Component)]
-pub struct Ball{
+pub struct Ball {
     pub radius: f32,
     pub elasticity: f32,
     pub prev_pos: Vec3,
@@ -38,7 +38,7 @@ pub struct Colliding {
     pub currently_colliding: bool,
 }
 
-impl Colliding{
+impl Colliding {
     pub fn new() -> Self {
         Self {
             currently_colliding: false,
@@ -46,18 +46,18 @@ impl Colliding{
     }
 }
 
-
 #[derive(Component)]
-pub struct Hitbox{
-    pub size: Vec2, 
+pub struct Hitbox {
+    pub size: Vec2,
 }
 
 #[derive(Component)]
 pub struct Aim;
 
 #[derive(Component)]
-pub struct HealthHitbox{
-    pub size: Vec2, 
+
+pub struct HealthHitbox {
+    pub size: Vec2,
 }
 
 #[derive(Component)]

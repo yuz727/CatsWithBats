@@ -3,6 +3,7 @@ use crate::game::npc_bully::*;
 use crate::game::npc_events::*;
 use crate::game::pathfinding::*;
 use crate::GameState;
+use crate::MAP;
 
 use bevy::prelude::*;
 use bevy::time::common_conditions::on_fixed_timer;
@@ -13,6 +14,7 @@ use std::time::Duration;
 use super::components::Ball;
 use super::components::BallVelocity;
 use super::components::Player;
+use super::DIFFICULTY;
 
 /// Constants for animation timer
 const ANIM_TIME: f32 = 0.2;
@@ -95,15 +97,6 @@ impl NPCVelocity {
     }
 }
 
-impl Maps {
-    fn new() -> Self {
-        Self {
-            path_map: load_map_path(),
-            walkable: load_walkable(),
-        }
-    }
-}
-
 impl Path {
     fn new() -> Self {
         Self {
@@ -114,13 +107,8 @@ impl Path {
     }
 }
 
+/// States Related Functions to check states
 impl States {
-    // pub fn to_default(&mut self) {
-    //     *self = match std::mem::replace(self, States::Default) {
-    //         States::Danger => States::Default,
-    //         v => v,
-    //     }
-    // }
     pub fn is_danger(&self) -> bool {
         match *self {
             States::Danger => true,
@@ -148,20 +136,39 @@ pub struct NPCPlugin {
 
 impl Plugin for NPCPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Game), load_npc);
         if self.bully_mode {
+            // Easter egg Mode
             app.add_systems(
                 Update,
                 set_path
                     .run_if(in_state(GameState::Game))
                     .run_if(on_timer(Duration::from_secs(10))),
             );
+            if unsafe { MAP == 1 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map1);
+            } else if unsafe { MAP == 2 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map2);
+            } else if unsafe { MAP == 3 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map3);
+            } else if unsafe { MAP == 4 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map4);
+            }
             app.add_systems(
                 Update,
                 approach_player.run_if(in_state(GameState::Game)), // Timer here to control the speed of the NPC
             );
             app.add_systems(Update, bully_swing.run_if(in_state(GameState::Game)));
         } else {
+            // Spawn NPC with Different Attribute Depending on the map
+            if unsafe { MAP == 1 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map1);
+            } else if unsafe { MAP == 2 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map2);
+            } else if unsafe { MAP == 3 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map3);
+            } else if unsafe { MAP == 4 } {
+                app.add_systems(OnEnter(GameState::Game), load_npc_map4);
+            }
             app.add_systems(
                 FixedUpdate,
                 selection
@@ -173,36 +180,32 @@ impl Plugin for NPCPlugin {
                 Update,
                 perform_a_star.run_if(in_state(GameState::Game)), //.run_if(on_fixed_timer(Duration::from_millis(17))),
             );
-            app.add_systems(
-                Update, 
-                swing
-                .run_if(in_state(GameState::Game)),
-            );
+            app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
             app.add_systems(Update, sidestep.run_if(in_state(GameState::Game)));
-            
-            // app.add_systems(Update, target_check.run_if(in_state(GameState::Game)));
         }
     }
 }
 
 /// Load NPC entity and its bat
-pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn load_npc_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn NPC Sprite
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player4.png"),
-            transform: Transform::with_scale(
-                Transform::from_xyz(-600., 300., 3.),
-                Vec3::splat(0.13),
-            ),
+            transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
         .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Default)
-        .insert(Difficulty { difficulty: 75 })
-        .insert(Maps::new())
+        .insert(Difficulty {
+            difficulty: unsafe { DIFFICULTY },
+        })
+        .insert(Maps {
+            path_map: load_map_path(),
+            walkable: load_walkable_map_1(),
+        })
         .insert(Path::new())
         .insert(AnimationTimer(Timer::from_seconds(
             ANIM_TIME,
@@ -214,7 +217,129 @@ pub fn load_npc(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Bat.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-5., 0., 3.), Vec3::splat(0.20)),
+            transform: Transform::with_scale(Transform::from_xyz(-325., 0., 3.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCBat)
+        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)))
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )));
+}
+
+pub fn load_npc_map2(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Spawn NPC Sprite
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Player2.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPC)
+        .insert(NPCVelocity::new())
+        .insert(States::Default)
+        .insert(Difficulty {
+            difficulty: unsafe { DIFFICULTY },
+        })
+        .insert(Maps {
+            path_map: load_map_path(),
+            walkable: load_walkable_map_no_objects(),
+        })
+        .insert(Path::new())
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )))
+        .insert(DangerTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+
+    //spawn bat sprite
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Bat.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-325., 0., 3.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCBat)
+        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)))
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )));
+}
+
+pub fn load_npc_map3(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Spawn NPC Sprite
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Player3.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPC)
+        .insert(NPCVelocity::new())
+        .insert(States::Default)
+        .insert(Difficulty {
+            difficulty: unsafe { DIFFICULTY },
+        })
+        .insert(Maps {
+            path_map: load_map_path(),
+            walkable: load_walkable_map_no_objects(),
+        })
+        .insert(Path::new())
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )))
+        .insert(DangerTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+
+    //spawn bat sprite
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Bat.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-325., 0., 3.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCBat)
+        .insert(NPCTimer(Timer::from_seconds(0.3, TimerMode::Repeating)))
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )));
+}
+pub fn load_npc_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Spawn NPC Sprite
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Player4.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPC)
+        .insert(NPCVelocity::new())
+        .insert(States::Default)
+        .insert(Difficulty {
+            difficulty: unsafe { DIFFICULTY },
+        })
+        .insert(Maps {
+            path_map: load_map_path(),
+            walkable: load_walkable_map_1(),
+        })
+        .insert(Path::new())
+        .insert(AnimationTimer(Timer::from_seconds(
+            ANIM_TIME,
+            TimerMode::Repeating,
+        )))
+        .insert(DangerTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+
+    //spawn bat sprite
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Bat.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-325., 0., 3.), Vec3::splat(0.20)),
             ..default()
         })
         .insert(NPCBat)

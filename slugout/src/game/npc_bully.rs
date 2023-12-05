@@ -2,8 +2,11 @@
 use super::components::*;
 
 use crate::game::npc::*;
-use crate::game::npc_events::collision_check;
+use crate::game::npc_events::{
+    collision_check_map1, collision_check_map4, collision_check_no_objects,
+};
 use crate::game::pathfinding::*;
+use crate::MAP;
 
 use bevy::prelude::*;
 // use bevy::time::common_conditions::*;
@@ -87,11 +90,25 @@ pub fn approach_player(
                 let old_vel = velocity.velocity;
                 let mut collision: bool = false;
                 // Modify velocity based on whether collision happened
-                velocity.velocity = collision_check(
-                    npc_transform.translation,
-                    velocity.velocity,
-                    player_transform.translation,
-                );
+                if unsafe { MAP == 1 } {
+                    velocity.velocity = collision_check_map1(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                } else if unsafe { MAP == 2 || MAP == 3 } {
+                    velocity.velocity = collision_check_no_objects(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                } else if unsafe { MAP == 4 } {
+                    velocity.velocity = collision_check_map4(
+                        npc_transform.translation,
+                        velocity.velocity,
+                        player_transform.translation,
+                    );
+                }
 
                 if old_vel.x != velocity.velocity.x || old_vel.y != velocity.velocity.y {
                     collision = true;
@@ -109,9 +126,9 @@ pub fn approach_player(
                 {
                     npc_transform.translation.x = x;
                     npc_transform.translation.y = y;
+                    bat_transform.translation.x = npc_transform.translation.x - 5.;
+                    bat_transform.translation.y = npc_transform.translation.y;
                 }
-                bat_transform.translation.x = npc_transform.translation.x - 5.;
-                bat_transform.translation.y = npc_transform.translation.y;
             }
         }
     }
