@@ -172,6 +172,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Player {
             powerup: "none".to_string(),
             powerup_timer: 0.,
+            health: 3,
         })
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
@@ -195,7 +196,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .insert(Aim);
     commands.insert_resource(Events::<CursorMoved>::default());
-    commands
+    /*commands
         .spawn(SpriteBundle {
             texture: asset_server.load("FullHealth.png"),
             transform: Transform::with_scale(
@@ -214,7 +215,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ),
             ..default()
         })
-        .insert(Health);
+        .insert(Health);*/
 }
 
 fn setup_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
