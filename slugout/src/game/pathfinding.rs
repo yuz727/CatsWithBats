@@ -53,17 +53,17 @@ pub fn load_walkable() -> Vec<Vec<bool>> {
         curr_y = 0.;
         let mut row: Vec<bool> = Vec::new();
         while curr_y < 720. {
-            if (curr_x >= 708. && curr_x <= 812.) && (curr_y <= 224. && curr_y >= 136.) {
+            if (curr_x >= 708. && curr_x <= 812.) && (curr_y <= 244. && curr_y >= 136.) {
                 row.push(false);
                 curr_y += 4.;
                 continue;
             }
-            if (curr_x >= 556. && curr_x < 640.) && (curr_y <= 664. && curr_y >= 560.) {
+            if (curr_x >= 556. && curr_x < 724.) && (curr_y <= 664. && curr_y >= 544.) {
                 row.push(false);
                 curr_y += 4.;
                 continue;
             }
-            if (curr_x >= 528. && curr_x <= 636.) && (curr_y <= 244. && curr_y >= 60.) {
+            if (curr_x >= 524. && curr_x <= 636.) && (curr_y <= 244. && curr_y >= 52.) {
                 row.push(false);
                 curr_y += 4.;
                 continue;
