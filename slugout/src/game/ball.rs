@@ -61,6 +61,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.95,
             prev_pos: Vec3::splat(0.),
             density: 2.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -79,6 +80,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 1.,
             prev_pos: Vec3::splat(0.),
             density: 4.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 100.0, 2.0),
@@ -97,7 +99,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             radius: 3.1,
             elasticity: 0.975,
             prev_pos: Vec3::splat(0.),
-            density: 6.
+            density: 6.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(-500., 3., 2.),
@@ -115,6 +118,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.9,
             prev_pos: Vec3::splat(0.),
             density: 8.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -131,6 +135,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.875,
             prev_pos: Vec3::splat(0.),
             density: 10.,
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -147,6 +152,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             elasticity: 0.85,
             prev_pos: Vec3::splat(0.),
             density: 3., 
+            angular_velocity: 0.,
         })
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
@@ -330,54 +336,66 @@ pub fn bounce(
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
             new_translation_x = recliner_translation.x - recliner_size.x / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
             new_translation_x = recliner_translation.x + recliner_size.x / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
             new_translation_y = recliner_translation.y - recliner_size.y / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
             new_translation_y = recliner_translation.y + recliner_size.y / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         }
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.9 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.9 * ball.elasticity;
             new_translation_x = tv_translation.x + tv_size.x / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.9 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.9 * ball.elasticity;
             new_translation_x = tv_translation.x - tv_size.x / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.9 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.9 * ball.elasticity;
             new_translation_y = tv_translation.y - tv_size.y / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.9 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.9 * ball.elasticity;
             new_translation_y = tv_translation.y + tv_size.y / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.85 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.85 * ball.elasticity;
             new_translation_x = table_translation.x + table_size.x / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.85 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.85 * ball.elasticity;
             new_translation_x = table_translation.x - table_size.x / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.85 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y - table_size.y / 2. - ball_radius;
+            ball.angular_velocity = 0.;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.85 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y + table_size.y / 2. + ball_radius;
+            ball.angular_velocity = 0.;
         }
 
         ball.prev_pos = transform.translation;     
@@ -390,10 +408,12 @@ pub fn bounce(
         if transform.translation.x.abs() == WIN_W / 2.0 - ball_radius {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
+            ball.angular_velocity = 0.;
         }
         if transform.translation.y.abs() == WIN_H / 2.0 - ball_radius {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
+            ball.angular_velocity = 0.;
         }
     }
 }
@@ -453,6 +473,9 @@ pub fn bounce_balls(
 
                 ball1_velocity.velocity = new_velocity;
                 ball2_velocity.velocity = new_velocity_2;
+
+                ball1.angular_velocity = 0.;
+                ball2.angular_velocity = 0.;
 
             }
         }
@@ -690,11 +713,13 @@ fn swing(
                     // if Q is pressed, backspin -> ball moves slower
                     if input.pressed(KeyCode::Q) {
                         new_velocity *= 0.5;
+                        ball.angular_velocity = 5.; // positive implies topspin
                     }
 
                     // if E is pressed, topspin -> ball moves faster
                     if input.pressed(KeyCode::E) {
                         new_velocity *= 1.5;
+                        ball.angular_velocity = -5.; // positive implies backspin
                     }
                     
                     ball_velocity.velocity = new_velocity * ball.elasticity;

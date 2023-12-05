@@ -26,6 +26,7 @@ pub struct Ball{
     pub elasticity: f32,
     pub prev_pos: Vec3,
     pub density: f32,
+    pub angular_velocity: f32,
 }
 
 #[derive(Component)]
