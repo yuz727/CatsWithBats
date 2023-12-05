@@ -412,6 +412,7 @@ pub fn bounce(
     //health hitbox
     mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Ball>)>,
     mut healthbar_query: Query<(&mut Visibility, &mut Health), (With<Health>, Without<Ball>, Without<Player>)>,
+    input_mouse: Res<Input<MouseButton>>,
 ) {
     for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
         //ball radius on screen
@@ -433,6 +434,7 @@ pub fn bounce(
         );
 
         // Check for collision with player
+        
         for (mut player_transform, mut player) in player_query.iter_mut() {
             let player_collision = bevy::sprite::collide_aabb::collide(
                 player_transform.translation,
@@ -441,53 +443,57 @@ pub fn bounce(
                 Vec2::new(ball_radius * 2., ball_radius * 2.),
             );
 
-            
         
+    
 
             if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right) && player.health > 0{
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
-                for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
-                    if healthbar.lives == player.health{
-                        *health_visibility = Visibility::Hidden;
-                    }
-                }
                 new_translation_x = new_translation_x - 5.;
-                player.health = player.health - 1;
-                println!("HIDING");
+                if !input_mouse.pressed(MouseButton::Left) {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
+                        if healthbar.lives == player.health{
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                }
             }else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left) && player.health > 0{
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
-                for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
-                    if healthbar.lives == player.health{
-                        *health_visibility = Visibility::Hidden;
-                    }
-                }
                 new_translation_x = new_translation_x + 5.;
-                player.health = player.health - 1;
-                println!("HIDING");
+                if !input_mouse.pressed(MouseButton::Left) {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
+                        if healthbar.lives == player.health{
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                }
             }else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top) && player.health > 0{
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
-                for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
-                    if healthbar.lives == player.health{
-                        *health_visibility = Visibility::Hidden;
-                    }
-                }
                 new_translation_y = new_translation_y - 5.;
-                player.health = player.health - 1;
-                println!("HIDING");
+                if !input_mouse.pressed(MouseButton::Left) {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
+                        if healthbar.lives == player.health{
+                        *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                }
             }else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom) && player.health > 0{
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
-                for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
-                    if healthbar.lives == player.health{
-                        *health_visibility = Visibility::Hidden;
-                    }
-                }
                 new_translation_y = new_translation_y + 5.;
-                player.health = player.health - 1;
-                println!("HIDING");
+                if !input_mouse.pressed(MouseButton::Left) {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut(){
+                        if healthbar.lives == player.health{
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                }
             }
         }
 
@@ -736,7 +742,7 @@ fn bat_hitbox(
     if input_mouse.pressed(MouseButton::Left) {
         // Left button was pressed
         color_hitbox.color = Color::rgba(240., 140., 100., 0.2);
-    } else {
+    } else if !input_mouse.pressed(MouseButton::Left){
         color_hitbox.color = Color::rgba(240., 140., 100., 0.);
     }
 }
