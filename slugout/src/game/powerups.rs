@@ -118,11 +118,11 @@ pub fn apply_powerups(
     let speed_power = 4.2;
 
     if player.powerup == "faster".to_string() {
-        println!("entered faster power up");
+        // println!("entered faster power up");
         // println!("Original Velocity 1: {:?}", player_velocity.velocity);
 
         if player.powerup_timer == 15. {
-            println!("setting speed");
+            //println!("setting speed");
             let new_speed = PLAYER_SPEED * speed_power;
             player.powerup_timer = player.powerup_timer - time.delta_seconds();
             player_velocity.velocity *= new_speed;
@@ -131,10 +131,10 @@ pub fn apply_powerups(
             
         } 
         player.powerup_timer = player.powerup_timer - time.delta_seconds();
-        println!("Time Remaining: {:?}", player.powerup_timer);
+        //println!("Time Remaining: {:?}", player.powerup_timer);
         if player.powerup_timer <= 0. {
             player.powerup = "none".to_string();
-            println!("Restoring Original Velocity: {:?}", PLAYER_SPEED / speed_power);
+            //println!("Restoring Original Velocity: {:?}", PLAYER_SPEED / speed_power);
             player_velocity.velocity *= PLAYER_SPEED/speed_power;
         }
     
