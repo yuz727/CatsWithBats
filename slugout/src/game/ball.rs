@@ -52,7 +52,6 @@ impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<BallState>();
         app.add_systems(OnEnter(GameState::Game), setup);
-        app.add_systems(OnEnter(MultiplayerState::Game), setup);
         app.add_systems(OnEnter(MultiplayerState::Game), setup_mult.after(super::setup_mult));
         app.add_systems(Update, your_ball_player_collisions.after(super::setup_mult).after(setup_mult).run_if(in_state(MultiplayerState::Game)));
         app.add_systems(OnEnter(BallState::EndSetup), insert_balls_to_vec.after(setup_mult).
