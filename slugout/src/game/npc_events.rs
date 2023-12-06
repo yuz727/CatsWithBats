@@ -32,8 +32,7 @@ pub fn danger_check(
     for (ball_transform, ball_velocity, ball) in ball_query.iter() {
         // If a ball is close enough (< 200 pixels away) and it is moving towards the npc, then return true
 
-        if ball_transform.translation.distance(npc_translation) < 50.
-        {
+        if ball_transform.translation.distance(npc_translation) < 50. {
             return true;
         }
     }
@@ -43,7 +42,13 @@ pub fn danger_check(
 /// NPC movement in danger state, sidestep to avoid getting hit by ball
 pub fn sidestep(
     mut npc: Query<
-        (&mut Transform, &mut NPCVelocity, &mut States, &mut Path, &mut NPC),
+        (
+            &mut Transform,
+            &mut NPCVelocity,
+            &mut States,
+            &mut Path,
+            &mut NPC,
+        ),
         (With<NPC>, Without<NPCBat>, Without<Player>),
     >,
     mut bat: Query<&mut Transform, (With<NPCBat>, Without<NPC>, Without<Player>)>,
@@ -80,10 +85,10 @@ pub fn sidestep(
                     deltav.x += 1000.;
                 }
                 //if npc is confused from powerup, reverse directions
-                if(npc.confused == true){
+                if (npc.confused == true) {
                     deltav = -deltav;
                 }
-                
+
                 let deltat = time.delta_seconds();
                 let acc = NPC_ACCEL_RATE * deltat;
                 velocity.velocity = if deltav.length() > 0. {
@@ -273,7 +278,9 @@ pub fn perform_a_star(
         (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
     >,
 ) {
-    for (mut npc_transform, mut velocity, mut path, _maps, _difficulty, state, mut npc) in npc.iter_mut() {
+    for (mut npc_transform, mut velocity, mut path, _maps, _difficulty, state, mut npc) in
+        npc.iter_mut()
+    {
         if state.is_aggression() || state.is_evade() {
             for mut bat_transform in bat.iter_mut() {
                 for player_transform in player.iter() {
@@ -297,10 +304,10 @@ pub fn perform_a_star(
                     }
 
                     //if npc is confused from powerup, reverse directions
-                    if(npc.confused){
+                    if (npc.confused) {
                         deltav = -deltav;
                     }
-                    
+
                     let deltat = time.delta_seconds();
                     let acc = NPC_ACCEL_RATE * deltat;
                     velocity.velocity = if deltav.length() > 0. {
@@ -381,11 +388,14 @@ pub fn swing(
                     for (ball_transform, mut ball_velocity, ball) in ball_query.iter_mut() {
                         let ball_x = ball_transform.translation.x;
                         let npc_x = npc_transform.translation.x;
-
+                        let mut swing_radius = 100.;
+                        if unsafe { BIG_BAT_PU } {
+                            swing_radius = 150.;
+                        }
                         if ball_transform
                             .translation
                             .distance(npc_transform.translation)
-                            < 100.
+                            < swing_radius
                             && swing_cooldown_check(&mut swing_timer, &time)
                         {
                             // Check whether the ball is close enough for swinging
@@ -422,7 +432,12 @@ pub fn swing(
 }
 
 /// Determine where to send the ball, deviate the movement vector depending on the difficulty
-fn hit_accuracy(npc_translation: Vec3, player_translation: Vec3, difficulty: i32, ball_translation: Vec3) -> Vec3 {
+fn hit_accuracy(
+    npc_translation: Vec3,
+    player_translation: Vec3,
+    difficulty: i32,
+    ball_translation: Vec3,
+) -> Vec3 {
     let x_diff = player_translation.x - npc_translation.x;
     let y_diff = player_translation.y - npc_translation.y;
     let mut ball_velocity = Vec3::new(x_diff, y_diff, 0.);
