@@ -90,7 +90,7 @@ impl Plugin for GamePlugin {
             app.add_systems(OnEnter(MultiplayerState::Game), setup_mult)
                 .add_systems(OnEnter(GameState::Game), setup)
                 .add_systems(OnEnter(GameState::Game), setup_map1)
-                .add_systems(OnEnter(MultiplayerState::Game), setup_map1)
+                // .add_systems(OnEnter(MultiplayerState::Game), setup_mult)
                 .add_plugins(ball::BallPlugin)
                 .add_plugins(npc::NPCPlugin {
                     bully_mode: unsafe { BULLY_MODE },
