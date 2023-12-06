@@ -201,6 +201,7 @@ pub fn apply_powerups(
         for(mut bat_visibility) in bat_visibility.iter_mut(){
             for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
                 if player.powerup == "bigbat".to_string() && powerup.active == true  {
+
                     if player.powerup_timer == 10. {
                         *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
                         *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));

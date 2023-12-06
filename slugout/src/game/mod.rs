@@ -158,6 +158,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             powerup: "none".to_string(),
             powerup_timer: 0.,
             health: 3,
+            health_timer: 0.,
+
         })
         .insert(player_movement::PlayerVelocity::new())
         .insert(Colliding::new());
@@ -427,7 +429,7 @@ fn single_player_menu_action(
     mut textbox: Query<&InputText, With<InputText>>,
 ) {
     for (interaction, multiplayer_button_action) in &interaction_query {
-        for (user_input) in textbox.iter_mut() {
+        for user_input in textbox.iter_mut() {
             if *interaction == Interaction::Pressed {
                 match multiplayer_button_action {
                     SingleplayerButtonAction::Game => {

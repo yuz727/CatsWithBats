@@ -5,6 +5,10 @@ pub struct Player{
     pub powerup: String,
     pub powerup_timer: f32,
     pub health: i32,
+    pub health_timer: f32,
+
+
+
 }
 
 #[derive(Component)]
@@ -67,6 +71,7 @@ pub struct HealthHitbox {
 #[derive(Component)]
 pub struct Health{
     pub lives: i32,
+    pub player_type: String,
 }
 
 #[derive(Component)]
