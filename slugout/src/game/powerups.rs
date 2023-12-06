@@ -6,7 +6,7 @@ use crate::multiplayer::{ClientSocket, SocketAddress};
 use crate::GameState;
 
 use super::components::{Bat, Hitbox, Player, PowerUp};
-use super::npc::NPC;
+use super::npc::{NPC, NPCBat};
 
 const PLAYER_SIZE: f32 = 30.; // size of power up as well
                               // 5px/frame @60Hz == 300px/s
@@ -85,10 +85,10 @@ pub fn player_powerups(
         (&mut Transform, &mut PowerUp, &mut Visibility),
         (With<PowerUp>, Without<Player>, Without<NPC>),
     >,
-    npc_query: Query<&Transform, (With<NPC>, Without<PowerUp>, Without<Player>)>,
+    mut npc_query: Query<(&Transform, &mut NPC),(With<NPC>, Without<PowerUp>, Without<Player>)>,
 ) {
     let (player_transform, mut player) = player_query.single_mut();
-    for npc_transform in npc_query.iter() {
+    for (npc_transform,  mut npc) in npc_query.iter_mut() {
         for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
             let player_collision = bevy::sprite::collide_aabb::collide(
                 player_transform.translation,
@@ -108,6 +108,13 @@ pub fn player_powerups(
                 || npc_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
                 || npc_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
             {
+                if npc.powerup == "none".to_string(){
+                    npc.powerup = powerup.powerup.clone();
+                    println!("Setting Timer");
+                    npc.powerup_timer = 10.;
+                    powerup.active = false;
+                    *powerup_visibility = Visibility::Hidden;
+                }
             }
             if powerup.active == true {
                 if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
@@ -155,6 +162,7 @@ pub fn apply_powerups(
             Without<PowerUp>,
             Without<Player>,
             Without<Hitbox>,
+            Without<NPC>,
         ),
     >,
     mut powerups: Query<
@@ -162,18 +170,59 @@ pub fn apply_powerups(
         (
             With<PowerUp>,
             Without<Player>, 
-            Without<NPC>
+            Without<NPC>,
         ),
->,
+    >,
     mut bat_visibility: Query<
-    &mut Visibility,
-    (
-        With<Bat>,
-        Without<PowerUp>,
-        Without<Hitbox>,
-        Without<Player>,
-    ),
->,
+        &mut Visibility,
+        (
+            With<Bat>,
+            Without<PowerUp>,
+            Without<Hitbox>,
+            Without<Player>,
+        ),
+    >,
+    mut npc_query: Query<
+        (&mut Transform, &mut NPC),
+        (
+            With<NPC>,  
+            Without<Player>, 
+            Without<Bat>,
+            Without<Hitbox>,
+        )
+    >,
+    mut npc_visibility: Query<
+        &mut Visibility,
+        (
+            With<NPC>, 
+            Without<PowerUp>, 
+            Without<Player>, 
+            Without<Bat>,
+            Without<Hitbox>,
+        )
+    >,
+    mut npc_bat_visibility: Query<
+        &mut Visibility,
+        (
+            With<NPCBat>, 
+            Without<NPC>,
+            Without<PowerUp>, 
+            Without<Player>, 
+            Without<Bat>,
+            Without<Hitbox>,
+        )
+    >,
+    mut npc_bat: Query<
+        &mut Transform,
+        (
+            With<NPCBat>, 
+            Without<NPC>,
+            Without<PowerUp>, 
+            Without<Player>, 
+            Without<Bat>,
+            Without<Hitbox>,
+        )
+    >,
     mut hitbox_query: Query<
         (&mut Transform, &mut Hitbox),
         (
@@ -194,61 +243,96 @@ pub fn apply_powerups(
     >,
 ) {
     let mut player = player_query.single_mut();
+    //let mut npc = npc_query.single_mut();
     let mut bat_transform = bat.single_mut();
+    let mut npc_bat_transform = npc_bat.single_mut();
     let (mut hitbox_transform, mut hitbox) = hitbox_query.single_mut();
     let mut player_velocity = player_velocity_query.single_mut();
+    let mut player_visibility = player_visibility.single_mut();
+    let mut bat_visibility = bat_visibility.single_mut();
+    let mut npc_visibility = npc_visibility.single_mut();
+    let mut npc_bat_visibility = npc_bat_visibility.single_mut();
+    for (mut npc_transform,  mut npc) in npc_query.iter_mut() {
+        for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
+            if player.powerup == "bigbat".to_string() && powerup.active == true  {
 
-    for (mut player_visibility) in player_visibility.iter_mut() {
-        for(mut bat_visibility) in bat_visibility.iter_mut(){
-            for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
-                if player.powerup == "bigbat".to_string() && powerup.active == true  {
-
-                    if player.powerup_timer == 10. {
-                        *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
-                        *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
-                        hitbox.size = Vec2::new(78.75, 131.25);
-                        powerup.active == false;
-                    }
-                    player.powerup_timer = player.powerup_timer - time.delta_seconds();
-                    if player.powerup_timer <= 0. {
-                        player.powerup = "none".to_string();
-                        powerup.active == false;
-                        *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
-                        *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
-                        hitbox.size = Vec2::new(45., 75.);
-                    }
+                if player.powerup_timer == 10. {
+                    *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
+                    *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
+                    hitbox.size = Vec2::new(78.75, 131.25);
+                    powerup.active == false;
                 }
+                player.powerup_timer = player.powerup_timer - time.delta_seconds();
+                if player.powerup_timer <= 0. {
+                    player.powerup = "none".to_string();
+                    powerup.active == false;
+                    *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
+                    *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
+                    hitbox.size = Vec2::new(45., 75.);
+                }
+            }
 
-                if player.powerup == "invisibility".to_string() && powerup.active == true {
-                    if player.powerup_timer == 10. {
-                        
-                        *player_visibility = Visibility::Hidden;
-                        *bat_visibility = Visibility:: Hidden;
-                        powerup.active == false;
+            if npc.powerup == "bigbat".to_string() && powerup.active == true  {
+
+                if npc.powerup_timer == 10. {
+                    *npc_bat_transform = npc_bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
+                    powerup.active == false;
+                }
+                npc.powerup_timer -= time.delta_seconds();
+                if npc.powerup_timer <= 0. {
+                    npc.powerup = "none".to_string();
+                    powerup.active == false;
+                    *npc_bat_transform = npc_bat_transform.with_scale(Vec3::new(0.13, 0.13, 0.));
+                }
+            }
+
+            if player.powerup == "invisibility".to_string() && powerup.active == true {
+                if player.powerup_timer == 10. {
                     
-                    }
-                    player.powerup_timer = player.powerup_timer - time.delta_seconds();
+                    *player_visibility = Visibility::Hidden;
+                    *bat_visibility = Visibility:: Hidden;
+                    powerup.active == false;
+                
+                }
+                player.powerup_timer = player.powerup_timer - time.delta_seconds();
 
-                    if player.powerup_timer <= 0. {
-                        player.powerup = "none".to_string();
-                        powerup.active == false;
-                        *player_visibility = Visibility::Visible;
-                        *bat_visibility = Visibility:: Visible;
-                    }
-                }   
+                if player.powerup_timer <= 0. {
+                    player.powerup = "none".to_string();
+                    powerup.active == false;
+                    *player_visibility = Visibility::Visible;
+                    *bat_visibility = Visibility:: Visible;
+                }
+            }   
 
-                if player.powerup == "confusion".to_string() && powerup.active == true {
-                    if player.powerup_timer == 10. {
-                        player_velocity.confused = true;
-                        powerup.active == false;
-                    }
-                    player.powerup_timer = player.powerup_timer - time.delta_seconds();
-    
-                    if player.powerup_timer <= 0. {
-                        player.powerup = "none".to_string();
-                        player_velocity.confused = false;
-                        powerup.active == false;
-                    }
+            if npc.powerup == "invisibility".to_string() && powerup.active == true {
+                if npc.powerup_timer == 10. {
+                    
+                    *npc_visibility = Visibility::Hidden;
+                    *npc_bat_visibility = Visibility:: Hidden;
+                    powerup.active == false;
+                
+                }
+                npc.powerup_timer = npc.powerup_timer - time.delta_seconds();
+
+                if npc.powerup_timer <= 0. {
+                    npc.powerup = "none".to_string();
+                    powerup.active == false;
+                    *npc_visibility = Visibility::Visible;
+                    *npc_bat_visibility = Visibility:: Visible;
+                }
+            }
+
+            if player.powerup == "confusion".to_string() && powerup.active == true {
+                if player.powerup_timer == 10. {
+                    player_velocity.confused = true;
+                    powerup.active == false;
+                }
+                player.powerup_timer = player.powerup_timer - time.delta_seconds();
+
+                if player.powerup_timer <= 0. {
+                    player.powerup = "none".to_string();
+                    player_velocity.confused = false;
+                    powerup.active == false;
                 }
             }
         }
