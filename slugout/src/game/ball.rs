@@ -134,7 +134,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .insert(Colliding::new());
 
-    /*commands
+    commands
         .spawn(SpriteBundle {
             texture: asset_server.load("yarnball.png"),
             transform: Transform::from_xyz(100., 105., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
@@ -181,7 +181,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(BallVelocity {
             velocity: Vec3::new(300.0, 300.0, 2.0),
         })
-        .insert(Colliding::new());*/
+        .insert(Colliding::new());
     /*// added for debugging
 
     commands

@@ -187,8 +187,8 @@ pub fn apply_powerups(
     let (mut hitbox_transform, mut hitbox) = hitbox_query.single_mut();
     let mut player_velocity = player_velocity_query.single_mut();
 
-    for (mut player_visibility) in player_visibility.iter_mut() {
-        for(mut bat_visibility) in bat_visibility.iter_mut(){
+    for mut player_visibility in player_visibility.iter_mut() {
+        for mut bat_visibility in bat_visibility.iter_mut(){
 
         
             if player.powerup_applied {

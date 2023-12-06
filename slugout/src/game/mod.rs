@@ -158,6 +158,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             powerup: "none".to_string(),
             powerup_timer: 0.,
             health: 3,
+            health_timer: 0.,
             powerup_applied: false,
         })
         .insert(player_movement::PlayerVelocity::new())
