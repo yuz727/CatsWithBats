@@ -428,7 +428,7 @@ fn single_player_menu_action(
     mut textbox: Query<&InputText, With<InputText>>,
 ) {
     for (interaction, multiplayer_button_action) in &interaction_query {
-        for (user_input) in textbox.iter_mut() {
+        for user_input in textbox.iter_mut() {
             if *interaction == Interaction::Pressed {
                 match multiplayer_button_action {
                     SingleplayerButtonAction::Game => {
