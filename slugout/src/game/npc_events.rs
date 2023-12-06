@@ -49,14 +49,14 @@ pub fn danger_check(
 /// NPC movement in danger state, sidestep to avoid getting hit by ball
 pub fn sidestep(
     mut npc: Query<
-        (&mut Transform, &mut NPCVelocity, &mut States, &mut Path),
+        (&mut Transform, &mut NPCVelocity, &mut States, &mut Path, &mut NPC),
         (With<NPC>, Without<NPCBat>, Without<Player>),
     >,
     mut bat: Query<&mut Transform, (With<NPCBat>, Without<NPC>, Without<Player>)>,
     player: Query<&Transform, (With<Player>, Without<NPCBat>, Without<NPC>)>,
     time: Res<Time>,
 ) {
-    for (mut npc_transform, mut velocity, state, path) in npc.iter_mut() {
+    for (mut npc_transform, mut velocity, state, path, mut npc) in npc.iter_mut() {
         if state.is_danger() {
             for player_transform in player.iter() {
                 let mut bat_transform = bat.single_mut();
@@ -84,7 +84,9 @@ pub fn sidestep(
                 } else if path.ball.y > 0. {
                     deltav.x += 1000.;
                 }
-
+                if(npc.confused == true){
+                    deltav = -deltav;
+                }
                 let deltat = time.delta_seconds();
                 let acc = NPC_ACCEL_RATE * deltat;
                 velocity.velocity = if deltav.length() > 0. {
@@ -263,6 +265,7 @@ pub fn perform_a_star(
             &Maps,
             &Difficulty,
             &mut States,
+            &mut NPC,
         ),
         (With<NPC>, Without<NPCBat>, Without<Ball>, Without<Player>),
     >,
@@ -273,7 +276,7 @@ pub fn perform_a_star(
         (With<Ball>, Without<NPC>, Without<NPCBat>, Without<Player>),
     >,
 ) {
-    for (mut npc_transform, mut velocity, mut path, _maps, _difficulty, state) in npc.iter_mut() {
+    for (mut npc_transform, mut velocity, mut path, _maps, _difficulty, state, mut npc) in npc.iter_mut() {
         if state.is_aggression() || state.is_evade() {
             for mut bat_transform in bat.iter_mut() {
                 for player_transform in player.iter() {
@@ -296,6 +299,10 @@ pub fn perform_a_star(
                         deltav.y -= 1000.;
                     }
 
+                    if(npc.confused){
+                        deltav = -deltav;
+                    }
+                    
                     let deltat = time.delta_seconds();
                     let acc = NPC_ACCEL_RATE * deltat;
                     velocity.velocity = if deltav.length() > 0. {

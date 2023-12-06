@@ -110,7 +110,6 @@ pub fn player_powerups(
             {
                 if npc.powerup == "none".to_string(){
                     npc.powerup = powerup.powerup.clone();
-                    println!("Setting Timer");
                     npc.powerup_timer = 10.;
                     powerup.active = false;
                     *powerup_visibility = Visibility::Hidden;
@@ -319,6 +318,19 @@ pub fn apply_powerups(
                     powerup.active == false;
                     *npc_visibility = Visibility::Visible;
                     *npc_bat_visibility = Visibility:: Visible;
+                }
+            }
+            if npc.powerup == "confusion".to_string() && powerup.active == true {
+                if npc.powerup_timer == 10. {
+                    npc.confused = true;
+                    powerup.active == false;
+                }
+                npc.powerup_timer = npc.powerup_timer - time.delta_seconds();
+
+                if npc.powerup_timer <= 0. {
+                    npc.powerup = "none".to_string();
+                    npc.confused = false;
+                    powerup.active == false;
                 }
             }
 
