@@ -1,4 +1,5 @@
 use crate::game::components::Aim;
+use crate::game::npc::*;
 
 use crate::{despawn_screen, GameState, MultiplayerState, MAP, TEXT_COLOR};
 
@@ -7,7 +8,7 @@ use bevy::{prelude::*, window::PresentMode};
 use std::io::{stdin, stdout, Write};
 use std::string;
 
-use self::components::{Bat, Colliding, Health, Object, Player, Rug};
+use self::components::{Bat, Colliding, Health, Object, Player, Rug, Background};
 
 mod ball;
 pub mod components;
@@ -18,6 +19,7 @@ mod npc_events;
 mod pathfinding;
 mod player_movement;
 mod powerups;
+
 
 // mod tree;
 const WIN_W: f32 = 1280.0;
@@ -101,7 +103,8 @@ impl Plugin for GamePlugin {
                 .add_systems(
                     Update,
                     player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
-                );
+                )
+                .add_systems(Update, end_game.run_if(in_state(GameState::Game)));
         } else if unsafe { MAP == 2 || MAP == 3 } {
             app.add_systems(OnEnter(MultiplayerState::Game), setup)
                 .add_systems(OnEnter(GameState::Game), setup)
@@ -120,7 +123,8 @@ impl Plugin for GamePlugin {
                 .add_systems(
                     Update,
                     player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
-                );
+                )
+                .add_systems(Update, end_game.run_if(in_state(GameState::Game)));
         } else if unsafe { MAP == 4 } {
             app.add_systems(OnEnter(GameState::Game), setup)
                 .add_systems(OnEnter(MultiplayerState::Game), setup)
@@ -141,7 +145,8 @@ impl Plugin for GamePlugin {
                 .add_systems(
                     Update,
                     player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
-                );
+                )
+                .add_systems(Update, end_game.run_if(in_state(GameState::Game)));
         }
     }
 }
@@ -470,3 +475,31 @@ fn process_difficulty_input(input_text: &String) -> bool {
     };
     // return false;
 }
+
+fn end_game (
+    mut commands: Commands,
+    npc_query: Query<(&NPC, Entity), (With<NPC>, Without<Player>)>,
+    player_query: Query<(&Player, Entity), (With<Player>, Without<NPC>)>,
+    mut game_state: ResMut<NextState<GameState>>,
+    asset_server: Res<AssetServer>,
+){
+    let (npc, npc_entity) = npc_query.single();
+    let(player, player_entity) = player_query.single();
+
+    if npc.health == 0 || player.health == 0 {
+        commands.entity(npc_entity).despawn();
+        commands.entity(player_entity).despawn();
+
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("background1_small.png"),
+                transform: Transform::from_xyz(0., 0., 300.),
+                ..default()
+            })
+            .insert(Background);
+        
+        game_state.set(GameState::GameOver);
+    }
+
+}
+
