@@ -39,9 +39,7 @@ pub struct NPCVelocity {
 
 /// NPC struct tag for entity
 #[derive(Component)]
-pub struct NPC{
-    pub health: i32,
-}
+pub struct NPC;
 
 /// NPC's Bat tag for entity
 #[derive(Component)]
@@ -198,9 +196,7 @@ pub fn load_npc_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
-        .insert(NPC{
-            health: 3,
-        })
+        .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Default)
         .insert(Difficulty {
@@ -241,9 +237,7 @@ pub fn load_npc_map2(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
-        .insert(NPC{
-            health: 3, 
-        })
+        .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Default)
         .insert(Difficulty {
@@ -284,9 +278,7 @@ pub fn load_npc_map3(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
-        .insert(NPC{
-            health: 3,
-        })
+        .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Default)
         .insert(Difficulty {
@@ -326,9 +318,7 @@ pub fn load_npc_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
-        .insert(NPC{
-            health: 3,
-        })
+        .insert(NPC)
         .insert(NPCVelocity::new())
         .insert(States::Default)
         .insert(Difficulty {
