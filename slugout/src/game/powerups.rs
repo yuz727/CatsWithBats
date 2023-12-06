@@ -114,7 +114,7 @@ pub fn player_powerups(
                     //println!("running");
                     if player.powerup == "none".to_string() {
                         player.powerup = powerup.powerup.clone();
-                        player.powerup_timer = 15.;
+                        player.powerup_timer = 10.;
                         //println!("running");
                         player.powerup_applied = true; // Set the flag
                         *powerup_visibility = Visibility::Hidden;
@@ -136,6 +136,15 @@ pub fn apply_powerups(
             Without<Bat>,
         ),
     >,
+    mut player_visibility: Query<
+        &mut Visibility,
+        (
+            With<Player>,
+            Without<PowerUp>,
+            Without<Hitbox>,
+            Without<Bat>,
+        ),
+    >,
     mut bat: Query<
         &mut Transform,
         (
@@ -145,6 +154,15 @@ pub fn apply_powerups(
             Without<Hitbox>,
         ),
     >,
+    mut bat_visibility: Query<
+    &mut Visibility,
+    (
+        With<Bat>,
+        Without<PowerUp>,
+        Without<Hitbox>,
+        Without<Player>,
+    ),
+>,
     mut hitbox_query: Query<
         (&mut Transform, &mut Hitbox),
         (
@@ -169,59 +187,45 @@ pub fn apply_powerups(
     let (mut hitbox_transform, mut hitbox) = hitbox_query.single_mut();
     let mut player_velocity = player_velocity_query.single_mut();
 
-    if player.powerup_applied {
-        if player.powerup == "bigbat".to_string() {
-            if player.powerup_timer == 15. {
-                *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
-                *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
-                hitbox.size = Vec2::new(78.75, 131.25);
-            }
-            player.powerup_timer = player.powerup_timer - time.delta_seconds();
-            if player.powerup_timer <= 0. {
-                player.powerup = "none".to_string();
-                player.powerup_applied = false;
-                *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
-                *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
-                hitbox.size = Vec2::new(45., 75.);
-            }
-        }
+    for (mut player_visibility) in player_visibility.iter_mut() {
+        for(mut bat_visibility) in bat_visibility.iter_mut(){
 
-        let speed_power = 4.2;
+        
+            if player.powerup_applied {
+                if player.powerup == "bigbat".to_string() {
+                    if player.powerup_timer == 10. {
+                        *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
+                        *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
+                        hitbox.size = Vec2::new(78.75, 131.25);
+                    }
+                    player.powerup_timer = player.powerup_timer - time.delta_seconds();
+                    if player.powerup_timer <= 0. {
+                        player.powerup = "none".to_string();
+                        player.powerup_applied = false;
+                        *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
+                        *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
+                        hitbox.size = Vec2::new(45., 75.);
+                    }
+                }
 
-        if player.powerup == "faster".to_string() {
-            // println!("entered faster power up");
-            // println!("Original Velocity 1: {:?}", player_velocity.velocity);
 
-            if player.powerup_timer == 15. {
-                //println!("setting speed");
-                let new_speed = PLAYER_SPEED * speed_power;
-                player.powerup_timer = player.powerup_timer - time.delta_seconds();
-                player_velocity.velocity *= new_speed;
-                // println!("New Velocity: {:?}", player_velocity.velocity);
-            }
-            player.powerup_timer = player.powerup_timer - time.delta_seconds();
-            //println!("Time Remaining: {:?}", player.powerup_timer);
-            if player.powerup_timer <= 0. {
-                player.powerup = "none".to_string();
-                //println!("Restoring Original Velocity: {:?}", PLAYER_SPEED / speed_power);
-                player.powerup_applied = false;
-                player_velocity.velocity *= PLAYER_SPEED / speed_power;
-            }
-        }
+                if player.powerup == "invisibility".to_string() {
+                    if player.powerup_timer == 10. {
+                        
+                        *player_visibility = Visibility::Hidden;
+                        *bat_visibility = Visibility:: Hidden;
+                    
+                    }
+                    player.powerup_timer = player.powerup_timer - time.delta_seconds();
 
-        if player.powerup == "slower".to_string() {
-            println!("Applying slower power-up!");
-            if player.powerup_timer == 15. {
-                let new_speed_power = 0.5;
-                let new_speed = PLAYER_SPEED * new_speed_power;
-                player_velocity.velocity *= new_speed / PLAYER_SPEED;
-            }
-            player.powerup_timer = player.powerup_timer - time.delta_seconds();
-            if player.powerup_timer <= 0. {
-                player.powerup = "none".to_string();
-                player.powerup_applied = false;
-                player_velocity.velocity *= PLAYER_SPEED;
-            }
+                    if player.powerup_timer <= 0. {
+                        player.powerup = "none".to_string();
+                        player.powerup_applied = false;
+                        *player_visibility = Visibility::Visible;
+                        *bat_visibility = Visibility:: Visible;
+                    }
+                }
+            }    
         }
     }
 }
