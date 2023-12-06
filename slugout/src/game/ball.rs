@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::multiplayer::{BallInfo, BallListVector, ClientListVector, PlayerNumber, ServerSocket, ClientBallInfo, PlayerInfo};
+use crate::multiplayer::{BallInfo, BallListVector, ClientListVector, PlayerNumber, ServerSocket, ClientBallInfo, PlayerInfo, BatInfo};
 use crate::multiplayer::server::OtherPlayer;
 use crate::{GameState, MultiplayerState, NetworkingState};
 //use bevy::window::CursorMoved;
@@ -75,7 +75,7 @@ impl Plugin for BallPlugin {
             app.add_systems(Update, swing_m4.run_if(in_state(MultiplayerState::Game)));
         } else {
             app.add_systems(Update, swing.run_if(in_state(GameState::Game)));
-            app.add_systems(Update, swing.run_if(in_state(MultiplayerState::Game)));
+            app.add_systems(Update, swing_mult.run_if(in_state(MultiplayerState::Game)));
         }
         if unsafe { MAP } == 1 {
             app.add_systems(Update, friction_map1.run_if(in_state(GameState::Game)));
@@ -2191,6 +2191,242 @@ fn swing(
             unsafe {
                 MOUSE_BUTTON_JUST_RELEASED = false;
                 BAT_TRANSFORMED = false;
+            }
+        }
+    }
+}
+
+fn swing_mult(
+    //mut commands: Commands,
+    input_mouse: Res<Input<MouseButton>>,
+    input: Res<Input<KeyCode>>,
+    mut query: Query<
+        (&mut Ball, &mut BallVelocity, &mut Transform, &BallNumber),
+        (With<Ball>, Without<Hitbox>, Without<Bat>, Without<Player>),
+    >,
+    mut query_bat: Query<
+        (&mut Transform, &crate::game::PlayerNumber),
+        (With<Bat>, Without<Hitbox>, Without<Ball>, With<Player>, Without<OtherPlayer>),
+    >,
+    //cursor_events: ResMut<Events<CursorMoved>>,
+    mut hitbox: Query<
+        (&mut Transform, &mut Hitbox),
+        (With<Hitbox>, Without<Ball>, Without<Ball>, With<Player>),
+    >,
+    window: Query<&Window>,
+    player: Query<&Transform, (With<Player>, Without<Hitbox>, Without<Bat>, Without<Ball>)>,
+    ball_list: Res<BallListVector>,
+    mut client_info: ResMut<crate::multiplayer::ClientSocket>,
+    mut bat_info: ResMut<ClientListVector>
+) {
+    let (mut hitbox_transform, hitbox) = hitbox.single_mut();
+
+    static mut MOUSE_BUTTON_PRESSED: bool = false;
+    static mut BAT_TRANSFORMED: bool = false;
+    static mut MOUSE_BUTTON_JUST_RELEASED: bool = false;
+
+    let mut is_left = true;
+    //let mut mouse_position: Vec2;
+    let (mut bat_transform, bat_number) = query_bat.single_mut();
+    let player_transform = player.single();
+
+    if input_mouse.just_pressed(MouseButton::Left) {
+        // Mouse button was just pressed
+        unsafe {
+            MOUSE_BUTTON_PRESSED = true;
+            BAT_TRANSFORMED = false;
+            MOUSE_BUTTON_JUST_RELEASED = false;
+        }
+        //println!("Mouse button pressed");
+    } else if input_mouse.just_released(MouseButton::Left) {
+        // Mouse button was just released
+        unsafe {
+            if MOUSE_BUTTON_PRESSED {
+                MOUSE_BUTTON_PRESSED = false;
+                BAT_TRANSFORMED = true;
+                MOUSE_BUTTON_JUST_RELEASED = true;
+                //println!("Mouse button released");
+            }
+        }
+    }
+
+    /*let mut cursor_event_reader = cursor_events.get_reader();
+    for event in cursor_event_reader.iter(&cursor_events) {
+        // Update the mouse position
+        mouse_position = event.position;
+        //println!("Mouse position changed");
+    }*/
+
+    //for (bat, mut bat_transform) in query_bat.iter_mut() {
+    if unsafe { MOUSE_BUTTON_PRESSED } {
+        // Left mouse button is pressed, set the bat to horizontal
+        bat_transform.scale.y = -bat_transform.scale.y.abs();
+    } else if unsafe { BAT_TRANSFORMED } {
+        bat_transform.scale.y = bat_transform.scale.y.abs();
+    }
+    //}
+
+    if let Some(mouse_position) = window.single().physical_cursor_position() {
+        //println!("Cursor is inside window {:?}", mouse_position);
+        // Move bat to the same side of the player as the mouse
+        if ((mouse_position.x - WIN_W) / 2.) > player_transform.translation.x {
+            bat_transform.translation = player_transform.translation;
+            bat_transform.translation.x = bat_transform.translation.x + 8.;
+            bat_transform.scale.x = -bat_transform.scale.x.abs();
+
+            hitbox_transform.translation = bat_transform.translation;
+            hitbox_transform.translation.x = hitbox_transform.translation.x + hitbox.size.x/2.;
+            hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
+            is_left = false;
+        } else {
+            bat_transform.translation = player_transform.translation;
+            bat_transform.translation.x = bat_transform.translation.x - 5.;
+            bat_transform.scale.x = bat_transform.scale.x.abs();
+
+            hitbox_transform.translation = bat_transform.translation;
+            hitbox_transform.translation.x = hitbox_transform.translation.x - hitbox.size.x/2.;
+            hitbox_transform.translation.y = hitbox_transform.translation.y - 5.;
+            is_left = true;
+        }
+        if unsafe { MOUSE_BUTTON_JUST_RELEASED } {
+            for (mut ball, mut ball_velocity, mut ball_transform, ball_number) in query.iter_mut() {
+                let bat_to_ball_collision = bevy::sprite::collide_aabb::collide(
+                    hitbox_transform.translation,
+                    hitbox.size,
+                    ball_transform.translation,
+                    Vec2::new(BALL_SIZE, BALL_SIZE),
+                );
+
+                if (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Right))
+                    || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Left))
+                    || (bat_to_ball_collision == Some(bevy::sprite::collide_aabb::Collision::Top))
+                    || (bat_to_ball_collision
+                        == Some(bevy::sprite::collide_aabb::Collision::Bottom))
+                    || (bat_to_ball_collision
+                        == Some(bevy::sprite::collide_aabb::Collision::Inside))
+                {
+                    ball_velocity.velocity = Vec3::splat(0.);
+                    let change_x =
+                        (((mouse_position.x - WIN_W) / 2.) - ball_transform.translation.x).abs();
+                    let change_y =
+                        ((-(mouse_position.y - WIN_H) / 2.) - ball_transform.translation.y).abs();
+                    let mut new_velocity = Vec3::new(change_x, change_y, 0.);
+                    new_velocity = new_velocity.normalize_or_zero();
+
+                    if ((mouse_position.x - WIN_W) / 2.) > ball_transform.translation.x {
+                        new_velocity.x = new_velocity.x;
+                    } else {
+                        new_velocity.x = -1. * new_velocity.x;
+                    }
+
+                    if (-(mouse_position.y - WIN_H) / 2.) > ball_transform.translation.y {
+                        new_velocity.y = new_velocity.y;
+                    } else {
+                        new_velocity.y = -1. * new_velocity.y;
+                    }
+
+                    new_velocity.x = new_velocity.x * 500.;
+                    new_velocity.y = new_velocity.y * 500.;
+
+                    // if Q is pressed, backspin -> ball moves slower
+                    if input.pressed(KeyCode::Q) {
+                        new_velocity *= 0.5;
+                    }
+
+                    // if E is pressed, topspin -> ball moves faster
+                    if input.pressed(KeyCode::E) {
+                        new_velocity *= 1.5;
+                    }
+
+                    ball_velocity.velocity = new_velocity * ball.elasticity;
+
+                    // BALLS COLLIDED: Now we find out which ball it is and send that info to the server
+                    for ball_check in ball_list.0.iter()
+                    {
+                        // println!("sending ball info");
+                        if (ball_transform.translation.x !=  ball_check.position.0 ||
+                            ball_transform.translation.y != ball_check.position.1) &&
+                            ball_number.number == ball_check.ball_number.number
+                        {
+                            if client_info.socket.is_none() {
+                                return;
+                            }
+                            let ball_info = BallInfo{
+                                position: (ball_transform.translation.x, ball_transform.translation.y),
+                                velocity: ball_velocity.clone(),
+                                ball_number: ball_number.clone(),
+                            };
+                    
+                            let socket = client_info.socket.as_mut().unwrap();
+                            socket.set_nonblocking(true).expect("could not set non-blocking");
+                            
+                                let message = serde_json::to_string(&ball_info).expect("Failed to serialize");
+                    
+                                let id = "BALFC";
+                                let big_message = id.to_string()  + &message;
+                                // println!("Sending my new ball data to the server, it is: {:?}", message);
+                                // println!("what is server address string {:?}", server_address_str);
+                                match socket.send(big_message.as_bytes()) {
+                                    Ok(_) => {},
+                                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                                        // Ignore WouldBlock errors
+                                    },
+                                    Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                                        println!("Socket is already connected");
+                                    },
+                                    Err(e) => {
+                                        println!("failed to send server updated position");
+                                        println!("Failed to send data: {:?}", e);
+                                    }
+                                }
+                        } 
+                    }
+                    
+                }
+
+            }
+
+            
+            // Reset the flags for the next interaction
+            unsafe {
+                MOUSE_BUTTON_JUST_RELEASED = false;
+                BAT_TRANSFORMED = false;
+            }
+        }
+        for client in bat_info.0.iter_mut()
+        {
+            if bat_number.number == client.username[4..client.username.len()].parse::<usize>().unwrap()
+            {
+                if client_info.socket.is_none() {
+                    return;
+                }
+                let ball_info = BatInfo{
+                    is_swinging: unsafe{MOUSE_BUTTON_PRESSED},
+                    is_left: is_left,
+                };
+        
+                let socket = client_info.socket.as_mut().unwrap();
+                socket.set_nonblocking(true).expect("could not set non-blocking");
+                
+                    let message = serde_json::to_string(&ball_info).expect("Failed to serialize");
+        
+                    let id = "BATFC";
+                    let big_message = id.to_string()  + &message;
+                    // println!("Sending my new bat data to the server, it is: {:?}", message);
+                    // println!("what is server address string {:?}", server_address_str);
+                    match socket.send(big_message.as_bytes()) {
+                        Ok(_) => {},
+                        Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                            // Ignore WouldBlock errors
+                        },
+                        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                            println!("Socket is already connected");
+                        },
+                        Err(e) => {
+                            println!("failed to send server updated position");
+                            println!("Failed to send data: {:?}", e);
+                        }
+                    }
             }
         }
     }
