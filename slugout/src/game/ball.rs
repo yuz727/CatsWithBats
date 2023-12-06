@@ -40,11 +40,13 @@ impl Plugin for BallPlugin {
             app.add_systems(Update, bounce_m2);
         } else if unsafe { MAP } == 3 {
             app.add_systems(Update, bounce_m2);
+            app.add_systems(Update, friction_map3.run_if(in_state(GameState::Game)));
         } else if unsafe { MAP } == 4 {
             app.add_systems(Update, bounce_m2);
+            app.add_systems(Update, friction_map4.run_if(in_state(GameState::Game)));
         }
         //app.add_systems(Update, bounce/* .run_if(in_state(MultiplayerState::Game)))*/;
-        app.add_systems(OnEnter(MultiplayerState::Game), setup);
+
         app.add_systems(Update, bounce_balls.after(bounce));
         if unsafe { MAP } == 4 {
             app.add_systems(Update, swing_m4.run_if(in_state(GameState::Game)));
@@ -54,10 +56,13 @@ impl Plugin for BallPlugin {
             app.add_systems(Update, swing.run_if(in_state(MultiplayerState::Game)));
         }
         if unsafe { MAP } == 1 {
-            app.add_systems(Update, friction.run_if(in_state(GameState::Game)));
+            app.add_systems(Update, friction_map1.run_if(in_state(GameState::Game)));
         }
         if unsafe { MAP } == 1 {
-            app.add_systems(Update, friction.run_if(in_state(MultiplayerState::Game)));
+            app.add_systems(
+                Update,
+                friction_map1.run_if(in_state(MultiplayerState::Game)),
+            );
         }
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
         app.add_systems(Update, bat_hitbox.run_if(in_state(MultiplayerState::Game)));
@@ -81,107 +86,331 @@ impl Plugin for BallPlugin {
 //ball Creation
 //for map 2,3,4 change velocity to 0 or reduced
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(100., 100., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
-            ..Default::default()
-        })
-        .insert(Ball {
-            radius: 2.5,
-            elasticity: 0.95,
-            prev_pos: Vec3::splat(0.),
-            density: 2.,
-        })
-        .insert(BallVelocity {
-            velocity: Vec3::new(300.0, 300.0, 2.0),
-        })
-        .insert(Colliding::new());
+    if unsafe { MAP == 1 || MAP == 4 } {
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(100., 100., 2.)
+                    .with_scale(Vec3::new(0.025, 0.025, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 2.5,
+                elasticity: 0.95,
+                prev_pos: Vec3::splat(0.),
+                density: 2.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(300.0, 300.0, 2.0),
+            })
+            .insert(Colliding::new());
 
-    // 2ND ball
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(300., 300., 2.).with_scale(Vec3::new(0.028, 0.028, 0.)),
-            ..Default::default()
-        })
-        .insert(Ball {
-            radius: 2.8,
-            elasticity: 1.,
-            prev_pos: Vec3::splat(0.),
-            density: 4.,
-        })
-        .insert(BallVelocity {
-            velocity: Vec3::new(300.0, 100.0, 2.0),
-        })
-        .insert(Colliding::new());
+        // 2ND ball
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(300., 300., 2.)
+                    .with_scale(Vec3::new(0.028, 0.028, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 2.8,
+                elasticity: 1.,
+                prev_pos: Vec3::splat(0.),
+                density: 4.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(300.0, 100.0, 2.0),
+            })
+            .insert(Colliding::new());
 
-    //3RD ball
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(300., 300., 2.).with_scale(Vec3::new(0.031, 0.031, 0.)),
-            ..Default::default()
-        })
-        .insert(Ball {
-            radius: 3.1,
-            elasticity: 0.975,
-            prev_pos: Vec3::splat(0.),
-            density: 6.,
-        })
-        .insert(BallVelocity {
-            velocity: Vec3::new(-500., 3., 2.),
-        })
-        .insert(Colliding::new());
+        //3RD ball
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(300., 200., 2.)
+                    .with_scale(Vec3::new(0.031, 0.031, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.1,
+                elasticity: 0.975,
+                prev_pos: Vec3::splat(0.),
+                density: 6.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(-500., 3., 2.),
+            })
+            .insert(Colliding::new());
 
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(100., 105., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
-            ..Default::default()
-        })
-        .insert(Ball {
-            radius: 3.4,
-            elasticity: 0.9,
-            prev_pos: Vec3::splat(0.),
-            density: 8.,
-        })
-        .insert(BallVelocity {
-            velocity: Vec3::new(300.0, 300.0, 2.0),
-        })
-        .insert(Colliding::new());
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(-200., 300., 2.).with_scale(Vec3::new(0.038, 0.038, 0.)),
-            ..Default::default()
-        })
-        .insert(Ball {
-            radius: 3.8,
-            elasticity: 0.875,
-            prev_pos: Vec3::splat(0.),
-            density: 10.,
-        })
-        .insert(BallVelocity {
-            velocity: Vec3::new(300.0, 300.0, 2.0),
-        })
-        .insert(Colliding::new());
-    commands
-        .spawn(SpriteBundle {
-            texture: asset_server.load("yarnball.png"),
-            transform: Transform::from_xyz(350., 350., 2.).with_scale(Vec3::new(0.042, 0.042, 0.)),
-            ..Default::default()
-        })
-        .insert(Ball {
-            radius: 4.2,
-            elasticity: 0.85,
-            prev_pos: Vec3::splat(0.),
-            density: 3.,
-        })
-        .insert(BallVelocity {
-            velocity: Vec3::new(300.0, 300.0, 2.0),
-        })
-        .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(100., 105., 2.)
+                    .with_scale(Vec3::new(0.034, 0.034, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.4,
+                elasticity: 0.9,
+                prev_pos: Vec3::splat(0.),
+                density: 8.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(300.0, 300.0, 2.0),
+            })
+            .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(-200., 300., 2.)
+                    .with_scale(Vec3::new(0.038, 0.038, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.8,
+                elasticity: 0.875,
+                prev_pos: Vec3::splat(0.),
+                density: 10.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(300.0, 300.0, 2.0),
+            })
+            .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(450., 250., 2.)
+                    .with_scale(Vec3::new(0.042, 0.042, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 4.2,
+                elasticity: 0.85,
+                prev_pos: Vec3::splat(0.),
+                density: 3.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(300.0, 300.0, 2.0),
+            })
+            .insert(Colliding::new());
+    } else if unsafe { MAP == 3 } {
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(100., 100., 2.)
+                    .with_scale(Vec3::new(0.025, 0.025, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 2.5,
+                elasticity: 0.95,
+                prev_pos: Vec3::splat(0.),
+                density: 2.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(600.0, 600.0, 2.0),
+            })
+            .insert(Colliding::new());
+
+        // 2ND ball
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(300., 300., 2.)
+                    .with_scale(Vec3::new(0.028, 0.028, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 2.8,
+                elasticity: 1.,
+                prev_pos: Vec3::splat(0.),
+                density: 4.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(600.0, 200.0, 2.0),
+            })
+            .insert(Colliding::new());
+
+        //3RD ball
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(300., 200., 2.)
+                    .with_scale(Vec3::new(0.031, 0.031, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.1,
+                elasticity: 0.975,
+                prev_pos: Vec3::splat(0.),
+                density: 6.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(-1000., 6., 2.),
+            })
+            .insert(Colliding::new());
+
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(100., 105., 2.)
+                    .with_scale(Vec3::new(0.034, 0.034, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.4,
+                elasticity: 0.9,
+                prev_pos: Vec3::splat(0.),
+                density: 8.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(600.0, 600.0, 2.0),
+            })
+            .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(-200., 300., 2.)
+                    .with_scale(Vec3::new(0.038, 0.038, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.8,
+                elasticity: 0.875,
+                prev_pos: Vec3::splat(0.),
+                density: 10.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(600.0, 600.0, 2.0),
+            })
+            .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(450., 50., 2.)
+                    .with_scale(Vec3::new(0.042, 0.042, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 4.2,
+                elasticity: 0.85,
+                prev_pos: Vec3::splat(0.),
+                density: 3.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(600.0, 600.0, 2.0),
+            })
+            .insert(Colliding::new());
+    } else if unsafe { MAP == 2 } {
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(-100., 100., 2.)
+                    .with_scale(Vec3::new(0.025, 0.025, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 2.5,
+                elasticity: 0.95,
+                prev_pos: Vec3::splat(0.),
+                density: 2.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(0.0, 0.0, 2.0),
+            })
+            .insert(Colliding::new());
+
+        // 2ND ball
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(300., -200., 2.)
+                    .with_scale(Vec3::new(0.028, 0.028, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 2.8,
+                elasticity: 1.,
+                prev_pos: Vec3::splat(0.),
+                density: 4.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(0.0, 0.0, 2.0),
+            })
+            .insert(Colliding::new());
+
+        //3RD ball
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(300., 300., 2.)
+                    .with_scale(Vec3::new(0.031, 0.031, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.1,
+                elasticity: 0.975,
+                prev_pos: Vec3::splat(0.),
+                density: 6.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(0.0, 0.0, 2.0),
+            })
+            .insert(Colliding::new());
+
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(100., 105., 2.)
+                    .with_scale(Vec3::new(0.034, 0.034, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.4,
+                elasticity: 0.9,
+                prev_pos: Vec3::splat(0.),
+                density: 8.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(0.0, 0.0, 2.0),
+            })
+            .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(-200., 300., 2.)
+                    .with_scale(Vec3::new(0.038, 0.038, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 3.8,
+                elasticity: 0.875,
+                prev_pos: Vec3::splat(0.),
+                density: 10.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(0.0, 0.0, 2.0),
+            })
+            .insert(Colliding::new());
+        commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("yarnball.png"),
+                transform: Transform::from_xyz(-350., -200., 2.)
+                    .with_scale(Vec3::new(0.042, 0.042, 0.)),
+                ..Default::default()
+            })
+            .insert(Ball {
+                radius: 4.2,
+                elasticity: 0.85,
+                prev_pos: Vec3::splat(0.),
+                density: 3.,
+            })
+            .insert(BallVelocity {
+                velocity: Vec3::new(0.0, 0.0, 2.0),
+            })
+            .insert(Colliding::new());
+    }
     /*// added for debugging
 
     commands
@@ -588,7 +817,7 @@ pub fn ball_player_collisions(
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
                 transform.translation.x = transform.translation.x - 10.;
-                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0.{
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == player.health
                             && healthbar.player_type == "player".to_string()
@@ -605,7 +834,7 @@ pub fn ball_player_collisions(
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
                 transform.translation.x = transform.translation.x + 10.;
-                if !input_mouse.pressed(MouseButton::Left)  && player.health_timer <= 0.{
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == player.health
                             && healthbar.player_type == "player".to_string()
@@ -622,7 +851,7 @@ pub fn ball_player_collisions(
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
                 transform.translation.y = transform.translation.y - 10.;
-                if !input_mouse.pressed(MouseButton::Left)  && player.health_timer <= 0.{
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == player.health
                             && healthbar.player_type == "player".to_string()
@@ -639,7 +868,7 @@ pub fn ball_player_collisions(
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
                 transform.translation.y = transform.translation.y + 10.;
-                if !input_mouse.pressed(MouseButton::Left)  && player.health_timer <= 0.{
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == player.health
                             && healthbar.player_type == "player".to_string()
@@ -684,7 +913,7 @@ pub fn ball_npc_collisions(
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
                 transform.translation.x = transform.translation.x - 10.;
-                if !input_mouse.pressed(MouseButton::Left) && npc.health_timer <= 0.{
+                if !input_mouse.pressed(MouseButton::Left) && npc.health_timer <= 0. {
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == npc.health
                             && healthbar.player_type == "npc".to_string()
@@ -827,7 +1056,7 @@ pub fn bounce_m2(
                 Vec2::new(ball_radius * 2., ball_radius * 2.),
             );
 
-                if coral1 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+            if coral1 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 new_translation_x = Vec3::new(0., 180., 2.).x + coral_size.x / 2. + ball_radius;
@@ -844,7 +1073,6 @@ pub fn bounce_m2(
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 new_translation_y = Vec3::new(0., 180., 2.).y + coral_size.y / 2. + ball_radius;
             }
-
 
             if coral2 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
@@ -1063,7 +1291,7 @@ fn bat_hitbox(
     }
 }
 
-fn friction(
+fn friction_map1(
     mut query: Query<(&Transform, &mut BallVelocity), With<Ball>>,
     rug: Query<(&Transform, &Rug), With<Rug>>,
     time: Res<Time>,
@@ -1142,6 +1370,74 @@ fn friction(
                 if newvy > MIN_BALL_VELOCITY {
                     ball_velocity.velocity.y = newvy;
                 }
+            }
+        }
+    }
+}
+
+fn friction_map3(mut query: Query<(&Transform, &mut BallVelocity), With<Ball>>, time: Res<Time>) {
+    let deltat = time.delta_seconds();
+
+    for (ball_transform, mut ball_velocity) in query.iter_mut() {
+        let newvx;
+        let newvy;
+
+        //Caclulate the new ball velocity using v' = v - G * coefficient of friction * deltat
+        if ball_velocity.velocity.x < 0. {
+            newvx = ball_velocity.velocity.x + G * 0.05 * deltat;
+            if newvx < (-1. * MIN_BALL_VELOCITY) {
+                ball_velocity.velocity.x = newvx;
+            }
+        } else {
+            newvx = ball_velocity.velocity.x - G * 0.05 * deltat;
+            if newvx > MIN_BALL_VELOCITY {
+                ball_velocity.velocity.x = newvx;
+            }
+        }
+
+        if ball_velocity.velocity.y < 0. {
+            newvy = ball_velocity.velocity.y + G * 0.05 * deltat;
+            if newvx < (-1. * MIN_BALL_VELOCITY) {
+                ball_velocity.velocity.y = newvy;
+            }
+        } else {
+            newvy = ball_velocity.velocity.y - G * 0.05 * deltat;
+            if newvy > MIN_BALL_VELOCITY {
+                ball_velocity.velocity.y = newvy;
+            }
+        }
+    }
+}
+
+fn friction_map4(mut query: Query<(&Transform, &mut BallVelocity), With<Ball>>, time: Res<Time>) {
+    let deltat = time.delta_seconds();
+
+    for (ball_transform, mut ball_velocity) in query.iter_mut() {
+        let newvx;
+        let newvy;
+
+        //Caclulate the new ball velocity using v' = v - G * coefficient of friction * deltat
+        if ball_velocity.velocity.x < 0. {
+            newvx = ball_velocity.velocity.x + G * 0.75 * deltat;
+            if newvx < (-1. * MIN_BALL_VELOCITY) {
+                ball_velocity.velocity.x = newvx;
+            }
+        } else {
+            newvx = ball_velocity.velocity.x - G * 0.75 * deltat;
+            if newvx > MIN_BALL_VELOCITY {
+                ball_velocity.velocity.x = newvx;
+            }
+        }
+
+        if ball_velocity.velocity.y < 0. {
+            newvy = ball_velocity.velocity.y + G * 0.75 * deltat;
+            if newvx < (-1. * MIN_BALL_VELOCITY) {
+                ball_velocity.velocity.y = newvy;
+            }
+        } else {
+            newvy = ball_velocity.velocity.y - G * 0.75 * deltat;
+            if newvy > MIN_BALL_VELOCITY {
+                ball_velocity.velocity.y = newvy;
             }
         }
     }
