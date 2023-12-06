@@ -1,5 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 
+use crate::MultiplayerState;
+
 use super::{despawn_screen, GameState, TEXT_COLOR};
 
 pub struct SetupPlugin;
@@ -175,6 +177,7 @@ fn setup_menu_action(
     mut _app_exit_events: EventWriter<AppExit>,
     mut setup_state: ResMut<NextState<SetupState>>,
     mut game_state: ResMut<NextState<GameState>>,
+    mut mult_state: ResMut<NextState<MultiplayerState>>,
 ) {
     for (interaction, setup_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
@@ -186,6 +189,7 @@ fn setup_menu_action(
                 SetupButtonAction::Multiplayer => {
                     setup_state.set(SetupState::Disabled);
                     game_state.set(GameState::Multiplayer);
+                    mult_state.set(MultiplayerState::Main);
                 }
                 SetupButtonAction::Back => {
                     setup_state.set(SetupState::Disabled);
