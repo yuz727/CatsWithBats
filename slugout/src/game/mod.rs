@@ -1,4 +1,5 @@
 use crate::game::components::Aim;
+use bevy::{prelude::*, text::FontAtlasSet};
 use crate::game::npc::*;
 
 use crate::{despawn_screen, GameState, MultiplayerState, MAP, TEXT_COLOR};
@@ -483,6 +484,7 @@ fn end_game (
     mut game_state: ResMut<NextState<GameState>>,
     asset_server: Res<AssetServer>,
 ){
+    let font_handle = asset_server.load("FiraSans-Bold.ttf");
     let (npc, npc_entity) = npc_query.single();
     let(player, player_entity) = player_query.single();
 
@@ -499,6 +501,37 @@ fn end_game (
             .insert(Background);
         
         game_state.set(GameState::GameOver);
+        
+        if npc.health == 0{
+            commands
+            .spawn(TextBundle {
+                text: Text::from_section(
+                    "Game Over. You Win.",
+                    TextStyle {
+                        font: font_handle.clone(),
+                        font_size: 100.0,
+                        color: Color::WHITE,
+                    },
+                ),
+                transform: Transform::from_xyz(600., 350., 400.),
+                ..default()
+            });
+        }else{
+            commands
+            .spawn(TextBundle {
+                text: Text::from_section(
+                    "Game Over. You Lose.",
+                    TextStyle {
+                        font: font_handle.clone(),
+                        font_size: 100.0,
+                        color: Color::WHITE,
+                    },
+                ),
+                transform: Transform::from_xyz(600., 350., 400.),
+                ..default()
+            });
+        }
+
     }
 
 }
