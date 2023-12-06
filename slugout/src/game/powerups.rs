@@ -242,7 +242,6 @@ pub fn apply_powerups(
     >,
 ) {
     let mut player = player_query.single_mut();
-    //let mut npc = npc_query.single_mut();
     let mut bat_transform = bat.single_mut();
     let mut npc_bat_transform = npc_bat.single_mut();
     let (mut hitbox_transform, mut hitbox) = hitbox_query.single_mut();
@@ -251,10 +250,11 @@ pub fn apply_powerups(
     let mut bat_visibility = bat_visibility.single_mut();
     let mut npc_visibility = npc_visibility.single_mut();
     let mut npc_bat_visibility = npc_bat_visibility.single_mut();
+
     for (mut npc_transform,  mut npc) in npc_query.iter_mut() {
         for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
+            //Big Bat Powerup for Player
             if player.powerup == "bigbat".to_string() && powerup.active == true  {
-
                 if player.powerup_timer == 10. {
                     *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
                     *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
@@ -270,7 +270,7 @@ pub fn apply_powerups(
                     hitbox.size = Vec2::new(45., 75.);
                 }
             }
-
+            //Big Bat Powerup for NPC
             if npc.powerup == "bigbat".to_string() && powerup.active == true  {
 
                 if npc.powerup_timer == 10. {
@@ -284,7 +284,7 @@ pub fn apply_powerups(
                     *npc_bat_transform = npc_bat_transform.with_scale(Vec3::new(0.13, 0.13, 0.));
                 }
             }
-
+            //Invisibility Power Up for Player
             if player.powerup == "invisibility".to_string() && powerup.active == true {
                 if player.powerup_timer == 10. {
                     
@@ -302,7 +302,7 @@ pub fn apply_powerups(
                     *bat_visibility = Visibility:: Visible;
                 }
             }   
-
+              //Invisibility Power Up for NPC
             if npc.powerup == "invisibility".to_string() && powerup.active == true {
                 if npc.powerup_timer == 10. {
                     
@@ -320,6 +320,7 @@ pub fn apply_powerups(
                     *npc_bat_visibility = Visibility:: Visible;
                 }
             }
+            //Confusion Powerup for NPC
             if npc.powerup == "confusion".to_string() && powerup.active == true {
                 if npc.powerup_timer == 10. {
                     npc.confused = true;
@@ -333,7 +334,7 @@ pub fn apply_powerups(
                     powerup.active == false;
                 }
             }
-
+            //Confusion Powerup for Player
             if player.powerup == "confusion".to_string() && powerup.active == true {
                 if player.powerup_timer == 10. {
                     player_velocity.confused = true;
