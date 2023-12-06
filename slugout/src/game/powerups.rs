@@ -70,13 +70,16 @@ pub fn player_powerups(
     for (mut powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut(){
         let collision = bevy::sprite::collide_aabb::collide(player_transform.translation, 
             Vec2::new(PLAYER_SIZE, PLAYER_SIZE), powerup_transform.translation, Vec2::new(PLAYER_SIZE, PLAYER_SIZE));
-        if collision == Some(bevy::sprite::collide_aabb::Collision::Left) || collision == Some(bevy::sprite::collide_aabb::Collision::Right) || collision == Some(bevy::sprite::collide_aabb::Collision::Top) || collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
-            //println!("running");
-            if player.powerup == "none".to_string(){
-                player.powerup = powerup.powerup.clone();
-                player.powerup_timer = 15.;
+        if !player.powerup_applied{
+            if collision == Some(bevy::sprite::collide_aabb::Collision::Left) || collision == Some(bevy::sprite::collide_aabb::Collision::Right) || collision == Some(bevy::sprite::collide_aabb::Collision::Top) || collision == Some(bevy::sprite::collide_aabb::Collision::Bottom){
                 //println!("running");
-                *powerup_visibility = Visibility::Hidden;
+                if player.powerup == "none".to_string(){
+                    player.powerup = powerup.powerup.clone();
+                    player.powerup_timer = 15.;
+                    //println!("running");
+                    player.powerup_applied = true; // Set the flag
+                    *powerup_visibility = Visibility::Hidden;
+                }
             }
         }
     }
@@ -97,62 +100,67 @@ pub fn apply_powerups(
     let mut player_velocity = player_velocity_query.single_mut();
     
 
-    if player.powerup == "bigbat".to_string(){ 
-        if player.powerup_timer == 15.{
-            *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
-            *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
-            hitbox.size = Vec2::new(78.75, 131.25);
-        }
-        player.powerup_timer = player.powerup_timer - time.delta_seconds();
-        if player.powerup_timer <= 0.{
-            player.powerup = "none".to_string();
-            *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
-            *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
-            hitbox.size = Vec2::new(45., 75.);
-
-        }
-
-
-    }
-    
-    let speed_power = 4.2;
-
-    if player.powerup == "faster".to_string() {
-        // println!("entered faster power up");
-        // println!("Original Velocity 1: {:?}", player_velocity.velocity);
-
-        if player.powerup_timer == 15. {
-            //println!("setting speed");
-            let new_speed = PLAYER_SPEED * speed_power;
+    if player.powerup_applied {
+        if player.powerup == "bigbat".to_string() { 
+            if player.powerup_timer == 15.{
+                *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
+                *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
+                hitbox.size = Vec2::new(78.75, 131.25);
+            }
             player.powerup_timer = player.powerup_timer - time.delta_seconds();
-            player_velocity.velocity *= new_speed;
-            // println!("New Velocity: {:?}", player_velocity.velocity);
+            if player.powerup_timer <= 0.{
+                player.powerup = "none".to_string();
+                player.powerup_applied = false; 
+                *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
+                *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
+                hitbox.size = Vec2::new(45., 75.);
+            }
     
-            
-        } 
-        player.powerup_timer = player.powerup_timer - time.delta_seconds();
-        //println!("Time Remaining: {:?}", player.powerup_timer);
-        if player.powerup_timer <= 0. {
-            player.powerup = "none".to_string();
-            //println!("Restoring Original Velocity: {:?}", PLAYER_SPEED / speed_power);
-            player_velocity.velocity *= PLAYER_SPEED/speed_power;
+    
         }
+        
+        let speed_power = 4.2;
     
-               
+        if player.powerup == "faster".to_string() {
+            // println!("entered faster power up");
+            // println!("Original Velocity 1: {:?}", player_velocity.velocity);
+    
+            if player.powerup_timer == 15. {
+                //println!("setting speed");
+                let new_speed = PLAYER_SPEED * speed_power;
+                player.powerup_timer = player.powerup_timer - time.delta_seconds();
+                player_velocity.velocity *= new_speed;
+                // println!("New Velocity: {:?}", player_velocity.velocity);
+        
+                
+            } 
+            player.powerup_timer = player.powerup_timer - time.delta_seconds();
+            //println!("Time Remaining: {:?}", player.powerup_timer);
+            if player.powerup_timer <= 0. {
+                player.powerup = "none".to_string();
+                //println!("Restoring Original Velocity: {:?}", PLAYER_SPEED / speed_power);
+                player.powerup_applied = false; 
+                player_velocity.velocity *= PLAYER_SPEED/speed_power;
+            }
+        
+                   
+        }
+        
+        if player.powerup == "slower".to_string() {
+            println!("Applying slower power-up!");
+            if player.powerup_timer == 15. {
+                let new_speed_power = 0.5;  
+                let new_speed = PLAYER_SPEED * new_speed_power;
+                player_velocity.velocity *= new_speed / PLAYER_SPEED;
+            } 
+            player.powerup_timer = player.powerup_timer - time.delta_seconds();
+            if player.powerup_timer <= 0. {
+                player.powerup = "none".to_string();
+                player.powerup_applied = false; 
+                player_velocity.velocity *= PLAYER_SPEED;  
+            }
+        }
     }
     
-    if player.powerup == "slower".to_string() {
-        println!("Applying slower power-up!");
-        if player.powerup_timer == 15. {
-            let new_speed_power = 0.5;  
-            let new_speed = PLAYER_SPEED * new_speed_power;
-            player_velocity.velocity *= new_speed / PLAYER_SPEED;
-        } 
-        player.powerup_timer = player.powerup_timer - time.delta_seconds();
-        if player.powerup_timer <= 0. {
-            player.powerup = "none".to_string();
-            player_velocity.velocity *= PLAYER_SPEED;  
-        }
-    }
 
 }
