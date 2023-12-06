@@ -43,6 +43,7 @@ pub struct NPC {
     pub powerup: String,
     pub powerup_timer: f32,
     pub health: i32,
+    pub health_timer: f32,
     pub powerup_applied: bool,
 }
 
@@ -205,6 +206,7 @@ pub fn load_npc_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
             powerup: "none".to_string(),
             powerup_timer: 0.,
             health: 3,
+            health_timer: 0.,
             powerup_applied: false,
         })
         .insert(NPCVelocity::new())
@@ -251,6 +253,7 @@ pub fn load_npc_map2(mut commands: Commands, asset_server: Res<AssetServer>) {
             powerup: "none".to_string(),
             powerup_timer: 0.,
             health: 3,
+            health_timer: 0.,
             powerup_applied: false,
         })
         .insert(NPCVelocity::new())
@@ -297,6 +300,7 @@ pub fn load_npc_map3(mut commands: Commands, asset_server: Res<AssetServer>) {
             powerup: "none".to_string(),
             powerup_timer: 0.,
             health: 3,
+            health_timer: 0.,
             powerup_applied: false,
         })
         .insert(NPCVelocity::new())
@@ -342,6 +346,7 @@ pub fn load_npc_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
             powerup: "none".to_string(),
             powerup_timer: 0.,
             health: 3,
+            health_timer: 0.,
             powerup_applied: false,
         })
         .insert(NPCVelocity::new())
