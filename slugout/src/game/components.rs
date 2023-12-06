@@ -67,6 +67,7 @@ pub struct HealthHitbox {
 #[derive(Component)]
 pub struct Health{
     pub lives: i32,
+    pub player_type: String,
 }
 
 #[derive(Component)]
