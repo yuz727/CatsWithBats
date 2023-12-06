@@ -31,13 +31,7 @@ pub fn danger_check(
     // For every ball
     for (ball_transform, ball_velocity, ball) in ball_query.iter() {
         // If a ball is close enough (< 200 pixels away) and it is moving towards the npc, then return true
-        // let ball_future_position = Vec2::new(
-        //     (ball_transform.translation.x + (ball_velocity.velocity.x * time.delta_seconds()))
-        //         .clamp(-(1280. / 2.) + ball.radius, 1280. / 2. - ball.radius),
-        //     (ball_transform.translation.y + (ball_velocity.velocity.y * time.delta_seconds()))
-        //         .clamp(-(720. / 2.) + ball.radius, 720. / 2. - ball.radius),
-        // );
-        // && ball_future_position.distance(npc_translation.truncate())
+
         if ball_transform.translation.distance(npc_translation) < 50.
         {
             return true;
@@ -63,6 +57,7 @@ pub fn sidestep(
 
                 let mut deltav = Vec2::splat(0.);
 
+                //condition checks for ball position relative to NPC
                 if path.ball.x < 0. && path.ball.y < 0. {
                     deltav.x -= 1000.;
                     deltav.y += 1000.;
@@ -84,9 +79,11 @@ pub fn sidestep(
                 } else if path.ball.y > 0. {
                     deltav.x += 1000.;
                 }
+                //if npc is confused from powerup, reverse directions
                 if(npc.confused == true){
                     deltav = -deltav;
                 }
+                
                 let deltat = time.delta_seconds();
                 let acc = NPC_ACCEL_RATE * deltat;
                 velocity.velocity = if deltav.length() > 0. {
@@ -299,6 +296,7 @@ pub fn perform_a_star(
                         deltav.y -= 1000.;
                     }
 
+                    //if npc is confused from powerup, reverse directions
                     if(npc.confused){
                         deltav = -deltav;
                     }
@@ -383,7 +381,6 @@ pub fn swing(
                     for (ball_transform, mut ball_velocity, ball) in ball_query.iter_mut() {
                         let ball_x = ball_transform.translation.x;
                         let npc_x = npc_transform.translation.x;
-                        // let bat_x = bat_transform.translation.x;
 
                         if ball_transform
                             .translation
