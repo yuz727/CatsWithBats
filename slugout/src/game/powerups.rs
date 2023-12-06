@@ -266,14 +266,13 @@ pub fn apply_powerups(
                 if npc.powerup_timer == 10. {
                     *npc_bat_transform = npc_bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
                     powerup.active = false;
+                    unsafe { BIG_BAT_PU = true };
                 }
                 npc.powerup_timer -= time.delta_seconds();
                 if npc.powerup_timer <= 0. {
                     npc.powerup = "none".to_string();
                     powerup.active = false;
                     *npc_bat_transform = npc_bat_transform.with_scale(Vec3::new(0.13, 0.13, 0.));
-                    unsafe { BIG_BAT_PU = true };
-                } else {
                     unsafe { BIG_BAT_PU = false };
                 }
             }
