@@ -18,6 +18,7 @@ mod npc_events;
 mod pathfinding;
 mod player_movement;
 mod powerups;
+
 // mod tree;
 const WIN_W: f32 = 1280.0;
 const WIN_H: f32 = 720.0;
@@ -78,7 +79,8 @@ impl Plugin for GamePlugin {
             .add_systems(
                 OnExit(GameState::DifficultySelect),
                 despawn_screen::<OnDifficultySelectScreen>,
-            );
+            )
+            .add_plugins(powerups::PowerUpPlugin);
         if unsafe { MAP == 1 } {
             app.add_systems(OnEnter(MultiplayerState::Game), setup)
                 .add_systems(OnEnter(GameState::Game), setup)
@@ -90,19 +92,11 @@ impl Plugin for GamePlugin {
                 })
                 .add_systems(
                     Update,
+                    player_movement::player_npc_collisions.run_if(in_state(GameState::Game)),
+                )
+                .add_systems(
+                    Update,
                     player_movement::move_player.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    OnEnter(GameState::Game),
-                    powerups::spawn_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    Update,
-                    powerups::apply_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    Update,
-                    powerups::player_powerups.run_if(in_state(GameState::Game)),
                 )
                 .add_systems(
                     Update,
@@ -120,18 +114,6 @@ impl Plugin for GamePlugin {
                     player_movement::move_player.run_if(in_state(GameState::Game)),
                 )
                 .add_systems(
-                    OnEnter(GameState::Game),
-                    powerups::spawn_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    Update,
-                    powerups::apply_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    Update,
-                    powerups::player_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
                     Update,
                     player_movement::player_npc_collisions.run_if(in_state(GameState::Game)),
                 )
@@ -141,6 +123,7 @@ impl Plugin for GamePlugin {
                 );
         } else if unsafe { MAP == 4 } {
             app.add_systems(OnEnter(GameState::Game), setup)
+                .add_systems(OnEnter(MultiplayerState::Game), setup)
                 .add_plugins(ball::BallPlugin)
                 .add_plugins(npc::NPCPlugin {
                     bully_mode: unsafe { BULLY_MODE },
@@ -150,18 +133,6 @@ impl Plugin for GamePlugin {
                 .add_systems(
                     Update,
                     player_movement::move_player.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    OnEnter(GameState::Game),
-                    powerups::spawn_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    Update,
-                    powerups::apply_powerups.run_if(in_state(GameState::Game)),
-                )
-                .add_systems(
-                    Update,
-                    powerups::player_powerups.run_if(in_state(GameState::Game)),
                 )
                 .add_systems(
                     Update,
