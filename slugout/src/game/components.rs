@@ -7,8 +7,6 @@ pub struct Player{
     pub health: i32,
     pub health_timer: f32,
 
-
-
 }
 
 #[derive(Component)]
