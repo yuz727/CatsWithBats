@@ -31,15 +31,14 @@ pub fn danger_check(
     // For every ball
     for (ball_transform, ball_velocity, ball) in ball_query.iter() {
         // If a ball is close enough (< 200 pixels away) and it is moving towards the npc, then return true
-        let ball_future_position = Vec2::new(
-            (ball_transform.translation.x + (ball_velocity.velocity.x * time.delta_seconds()))
-                .clamp(-(1280. / 2.) + ball.radius, 1280. / 2. - ball.radius),
-            (ball_transform.translation.y + (ball_velocity.velocity.y * time.delta_seconds()))
-                .clamp(-(720. / 2.) + ball.radius, 720. / 2. - ball.radius),
-        );
-        if ball_transform.translation.distance(npc_translation) < 200.
-            && ball_future_position.distance(npc_translation.truncate())
-                < ball_transform.translation.distance(npc_translation)
+        // let ball_future_position = Vec2::new(
+        //     (ball_transform.translation.x + (ball_velocity.velocity.x * time.delta_seconds()))
+        //         .clamp(-(1280. / 2.) + ball.radius, 1280. / 2. - ball.radius),
+        //     (ball_transform.translation.y + (ball_velocity.velocity.y * time.delta_seconds()))
+        //         .clamp(-(720. / 2.) + ball.radius, 720. / 2. - ball.radius),
+        // );
+        // && ball_future_position.distance(npc_translation.truncate())
+        if ball_transform.translation.distance(npc_translation) < 50.
         {
             return true;
         }
@@ -382,7 +381,7 @@ pub fn swing(
                         if ball_transform
                             .translation
                             .distance(npc_transform.translation)
-                            < 75.
+                            < 100.
                             && swing_cooldown_check(&mut swing_timer, &time)
                         {
                             // Check whether the ball is close enough for swinging
@@ -391,6 +390,7 @@ pub fn swing(
                                 npc_transform.translation,
                                 player_transform.translation,
                                 difficulty.difficulty,
+                                ball_transform.translation,
                             );
                             if ball_x > npc_x {
                                 bat_transform.scale.x = -0.13;
@@ -418,7 +418,7 @@ pub fn swing(
 }
 
 /// Determine where to send the ball, deviate the movement vector depending on the difficulty
-fn hit_accuracy(npc_translation: Vec3, player_translation: Vec3, difficulty: i32) -> Vec3 {
+fn hit_accuracy(npc_translation: Vec3, player_translation: Vec3, difficulty: i32, ball_translation: Vec3) -> Vec3 {
     let x_diff = player_translation.x - npc_translation.x;
     let y_diff = player_translation.y - npc_translation.y;
     let mut ball_velocity = Vec3::new(x_diff, y_diff, 0.);
