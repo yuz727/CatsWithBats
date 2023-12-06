@@ -30,6 +30,7 @@ struct PlayerInfo {
 pub struct PlayerVelocity {
     pub velocity: Vec2,
     pub prev_position: (f32, f32),
+    pub confused: bool, 
 }
 
 impl PlayerVelocity {
@@ -37,6 +38,7 @@ impl PlayerVelocity {
         Self {
             velocity: Vec2::splat(0.),
             prev_position: (0.0, 0.0),
+            confused: false, 
         }
     }
 }
@@ -65,6 +67,11 @@ pub fn move_player(
     }
     if input.pressed(KeyCode::S) {
         deltav.y -= 1000.;
+    }
+
+    // confusion check
+    if velocity.confused {
+        deltav = -deltav;
     }
 
     let deltat = time.delta_seconds();
