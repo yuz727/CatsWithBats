@@ -5,8 +5,6 @@ pub struct Player{
     pub powerup: String,
     pub powerup_timer: f32,
     pub health: i32,
-    pub powerup_applied: bool,
-
 }
 
 #[derive(Component)]
@@ -74,4 +72,5 @@ pub struct Health{
 #[derive(Component)]
  pub struct PowerUp{
      pub powerup: String,
+     pub active: bool,
  }

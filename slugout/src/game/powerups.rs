@@ -42,6 +42,7 @@ pub fn spawn_powerups(mut commands: Commands) {
         })
         .insert(PowerUp {
             powerup: "bigbat".to_string(),
+            active: true,
         });
     commands
         .spawn(SpriteBundle {
@@ -55,6 +56,7 @@ pub fn spawn_powerups(mut commands: Commands) {
         })
         .insert(PowerUp {
             powerup: "confusion".to_string(),
+            active: true,
         });
 
     commands
@@ -69,6 +71,7 @@ pub fn spawn_powerups(mut commands: Commands) {
         })
         .insert(PowerUp {
             powerup: "invisibility".to_string(),
+            active: true,
         });
 }
 
@@ -85,7 +88,7 @@ pub fn player_powerups(
 ) {
     let (player_transform, mut player) = player_query.single_mut();
     for npc_transform in npc_query.iter() {
-        for (powerup_transform, powerup, mut powerup_visibility) in powerups.iter_mut() {
+        for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
             let player_collision = bevy::sprite::collide_aabb::collide(
                 player_transform.translation,
                 Vec2::new(PLAYER_SIZE, PLAYER_SIZE),
@@ -105,7 +108,7 @@ pub fn player_powerups(
                 || npc_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
             {
             }
-            if !player.powerup_applied {
+            if powerup.active == true {
                 if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
                     || player_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
                     || player_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
@@ -115,8 +118,7 @@ pub fn player_powerups(
                     if player.powerup == "none".to_string() {
                         player.powerup = powerup.powerup.clone();
                         player.powerup_timer = 10.;
-                        //println!("running");
-                        player.powerup_applied = true; // Set the flag
+                        powerup.active = false; // Set the flag
                         *powerup_visibility = Visibility::Hidden;
                     }
                 }
@@ -154,6 +156,14 @@ pub fn apply_powerups(
             Without<Hitbox>,
         ),
     >,
+    mut powerups: Query<
+        (&mut Transform, &mut PowerUp, &mut Visibility),
+        (
+            With<PowerUp>,
+            Without<Player>, 
+            Without<NPC>
+        ),
+>,
     mut bat_visibility: Query<
     &mut Visibility,
     (
@@ -189,19 +199,18 @@ pub fn apply_powerups(
 
     for (mut player_visibility) in player_visibility.iter_mut() {
         for(mut bat_visibility) in bat_visibility.iter_mut(){
-
-        
-            if player.powerup_applied {
-                if player.powerup == "bigbat".to_string() {
+            for (powerup_transform, mut powerup, mut powerup_visibility) in powerups.iter_mut() {
+                if player.powerup == "bigbat".to_string() && powerup.active == true  {
                     if player.powerup_timer == 10. {
                         *bat_transform = bat_transform.with_scale(Vec3::new(0.3, 0.3, 0.));
                         *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1.75, 1.75, 0.));
                         hitbox.size = Vec2::new(78.75, 131.25);
+                        powerup.active == false;
                     }
                     player.powerup_timer = player.powerup_timer - time.delta_seconds();
                     if player.powerup_timer <= 0. {
                         player.powerup = "none".to_string();
-                        player.powerup_applied = false;
+                        powerup.active == false;
                         *bat_transform = bat_transform.with_scale(Vec3::new(0.175, 0.175, 0.));
                         *hitbox_transform = hitbox_transform.with_scale(Vec3::new(1., 1., 0.));
                         hitbox.size = Vec2::new(45., 75.);
@@ -209,23 +218,24 @@ pub fn apply_powerups(
                 }
 
 
-                if player.powerup == "invisibility".to_string() {
+                if player.powerup == "invisibility".to_string() && powerup.active == true {
                     if player.powerup_timer == 10. {
                         
                         *player_visibility = Visibility::Hidden;
                         *bat_visibility = Visibility:: Hidden;
+                        powerup.active == false;
                     
                     }
                     player.powerup_timer = player.powerup_timer - time.delta_seconds();
 
                     if player.powerup_timer <= 0. {
                         player.powerup = "none".to_string();
-                        player.powerup_applied = false;
+                        powerup.active == false;
                         *player_visibility = Visibility::Visible;
                         *bat_visibility = Visibility:: Visible;
                     }
-                }
-            }    
+                }   
+            }
         }
     }
 }
