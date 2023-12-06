@@ -2,8 +2,10 @@ use crate::game::components::Aim;
 
 use crate::{despawn_screen, GameState, MultiplayerState, MAP, TEXT_COLOR};
 
+use bevy::input;
 use bevy::{prelude::*, window::PresentMode};
 use std::io::{stdin, stdout, Write};
+use std::string;
 
 use self::components::{Bat, Colliding, Health, Object, Player, Rug};
 
@@ -26,6 +28,7 @@ const HOVERED_PRESSED_BUTTON: Color = Color::rgb(0.25, 0.65, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 
 pub static mut DIFFICULTY: i32 = -1;
+pub static mut BULLY_MODE: bool = false;
 
 #[derive(Component)]
 struct SelectedOption;
@@ -36,9 +39,12 @@ struct OnDifficultySelectScreen;
 #[derive(Component)]
 enum SingleplayerButtonAction {
     Game,
+    InputProcess,
     Back,
 }
 
+#[derive(Component)]
+struct InputText(pub String);
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -64,8 +70,10 @@ impl Plugin for GamePlugin {
                 difficulty_select_setup,
             )
             .add_systems(
-                OnEnter(GameState::DifficultySelect),
-                difficulty_select.after(difficulty_select_setup),
+                Update,
+                difficulty_select
+                    .after(difficulty_select_setup)
+                    .run_if(in_state(GameState::DifficultySelect)),
             )
             .add_systems(
                 OnExit(GameState::DifficultySelect),
@@ -77,7 +85,9 @@ impl Plugin for GamePlugin {
                 .add_systems(OnEnter(GameState::Game), setup_map1)
                 .add_systems(OnEnter(MultiplayerState::Game), setup_map1)
                 .add_plugins(ball::BallPlugin)
-                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_plugins(npc::NPCPlugin {
+                    bully_mode: unsafe { BULLY_MODE },
+                })
                 .add_systems(
                     Update,
                     player_movement::move_player.run_if(in_state(GameState::Game)),
@@ -102,7 +112,9 @@ impl Plugin for GamePlugin {
             app.add_systems(OnEnter(MultiplayerState::Game), setup)
                 .add_systems(OnEnter(GameState::Game), setup)
                 .add_plugins(ball::BallPlugin)
-                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_plugins(npc::NPCPlugin {
+                    bully_mode: unsafe { BULLY_MODE },
+                })
                 .add_systems(
                     Update,
                     player_movement::move_player.run_if(in_state(GameState::Game)),
@@ -130,7 +142,9 @@ impl Plugin for GamePlugin {
         } else if unsafe { MAP == 4 } {
             app.add_systems(OnEnter(GameState::Game), setup)
                 .add_plugins(ball::BallPlugin)
-                .add_plugins(npc::NPCPlugin { bully_mode: false })
+                .add_plugins(npc::NPCPlugin {
+                    bully_mode: unsafe { BULLY_MODE },
+                })
                 .add_systems(OnEnter(GameState::Game), setup_map4)
                 .add_systems(OnEnter(MultiplayerState::Game), setup_map4)
                 .add_systems(
@@ -374,13 +388,29 @@ fn difficulty_select_setup(mut commands: Commands) {
                 }),
             );
             parent
+                .spawn(
+                    TextBundle::from_section(
+                        String::new().to_string(),
+                        TextStyle {
+                            font_size: 30.0,
+                            color: TEXT_COLOR,
+                            ..default()
+                        },
+                    )
+                    .with_style(Style {
+                        margin: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    }),
+                )
+                .insert(InputText(String::new()));
+            parent
                 .spawn((
                     ButtonBundle {
                         style: button_style.clone(),
                         background_color: NORMAL_BUTTON.into(),
                         ..default()
                     },
-                    SingleplayerButtonAction::Game,
+                    SingleplayerButtonAction::InputProcess,
                 ))
                 .with_children(|parent| {
                     parent.spawn(TextBundle::from_section("Run.", button_text_style.clone()));
@@ -400,26 +430,21 @@ fn difficulty_select_setup(mut commands: Commands) {
         });
 }
 
-fn difficulty_select(_kbd: Res<Input<KeyCode>>) {
-    loop {
-        let mut input = String::new();
-        print!("Pick a Difficulty from 1 - 5: ");
-        let _ = stdout().flush();
-        stdin()
-            .read_line(&mut input)
-            .expect("Did not enter a correct string");
-        let trimmed = input.trim();
-        match trimmed.parse::<i32>() {
-            Ok(i) => {
-                if i > 0 && i <= 5 {
-                    unsafe { DIFFICULTY = i * 20 };
-                    break;
-                } else {
-                    println!("Invalid difficulty, try again");
-                }
+fn difficulty_select(
+    mut char_input_events: EventReader<ReceivedCharacter>,
+    keyboard: Res<Input<KeyCode>>,
+    mut textbox: Query<(&mut Text, &mut InputText), With<InputText>>,
+) {
+    for (mut single_box, mut user_input) in textbox.iter_mut() {
+        for event in char_input_events.iter() {
+            if keyboard.pressed(KeyCode::Back) {
+                single_box.sections[0].value.pop();
+                user_input.0.pop();
+            } else {
+                single_box.sections[0].value.push(event.char);
+                user_input.0.push(event.char);
             }
-            Err(..) => println!("Invalid difficulty, try again"),
-        };
+        }
     }
 }
 
@@ -429,17 +454,47 @@ fn single_player_menu_action(
         (Changed<Interaction>, With<Button>),
     >,
     mut game_state: ResMut<NextState<GameState>>,
+    mut textbox: Query<&InputText, With<InputText>>,
 ) {
     for (interaction, multiplayer_button_action) in &interaction_query {
-        if *interaction == Interaction::Pressed {
-            match multiplayer_button_action {
-                SingleplayerButtonAction::Game => {
-                    game_state.set(GameState::Game);
-                }
-                SingleplayerButtonAction::Back => {
-                    game_state.set(GameState::Setup);
+        for (user_input) in textbox.iter_mut() {
+            if *interaction == Interaction::Pressed {
+                match multiplayer_button_action {
+                    SingleplayerButtonAction::Game => {
+                        game_state.set(GameState::Game);
+                    }
+                    SingleplayerButtonAction::InputProcess => {
+                        let temp: &String = &user_input.0;
+                        if process_difficulty_input(temp) {
+                            game_state.set(GameState::Game);
+                        }
+                    }
+                    SingleplayerButtonAction::Back => {
+                        game_state.set(GameState::Setup);
+                    }
                 }
             }
         }
     }
+}
+
+fn process_difficulty_input(input_text: &String) -> bool {
+    match input_text.parse::<i32>() {
+        Ok(i) => {
+            if i > 0 && i <= 5 {
+                unsafe { DIFFICULTY = i * 20 };
+                return true;
+            } else {
+                println!("BULLY MODE ACTIVATED!");
+                unsafe { DIFFICULTY = 100 };
+                unsafe { BULLY_MODE = true };
+                return true;
+            }
+        }
+        Err(..) => {
+            println!("Invalid Difficulty, Try Again");
+            return false;
+        }
+    };
+    // return false;
 }

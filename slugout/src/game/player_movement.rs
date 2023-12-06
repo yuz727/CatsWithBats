@@ -103,8 +103,11 @@ pub fn move_player(
             };
         }
         velocity.velocity = velocity.velocity * deltat;
-        velocity.velocity =
-            collision_check_map1(transform.translation, velocity.velocity, Vec3::splat(-1.));
+        velocity.velocity = collision_check_map1(
+            transform.translation,
+            velocity.velocity,
+            Vec3::splat(10000.),
+        );
     } else if unsafe { MAP == 2 || MAP == 3 } {
         velocity.velocity = if deltav.length() > 0. {
             (velocity.velocity + (deltav.normalize_or_zero() * acc)).clamp_length_max(PLAYER_SPEED)
