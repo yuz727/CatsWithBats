@@ -44,6 +44,7 @@ pub fn spawn_powerups(mut commands: Commands) {
             powerup: "bigbat".to_string(),
             active: true,
         });
+
     commands
         .spawn(SpriteBundle {
             sprite: Sprite {
@@ -218,7 +219,6 @@ pub fn apply_powerups(
                     }
                 }
 
-
                 if player.powerup == "invisibility".to_string() && powerup.active == true {
                     if player.powerup_timer == 10. {
                         
@@ -236,6 +236,20 @@ pub fn apply_powerups(
                         *bat_visibility = Visibility:: Visible;
                     }
                 }   
+
+                if player.powerup == "confusion".to_string() && powerup.active == true {
+                    if player.powerup_timer == 10. {
+                        player_velocity.confused = true;
+                        powerup.active == false;
+                    }
+                    player.powerup_timer = player.powerup_timer - time.delta_seconds();
+    
+                    if player.powerup_timer <= 0. {
+                        player.powerup = "none".to_string();
+                        player_velocity.confused = false;
+                        powerup.active == false;
+                    }
+                }
             }
         }
     }
