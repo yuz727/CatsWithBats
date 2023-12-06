@@ -831,112 +831,113 @@ pub fn bounce_m2(
                 Vec2::new(ball_radius * 2., ball_radius * 2.),
             );
 
-            if coral1 == Some(bevy::sprite::collide_aabb::Collision::Left) {
-            ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
-            ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-            new_translation_x = new_translation.x + coral_size.x / 2. + ball_radius;
+                if coral1 == Some(bevy::sprite::collide_aabb::Collision::Left) {
+                ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
+                ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
+                new_translation_x = Vec3::new(0., 180., 2.).x + coral_size.x / 2. + ball_radius;
             } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x - coral_size.x / 2. - ball_radius;
+                new_translation_x = Vec3::new(0., 180., 2.).x - coral_size.x / 2. - ball_radius;
             } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y - coral_size.y / 2. - ball_radius;
+                new_translation_y = Vec3::new(0., 180., 2.).y - coral_size.y / 2. - ball_radius;
             } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y + coral_size.y / 2. + ball_radius;
+                new_translation_y = Vec3::new(0., 180., 2.).y + coral_size.y / 2. + ball_radius;
             }
-    
+
+
             if coral2 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x + coral_size.x / 2. + ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                new_translation_x = Vec3::new(0., -180., 2.).x + coral_size.x / 2. + ball_radius;
+            } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Right) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x - coral_size.x / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                new_translation_x = Vec3::new(0., -180., 2.).x - coral_size.x / 2. - ball_radius;
+            } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Top) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y - coral_size.y / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                new_translation_y = Vec3::new(0., -180., 2.).y - coral_size.y / 2. - ball_radius;
+            } else if coral2 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y + coral_size.y / 2. + ball_radius;
+                new_translation_y = Vec3::new(0., -180., 2.).y + coral_size.y / 2. + ball_radius;
             }
-    
+
             if coral3 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x + coral_size.x / 2. + ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                new_translation_x = Vec3::new(-320., 180., 2.).x + coral_size.x / 2. + ball_radius;
+            } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Right) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x - coral_size.x / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                new_translation_x = Vec3::new(-320., 180., 2.).x - coral_size.x / 2. - ball_radius;
+            } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Top) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y - coral_size.y / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                new_translation_y = Vec3::new(-320., 180., 2.).y - coral_size.y / 2. - ball_radius;
+            } else if coral3 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y + coral_size.y / 2. + ball_radius;
+                new_translation_y = Vec3::new(-320., 180., 2.).y + coral_size.y / 2. + ball_radius;
             }
-    
+
             if coral4 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x + coral_size.x / 2. + ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                new_translation_x = Vec3::new(-320., -180., 2.).x + coral_size.x / 2. + ball_radius;
+            } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Right) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x - coral_size.x / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                new_translation_x = Vec3::new(-320., -180., 2.).x - coral_size.x / 2. - ball_radius;
+            } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Top) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y - coral_size.y / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                new_translation_y = Vec3::new(-320., -180., 2.).y - coral_size.y / 2. - ball_radius;
+            } else if coral4 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y + coral_size.y / 2. + ball_radius;
+                new_translation_y = Vec3::new(-320., -180., 2.).y + coral_size.y / 2. + ball_radius;
             }
-    
+
             if coral5 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x + coral_size.x / 2. + ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                new_translation_x = Vec3::new(320., 180., 2.).x + coral_size.x / 2. + ball_radius;
+            } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Right) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x - coral_size.x / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                new_translation_x = Vec3::new(320., 180., 2.).x - coral_size.x / 2. - ball_radius;
+            } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Top) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y - coral_size.y / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                new_translation_y = Vec3::new(320., 180., 2.).y - coral_size.y / 2. - ball_radius;
+            } else if coral5 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y + coral_size.y / 2. + ball_radius;
+                new_translation_y = Vec3::new(320., 180., 2.).y + coral_size.y / 2. + ball_radius;
             }
-    
+
             if coral6 == Some(bevy::sprite::collide_aabb::Collision::Left) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x + coral_size.x / 2. + ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Right) {
+                new_translation_x = Vec3::new(320., -180., 2.).x + coral_size.x / 2. + ball_radius;
+            } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Right) {
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
-                new_translation_x = new_translation.x - coral_size.x / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Top) {
+                new_translation_x = Vec3::new(320., -180., 2.).x - coral_size.x / 2. - ball_radius;
+            } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Top) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y - coral_size.y / 2. - ball_radius;
-            } else if coral1 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
+                new_translation_y = Vec3::new(320., -180., 2.).y - coral_size.y / 2. - ball_radius;
+            } else if coral6 == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
                 ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
                 ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
-                new_translation_y = new_translation.y + coral_size.y / 2. + ball_radius;
+                new_translation_y = Vec3::new(320., -180., 2.).y + coral_size.y / 2. + ball_radius;
             }
         }
 
