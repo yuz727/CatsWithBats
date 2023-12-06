@@ -588,7 +588,7 @@ pub fn ball_player_collisions(
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
                 transform.translation.x = transform.translation.x - 10.;
-                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0.{{
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0.{
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == player.health
                             && healthbar.player_type == "player".to_string()
@@ -684,7 +684,7 @@ pub fn ball_npc_collisions(
                 ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
                 ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
                 transform.translation.x = transform.translation.x - 10.;
-                if !input_mouse.pressed(MouseButton::Left) && npc.health_timer <= 0.{{
+                if !input_mouse.pressed(MouseButton::Left) && npc.health_timer <= 0.{
                     for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
                         if healthbar.lives == npc.health
                             && healthbar.player_type == "npc".to_string()
