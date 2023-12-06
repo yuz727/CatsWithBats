@@ -1,5 +1,6 @@
 use crate::game::components::{Aim, PlayerNumber};
 use crate::multiplayer::ClientListVector;
+use crate::multiplayer::server::OtherPlayer;
 use bevy::{prelude::*, text::FontAtlasSet};
 use crate::game::npc::*;
 
@@ -735,6 +736,55 @@ fn end_game (
         }
 
     }
+
+}
+
+pub fn end_game_mult (
+    mut commands: Commands,
+    player_query: Query<(&Player, Entity), (With<Player>)>,
+    other_players: Query<(&PlayerNumber, Entity), (With<OtherPlayer>, Without<Bat>)>,
+    mut game_state: ResMut<NextState<GameState>>,
+    mut multiplayer_state: ResMut<NextState<MultiplayerState>>,
+    asset_server: Res<AssetServer>,
+    mut client_list_vec: ResMut<ClientListVector>,
+    player_number: Res<crate::multiplayer::PlayerNumber>,
+){
+    
+    for player in client_list_vec.0.iter() { 
+
+        
+        if player.username.contains(player_number.0.to_string().as_str()) && player.player_info.as_ref().unwrap().health == 0 
+        {
+            //is me, despawn game over screen
+            for (_player, player_entity) in player_query.iter()
+            {
+                commands.entity(player_entity).despawn();
+            }
+            
+            game_state.set(GameState::GameOver);
+            multiplayer_state.set(MultiplayerState::Disabled);
+            commands
+            .spawn(SpriteBundle {
+                texture: asset_server.load("background1_small.png"),
+                transform: Transform::from_xyz(0., 0., 300.),
+                ..default()
+            })
+            .insert(Background);
+
+
+        }
+        else if player.player_info.as_ref().unwrap().health == 0 {
+            //is not me, despawn player
+            for (player_number, other_player_entity) in other_players.iter() {
+                if  player.username.contains(player_number.number.to_string().as_str()) {
+                    commands.entity(other_player_entity).despawn();
+                }
+            }
+        }
+        
+    }
+
+   
 
 }
 

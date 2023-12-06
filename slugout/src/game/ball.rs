@@ -88,7 +88,7 @@ impl Plugin for BallPlugin {
             );
         }
         app.add_systems(Update, bat_hitbox.run_if(in_state(GameState::Game)));
-        app.add_systems(Update, bat_hitbox.run_if(in_state(MultiplayerState::Game)));
+        app.add_systems(Update, bat_hitbox_mult.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(Update, aim_follows_cursor.run_if(in_state(GameState::Game)));
         app.add_systems(
             Update,
@@ -1859,6 +1859,20 @@ fn bat_hitbox(
         // Left button was pressed
         color_hitbox.color = Color::rgba(240., 140., 100., 0.2);
     } else if !input_mouse.pressed(MouseButton::Left) {
+        color_hitbox.color = Color::rgba(240., 140., 100., 0.);
+    }
+}
+
+fn bat_hitbox_mult(
+    mut hitbox: Query<&mut Sprite, (With<Hitbox>, With<Player>, Without<Bat>)>,
+    input_mouse: Res<Input<MouseButton>>,
+) {
+    let mut color_hitbox = hitbox.single_mut();
+
+    if input_mouse.pressed(MouseButton::Left) {
+        // Left button was pressed
+        color_hitbox.color = Color::rgba(240., 140., 100., 0.2);
+    } else {
         color_hitbox.color = Color::rgba(240., 140., 100., 0.);
     }
 }
