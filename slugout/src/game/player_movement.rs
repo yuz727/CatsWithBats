@@ -3,11 +3,11 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    multiplayer::{ClientSocket, SocketAddress, PlayerInfo},
+    multiplayer::{ClientSocket, SocketAddress, PlayerInfo, ClientPlayerInfo, ClientListVector},
     MAP,
 };
 
-use super::components::{Bat, Face, Player};
+use super::components::{Bat, Face, Player, PlayerNumber};
 
 use crate::game::npc::*;
 
@@ -606,3 +606,67 @@ pub fn collision_check_no_objects(
 
     return velocity;
 }
+
+pub fn update_other_players (
+    mut others: Query<
+        (&mut Transform, &mut PlayerVelocity, &PlayerNumber),
+        (With<crate::multiplayer::server::OtherPlayer>, Without<Face>, Without<Bat>)>,
+    mut others_bats: Query<
+    (&mut Transform, &PlayerNumber),
+    (With<crate::multiplayer::server::OtherPlayer>, Without<Face>, With<Bat>)>,
+    player_num: Res<crate::multiplayer::PlayerNumber>,
+    mut client_player_list: EventReader<ClientPlayerInfo>,
+    client_list: Res<ClientListVector>
+)
+{
+    for event in client_player_list.iter()
+    {
+        for client in event.data.iter()
+        {
+           
+            if player_num.0 == client.username[4..client.username.len()].parse::<u32>().unwrap()
+            {
+                continue;
+            }
+            for (mut transform, mut velocity, player_number)  in others.iter_mut()
+            {
+                
+                if player_number.number == client.username[4..client.username.len()].parse::<usize>().unwrap()
+                {
+                    transform.translation.x = client.player_info.as_ref().unwrap().position.0;
+                    transform.translation.y = client.player_info.as_ref().unwrap().position.1;
+                    *velocity = client.player_info.as_ref().unwrap().velocity.clone();
+                }
+            }   
+            for (mut transform, player_number) in others_bats.iter_mut()
+            {
+                
+                if player_number.number == client.username[4..client.username.len()].parse::<usize>().unwrap()
+                {
+                    if (client.bat_info.as_ref().unwrap().is_left)
+                    {
+                    transform.translation.x = client.player_info.as_ref().unwrap().position.0 - 5.;
+                    transform.scale.x = transform.scale.x.abs();
+                    }
+                    else 
+                    {
+                        transform.translation.x = client.player_info.as_ref().unwrap().position.0 + 8.;
+                        transform.scale.x = -transform.scale.x.abs();
+                    }
+
+                    transform.translation.y = client.player_info.as_ref().unwrap().position.1; 
+
+                    if (client.bat_info.as_ref().unwrap().is_swinging)
+                    {
+                        transform.scale.y = -0.175;
+                    }
+                    else
+                    {
+                        transform.scale.y = 0.175;
+                    }
+                }
+            }
+        }
+    }
+}
+

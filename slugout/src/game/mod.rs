@@ -107,7 +107,8 @@ impl Plugin for GamePlugin {
                     Update,
                     player_movement::move_player_mult.run_if(in_state(MultiplayerState::Game)),
                 )
-                .add_systems(Update, end_game.run_if(in_state(GameState::Game)));
+                .add_systems(Update, end_game.run_if(in_state(GameState::Game)))
+                .add_systems(Update, player_movement::update_other_players.after(setup_mult).run_if(in_state(MultiplayerState::Game)));
         } else if unsafe { MAP == 2 || MAP == 3 } {
             app.add_systems(OnEnter(MultiplayerState::Game), setup)
                 .add_systems(OnEnter(GameState::Game), setup)
