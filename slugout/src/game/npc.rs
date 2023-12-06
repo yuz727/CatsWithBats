@@ -197,10 +197,10 @@ pub fn load_npc_map1(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(SpriteBundle {
             texture: asset_server.load("Player4.png"),
-            transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
+            transform: Transform::with_scale(Transform::from_xyz(320., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPCTimer(Timer::from_seconds(0.2, TimerMode::Repeating)))
         .insert(NPC {
             powerup: "none".to_string(),
             powerup_timer: 0.,
@@ -246,7 +246,7 @@ pub fn load_npc_map2(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPCTimer(Timer::from_seconds(0.2, TimerMode::Repeating)))
         .insert(NPC {
             powerup: "none".to_string(),
             powerup_timer: 0.,
@@ -293,7 +293,7 @@ pub fn load_npc_map3(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPCTimer(Timer::from_seconds(0.2, TimerMode::Repeating)))
         .insert(NPC {
             powerup: "none".to_string(),
             powerup_timer: 0.,
@@ -338,7 +338,7 @@ pub fn load_npc_map4(mut commands: Commands, asset_server: Res<AssetServer>) {
             transform: Transform::with_scale(Transform::from_xyz(-320., 0., 3.), Vec3::splat(0.13)),
             ..default()
         })
-        .insert(NPCTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert(NPCTimer(Timer::from_seconds(0.2, TimerMode::Repeating)))
         .insert(NPC {
             powerup: "none".to_string(),
             powerup_timer: 0.,

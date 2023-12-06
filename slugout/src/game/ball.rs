@@ -26,7 +26,7 @@ const BALL_SIZE: f32 = 10.;
 const BASE_FRICTION: f32 = 0.4;
 const G: f32 = 9.81;
 const MIN_BALL_VELOCITY: f32 = 30.;
-const PLAYER_SIZE: f32 = 30.;
+const PLAYER_SIZE: f32 = 15.;
 
 pub struct BallPlugin;
 
@@ -903,7 +903,7 @@ pub fn ball_npc_collisions(
         for (mut npc_transform, mut npc) in npc_query.iter_mut() {
             let npc_collision = bevy::sprite::collide_aabb::collide(
                 npc_transform.translation,
-                Vec2::splat(PLAYER_SIZE),
+                Vec2::splat(15.),
                 transform.translation,
                 Vec2::new(ball_radius * 2., ball_radius * 2.),
             );
