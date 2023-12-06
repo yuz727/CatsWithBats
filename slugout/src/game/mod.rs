@@ -1,4 +1,5 @@
-use crate::game::components::Aim;
+use crate::game::components::{Aim, PlayerNumber};
+use crate::multiplayer::ClientListVector;
 use bevy::{prelude::*, text::FontAtlasSet};
 use crate::game::npc::*;
 
@@ -11,14 +12,14 @@ use std::string;
 
 use self::components::{Bat, Colliding, Health, Object, Player, Rug, Background};
 
-mod ball;
+pub mod ball;
 pub mod components;
 mod npc;
 mod npc_bully;
 mod npc_events;
 // mod npc_tree;
 mod pathfinding;
-mod player_movement;
+pub mod player_movement;
 mod powerups;
 
 
@@ -85,7 +86,7 @@ impl Plugin for GamePlugin {
             )
             .add_plugins(powerups::PowerUpPlugin);
         if unsafe { MAP == 1 } {
-            app.add_systems(OnEnter(MultiplayerState::Game), setup)
+            app.add_systems(OnEnter(MultiplayerState::Game), setup_mult)
                 .add_systems(OnEnter(GameState::Game), setup)
                 .add_systems(OnEnter(GameState::Game), setup_map1)
                 .add_systems(OnEnter(MultiplayerState::Game), setup_map1)
@@ -209,6 +210,207 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(Health);*/
+}
+
+pub fn setup_mult(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut client_list: ResMut<ClientListVector>,
+    player_number: Res<crate::multiplayer::PlayerNumber>,
+) {
+
+    println!("is this function running ");
+    // Load Player
+    for client in client_list.0.iter_mut() {
+        let player_x = client.player_info.as_mut().unwrap().position.0;
+        let player_y = client.player_info.as_mut().unwrap().position.1;
+        if player_number.0
+            == client.username[4..client.username.len()]
+                .parse::<u32>()
+                .unwrap()
+        {
+            println!("spawn 1");
+            commands
+                .spawn(SpriteBundle {
+                    texture: asset_server.load(if client.username.contains("1") {
+                        "Player.png"
+                    } else if client.username.contains("2") {
+                        "Player2.png"
+                    } else if client.username.contains("3") {
+                        "Player3.png"
+                    } else {
+                        "Player4.png"
+                    }),
+                    transform: Transform::with_scale(
+                        Transform::from_xyz(player_x, player_y, 10.),
+                        Vec3::splat(0.13),
+                    ),
+                    ..default()
+                })
+                .insert(Player {
+                    powerup: "none".to_string(),
+                    powerup_timer: 0.,
+                    health: 3,
+                    health_timer: 0.,
+                })
+                .insert(player_movement::PlayerVelocity::new())
+                .insert(Colliding::new())
+                .insert(PlayerNumber {
+                    number: client.username[4..client.username.len()]
+                        .parse::<usize>()
+                        .unwrap(),
+                });
+
+            // commands
+            //     .spawn(SpriteBundle {
+            //         texture: asset_server.load("Face.png"),
+            //         transform: Transform::with_scale(Transform::from_xyz(player_x, player_y, 20.), Vec3::splat(0.13)),
+            //         ..default()
+            //     })
+            //     .insert(Face)
+            //     .insert(Player{
+            //         powerup: "none".to_string(),
+            //         powerup_timer: 0.,
+            // });
+
+            commands
+                .spawn(SpriteBundle {
+                    texture: asset_server.load("Bat.png"),
+                    transform: Transform::with_scale(
+                        Transform::from_xyz(player_x - 5., player_y, 20.),
+                        Vec3::new(0.175, 0.175, 0.),
+                    ),
+                    ..default()
+                })
+                .insert(Bat)
+                .insert(Player {
+                    powerup: "none".to_string(),
+                    powerup_timer: 0.,
+                    health: 3, 
+                    health_timer: 0.,
+                })
+                .insert(PlayerNumber {
+                    number: client.username[4..client.username.len()]
+                        .parse::<usize>()
+                        .unwrap(),
+                });
+        } else {
+            println!("spawn 2");
+            commands
+                .spawn(SpriteBundle {
+                    texture: asset_server.load(if client.username.contains("1") {
+                        "Player.png"
+                    } else if client.username.contains("2") {
+                        "Player2.png"
+                    } else if client.username.contains("3") {
+                        "Player3.png"
+                    } else {
+                        "Player4.png"
+                    }),
+                    transform: Transform::with_scale(
+                        Transform::from_xyz(player_x, player_y, 10.),
+                        Vec3::splat(0.13),
+                    ),
+                    ..default()
+                })
+                .insert(crate::multiplayer::server::OtherPlayer)
+                .insert(player_movement::PlayerVelocity::new())
+                .insert(Colliding::new())
+                .insert(PlayerNumber {
+                    number: client.username[4..client.username.len()]
+                        .parse::<usize>()
+                        .unwrap(),
+                });
+            // commands
+            // .spawn(SpriteBundle {
+            //     texture: asset_server.load("Face.png"),
+            //     transform: Transform::with_scale(Transform::from_xyz(player_x, player_y, 20.), Vec3::splat(0.13)),
+            //     ..default()
+            // })
+            // .insert(Face)
+            // .insert(crate::multiplayer::server::OtherPlayer);
+
+            commands
+                .spawn(SpriteBundle {
+                    texture: asset_server.load("Bat.png"),
+                    transform: Transform::with_scale(
+                        Transform::from_xyz(player_x - 5., player_y, 20.),
+                        Vec3::new(0.175, 0.175, 0.),
+                    ),
+                    ..default()
+                })
+                .insert(Bat)
+                
+                .insert(crate::multiplayer::server::OtherPlayer)
+                .insert(PlayerNumber {
+                    number: client.username[4..client.username.len()]
+                        .parse::<usize>()
+                        .unwrap(),
+                });
+        }
+    }
+
+    // Load Objects
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("SideTable.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(120., 170., 2.),
+                Vec3::splat(0.18),
+            ),
+            ..default()
+        })
+        .insert(Object);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("TVStand.png"),
+            transform: Transform::with_rotation(
+                Transform::with_scale(Transform::from_xyz(0., -250., 2.), Vec3::splat(0.18)),
+                Quat::from_rotation_z(4.72),
+            ),
+            ..default()
+        })
+        .insert(Object);
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Recliner.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(-60., 210., 2.),
+                Vec3::splat(0.18),
+            ),
+            ..default()
+        })
+        .insert(Object);
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Rug.png"),
+            transform: Transform::with_rotation(
+                Transform::with_scale(Transform::from_xyz(0., 0., 1.), Vec3::splat(0.6)),
+                Quat::from_rotation_z(1.56),
+            ),
+            ..default()
+        })
+        .insert(Rug { friction: 1.4 });
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("newAim.png"),
+            transform: Transform::with_scale(Transform::from_xyz(-2., 0., 4.), Vec3::splat(0.13)),
+            ..default()
+        })
+        .insert(Aim);
+    commands.insert_resource(Events::<CursorMoved>::default());
+    // commands
+    //     .spawn(SpriteBundle {
+    //         texture: asset_server.load("FullHealth.png"),
+    //         transform: Transform::with_scale(
+    //             Transform::from_xyz(525., 280., 2.),
+    //             Vec3::splat(0.11),
+    //         ),
+    //         ..default()
+    //     })
+    //     .insert(Health);
 }
 
 fn setup_map1(mut commands: Commands, asset_server: Res<AssetServer>) {

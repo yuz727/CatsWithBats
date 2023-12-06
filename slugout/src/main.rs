@@ -23,9 +23,10 @@ pub enum GameState {
 }
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-enum MultiplayerState {
+pub enum MultiplayerState {
     Main,
     Lobby,
+    StartGame,
     Game,
     #[default]
     Disabled,

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::{Serialize, Deserialize};
 
 #[derive(Component)]
 pub struct Player{
@@ -34,7 +35,7 @@ pub struct Ball {
     pub density: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Serialize, Deserialize)]
 pub struct BallVelocity {
     pub velocity: Vec3,
 }
@@ -77,3 +78,8 @@ pub struct Health{
      pub powerup: String,
      pub active: bool,
  }
+
+ #[derive(Component)]
+pub struct PlayerNumber {
+    pub number: usize
+}

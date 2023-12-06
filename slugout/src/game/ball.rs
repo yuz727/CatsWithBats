@@ -2,7 +2,9 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::{GameState, MultiplayerState};
+use crate::multiplayer::{BallInfo, BallListVector, ClientListVector, PlayerNumber, ServerSocket, ClientBallInfo, PlayerInfo};
+use crate::multiplayer::server::OtherPlayer;
+use crate::{GameState, MultiplayerState, NetworkingState};
 //use bevy::window::CursorMoved;
 
 use super::components::Aim;
@@ -16,6 +18,7 @@ use super::components::Rug;
 use crate::game::components::HealthHitbox;
 use crate::game::components::Hitbox;
 use crate::game::npc::NPC;
+use serde::{Serialize, Deserialize};
 
 use crate::MAP;
 
@@ -30,10 +33,30 @@ const PLAYER_SIZE: f32 = 15.;
 
 pub struct BallPlugin;
 
+#[derive(Component, Serialize, Deserialize, Clone, PartialEq)]
+pub struct BallNumber
+{
+    pub number: u32
+}
+
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum BallState
+{
+    EndSetup,
+    Game,
+    #[default]
+    Disabled,
+}
+
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
+        app.add_state::<BallState>();
         app.add_systems(OnEnter(GameState::Game), setup);
         app.add_systems(OnEnter(MultiplayerState::Game), setup);
+        app.add_systems(OnEnter(MultiplayerState::Game), setup_mult.after(super::setup_mult));
+        app.add_systems(Update, your_ball_player_collisions.after(super::setup_mult).after(setup_mult).run_if(in_state(MultiplayerState::Game)));
+        app.add_systems(OnEnter(BallState::EndSetup), insert_balls_to_vec.after(setup_mult).
+            run_if(in_state(NetworkingState::Host)));
         if unsafe { MAP } == 1 {
             app.add_systems(Update, bounce);
         } else if unsafe { MAP } == 2 {
@@ -75,6 +98,7 @@ impl Plugin for BallPlugin {
             Update,
             ball_player_collisions.run_if(in_state(GameState::Game)),
         );
+        app.add_systems(Update, update_balls.run_if(in_state(MultiplayerState::Game)));
         app.add_systems(
             Update,
             aim_follows_cursor.run_if(in_state(MultiplayerState::Game)),
@@ -658,10 +682,355 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
+fn setup_mult(
+    mut commands: Commands, 
+    mut ball_list: ResMut<BallListVector>,
+    asset_server: Res<AssetServer>, 
+    client_list: Res<ClientListVector>,
+    player_num: Res<PlayerNumber>,
+    mut ball_state: ResMut<NextState<BallState>>,) {
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(0., 0., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 2.5,
+            elasticity: 0.95,
+            prev_pos: Vec3::splat(0.),
+            density: 2.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(300.0, 300.0, 2.0),
+        })
+        .insert(Colliding::new())
+        .insert(BallNumber{
+            number: 1,
+        });
+    ball_list.0.push(BallInfo{
+        position: (0., 0.),
+        velocity: BallVelocity {
+            velocity: Vec3::new(300.0, 300.0, 2.0),
+        },
+        ball_number: BallNumber{
+            number: 1,
+        }
+    });
+
+    // 2ND ball
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(200., 5., 2.).with_scale(Vec3::new(0.028, 0.028, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 2.8,
+            elasticity: 1.,
+            prev_pos: Vec3::splat(0.),
+            density: 4.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(300.0, 100.0, 2.0),
+        })
+        .insert(Colliding::new())
+        .insert(BallNumber{
+            number: 2,
+        });
+
+        ball_list.0.push(BallInfo{
+            position: (250., 5.),
+            velocity: BallVelocity {
+                velocity: Vec3::new(300.0, 100.0, 2.0),
+            },
+            ball_number: BallNumber { number: 2 }
+        });
+
+    // //3RD ball
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(-350., -100., 2.)
+                .with_scale(Vec3::new(0.031, 0.031, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 3.1,
+            elasticity: 0.975,
+            prev_pos: Vec3::splat(0.),
+            density: 6.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(-500., 3., 2.),
+        })
+        .insert(Colliding::new())
+        .insert(BallNumber{
+            number: 3,
+        });
+        ball_list.0.push(BallInfo{
+            position: (-350., -100.),
+            velocity: BallVelocity {
+                velocity: Vec3::new(-500.0, 3.0, 2.0),
+            },
+            ball_number: BallNumber { number: 3 }
+        });
+
+  
+    /*// added for debugging
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(7., 400., 2.).with_scale(Vec3::new(0.025, 0.025, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 2.5,
+            elasticity: 0.95,
+            prev_pos: Vec3::splat(0.),
+            density: 7.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(67.0, 282.0, 2.0),
+        })
+        .insert(Colliding::new());
+    // 2ND ball
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(360., 52., 2.).with_scale(Vec3::new(0.028, 0.028, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 2.8,
+            elasticity: 1.,
+            prev_pos: Vec3::splat(0.),
+            density: 9.,
+        })
+        .insert(super::components::BallVelocity {
+            velocity: Vec3::new(300.0, 100.0, 2.0),
+        })
+        .insert(Colliding::new());
+    //3RD ball
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(-400., 0., 2.)
+                .with_scale(Vec3::new(0.031, 0.031, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 3.1,
+            elasticity: 0.975,
+            prev_pos: Vec3::splat(0.),
+            density: 2.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(-500., 3., 2.),
+        })
+        .insert(Colliding::new());
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(82., 26., 2.).with_scale(Vec3::new(0.034, 0.034, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 3.4,
+            elasticity: 0.9,
+            prev_pos: Vec3::splat(0.),
+            density: 1.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(70.0, 300.0, 2.0),
+        })
+        .insert(Colliding::new());
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(38., 102., 2.).with_scale(Vec3::new(0.038, 0.038, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 3.8,
+            elasticity: 0.875,
+            prev_pos: Vec3::splat(0.),
+            density: 4.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(300.0, 300.0, 2.0),
+        })
+        .insert(Colliding::new());
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("yarnball.png"),
+            transform: Transform::from_xyz(500., 500., 2.).with_scale(Vec3::new(0.042, 0.042, 0.)),
+            ..Default::default()
+        })
+        .insert(Ball {
+            radius: 4.2,
+            elasticity: 0.85,
+            prev_pos: Vec3::splat(0.),
+            density: 6.,
+        })
+        .insert(BallVelocity {
+            velocity: Vec3::new(300.0, 300.0, 2.0),
+        })
+        .insert(Colliding::new()); */
+
+    //Spawn bat hitbox for bat
+    for client in client_list.0.iter()
+    {
+        if player_num.0 == client.username[4..client.username.len()].parse::<u32>().unwrap()
+        {
+            commands
+            .spawn(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgba(240., 140., 100., 0.),
+                    custom_size: Some(Vec2::new(45., 75.)),
+                    ..default()
+                },
+                transform: Transform::from_xyz(client.player_info.as_ref().unwrap().position.0, client.player_info.as_ref().unwrap().position.0, 2.),
+                ..Default::default()
+            })
+            .insert(Hitbox {
+                size: Vec2::new(45., 75.), //30 52
+            })
+            .insert(Player
+            {
+                powerup: String::new(),
+                powerup_timer: 0.,
+                health: 3,
+                health_timer: 0.,
+            });
+        }
+        else
+        {
+            commands
+                .spawn(SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::rgba(240., 140., 100., 0.),
+                        custom_size: Some(Vec2::new(45., 75.)),
+                        ..default()
+                    },
+                    transform: Transform::from_xyz(client.player_info.as_ref().unwrap().position.0, client.player_info.as_ref().unwrap().position.0, 2.),
+                    ..Default::default()
+                })
+                .insert(Hitbox {
+                    size: Vec2::new(45., 75.), //30 52
+                })
+                .insert(OtherPlayer);
+        }
+    }
+    
+
+    //Spawn health hitbox for player
+    commands
+        .spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgba(240., 140., 100., 0.2),
+                custom_size: Some(Vec2::new(30., 35.)),
+                ..default()
+            },
+            transform: Transform::from_xyz(0., 0., 2.),
+            visibility: Visibility::Hidden,
+            ..Default::default()
+        })
+        .insert(HealthHitbox {
+            size: Vec2::new(30., 35.), //30 52
+        });
+
+    // Player 1 health
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("Dead.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 2.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health
+        {
+            lives: 0,
+            player_type: String::new(),
+        });
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("1Health.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 3.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health
+            {
+                lives: 1,
+                player_type: String::new(),
+            });
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("2Health.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 4.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health
+            {
+                lives: 2,
+                player_type: String::new(),
+            });
+
+    commands
+        .spawn(SpriteBundle {
+            texture: asset_server.load("FullHealth.png"),
+            transform: Transform::with_scale(
+                Transform::from_xyz(525., 280., 5.),
+                Vec3::splat(0.11),
+            ),
+            ..default()
+        })
+        .insert(Health
+            {
+                lives: 3,
+                player_type: String::new(),
+            });
+    ball_state.set(BallState::EndSetup);
+}
+
+fn insert_balls_to_vec(
+    mut server_socket: ResMut<ServerSocket>,
+    mut query: Query<
+    (&mut Transform, &mut BallVelocity, &mut BallNumber)>,
+    mut ball_state: ResMut<NextState<BallState>>,
+)
+{
+    println!("putting balls in the vec");
+    for (mut transform, mut velocity,  mut number) in query.iter_mut()
+    {
+        let ball = BallInfo{
+            position: (transform.translation.x, transform.translation.y),
+            velocity: velocity.clone(),
+            ball_number: number.clone()
+        };
+        server_socket.yarn_balls.push(ball);
+    }
+        ball_state.set(BallState::Game);
+    
+}
+
 //bounce the ball
 pub fn bounce(
+    mut client_info: ResMut<crate::multiplayer::ClientSocket>,
+    ball_list: Res<BallListVector>,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
+    mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball, &BallNumber), (With<Ball>, Without<Player>)>,
     //health hitbox
     mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Ball>)>,
     mut healthbar_query: Query<
@@ -670,10 +1039,10 @@ pub fn bounce(
     >,
     input_mouse: Res<Input<MouseButton>>,
 ) {
-    for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
+    for (mut transform, mut ball_velocity, mut ball, ball_number) in query.iter_mut() {
         //ball radius on screen
         let ball_radius = ball.radius * 3.;
-
+        let mut collided_with = false; 
         // Find the new translation for the x and y for the ball
         let mut new_translation_x = (transform.translation.x
             + (ball_velocity.velocity.x * time.delta_seconds()))
@@ -722,54 +1091,66 @@ pub fn bounce(
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
             new_translation_x = recliner_translation.x - recliner_size.x / 2. - ball_radius;
+            collided_with = true;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.8 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.8 * ball.elasticity;
             new_translation_x = recliner_translation.x + recliner_size.x / 2. + ball_radius;
+            collided_with = true;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
             new_translation_y = recliner_translation.y - recliner_size.y / 2. - ball_radius;
+            collided_with = true;
         } else if recliner == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.8 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.8 * ball.elasticity;
             new_translation_y = recliner_translation.y + recliner_size.y / 2. + ball_radius;
+            collided_with = true;
         }
 
         if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.9 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.9 * ball.elasticity;
             new_translation_x = tv_translation.x + tv_size.x / 2. + ball_radius;
+            collided_with = true;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.9 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.9 * ball.elasticity;
             new_translation_x = tv_translation.x - tv_size.x / 2. - ball_radius;
+            collided_with = true;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.9 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.9 * ball.elasticity;
             new_translation_y = tv_translation.y - tv_size.y / 2. - ball_radius;
+            collided_with = true;
         } else if tv_stand == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.9 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.9 * ball.elasticity;
             new_translation_y = tv_translation.y + tv_size.y / 2. + ball_radius;
+            collided_with = true;
         }
 
         if side_table == Some(bevy::sprite::collide_aabb::Collision::Left) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.85 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.85 * ball.elasticity;
             new_translation_x = table_translation.x + table_size.x / 2. + ball_radius;
+            collided_with = true;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Right) {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * 0.85 * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * 0.85 * ball.elasticity;
             new_translation_x = table_translation.x - table_size.x / 2. - ball_radius;
+            collided_with = true;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Top) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.85 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y - table_size.y / 2. - ball_radius;
+            collided_with = true;
         } else if side_table == Some(bevy::sprite::collide_aabb::Collision::Bottom) {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * 0.85 * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * 0.85 * ball.elasticity;
             new_translation_y = table_translation.y + table_size.y / 2. + ball_radius;
+            collided_with = true;
         }
 
         ball.prev_pos = transform.translation;
@@ -782,10 +1163,201 @@ pub fn bounce(
         if transform.translation.x.abs() == WIN_W / 2.0 - ball_radius {
             ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
             ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
+            collided_with = true;
         }
         if transform.translation.y.abs() == WIN_H / 2.0 - ball_radius {
             ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
             ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
+            collided_with = true;
+        }
+        if collided_with {
+            for ball_check in ball_list.0.iter()
+            {
+                if (transform.translation.x !=  ball_check.position.0 ||
+                    transform.translation.y != ball_check.position.1) &&
+                    ball_number.number == ball_check.ball_number.number
+                {
+                    if client_info.socket.is_none() {
+                        return;
+                    }
+                    let ball_info = BallInfo{
+                        position: (transform.translation.x, transform.translation.y),
+                        velocity: ball_velocity.clone(),
+                        ball_number: ball_number.clone(),
+                    };
+                    // println!("sending ball info");
+                    let socket = client_info.socket.as_mut().unwrap();
+                    socket.set_nonblocking(true).expect("could not set non-blocking");
+                    
+                        let message = serde_json::to_string(&ball_info).expect("Failed to serialize");
+            
+                        let id = "BALFC";
+                        let big_message = id.to_string()  + &message;
+                        // println!("Bounce Sending my new ball data to the server, it is: {:?}", message);
+                        // println!("what is server address string {:?}", server_address_str);
+                        match socket.send(big_message.as_bytes()) {
+                            Ok(_) => {},
+                            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                                // Ignore WouldBlock errors
+                            },
+                            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                                println!("Socket is already connected");
+                            },
+                            Err(e) => {
+                                println!("failed to send server updated position");
+                                println!("Failed to send data: {:?}", e);
+                            }
+                        }
+                } 
+            }
+        }
+       
+    }
+}
+
+
+pub fn your_ball_player_collisions (
+    mut query: Query<(&mut Transform, &mut BallVelocity, &mut Ball), (With<Ball>, Without<Player>)>,
+    mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Bat>, Without<Ball>)>,
+    mut healthbar_query: Query<
+        (&mut Visibility, &mut Health),
+        (With<Health>, Without<Ball>, Without<Player>),
+    >,
+    input_mouse: Res<Input<MouseButton>>,
+    player_num: Res<PlayerNumber>,
+    time: Res<Time>,
+    mut client_info: ResMut<crate::multiplayer::ClientSocket>
+    , client_list: Res<ClientListVector>,
+) {
+    for (mut transform, mut ball_velocity, mut ball) in query.iter_mut() {
+        let ball_radius = ball.radius * 3.;
+
+        for (mut player_transform, mut player) in player_query.iter_mut() {
+            let player_collision = bevy::sprite::collide_aabb::collide(
+                player_transform.translation,
+                Vec2::splat(PLAYER_SIZE),
+                transform.translation,
+                Vec2::new(ball_radius * 2., ball_radius * 2.),
+            );
+            let mut did_lose_health = false; 
+            if player_collision == Some(bevy::sprite::collide_aabb::Collision::Right)
+                && player.health > 0
+            {
+                ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
+                ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
+                transform.translation.x = transform.translation.x - 10.;
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
+                        if healthbar.lives == player.health
+                            && healthbar.player_type == "player".to_string()
+                        {
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                    player.health_timer = 10.;
+                    did_lose_health = true; 
+                }
+            } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Left)
+                && player.health > 0
+            {
+                ball_velocity.velocity.x = -ball_velocity.velocity.x * ball.elasticity;
+                ball_velocity.velocity.y = ball_velocity.velocity.y * ball.elasticity;
+                transform.translation.x = transform.translation.x + 10.;
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
+                        if healthbar.lives == player.health
+                            && healthbar.player_type == "player".to_string()
+                        {
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                    player.health_timer = 10.;
+                    did_lose_health = true; 
+                }
+            } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Top)
+                && player.health > 0
+            {
+                ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
+                ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
+                transform.translation.y = transform.translation.y - 10.;
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
+                        if healthbar.lives == player.health
+                            && healthbar.player_type == "player".to_string()
+                        {
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                    player.health_timer = 10.;
+                    did_lose_health = true; 
+                }
+            } else if player_collision == Some(bevy::sprite::collide_aabb::Collision::Bottom)
+                && player.health > 0
+            {
+                ball_velocity.velocity.y = -ball_velocity.velocity.y * ball.elasticity;
+                ball_velocity.velocity.x = ball_velocity.velocity.x * ball.elasticity;
+                transform.translation.y = transform.translation.y + 10.;
+                if !input_mouse.pressed(MouseButton::Left) && player.health_timer <= 0. {
+                    for (mut health_visibility, mut healthbar) in healthbar_query.iter_mut() {
+                        if healthbar.lives == player.health
+                            && healthbar.player_type == "player".to_string()
+                        {
+                            *health_visibility = Visibility::Hidden;
+                        }
+                    }
+                    player.health = player.health - 1;
+                    player.health_timer = 10.;
+                    did_lose_health = true; 
+                }
+            }
+            if player.health_timer > 0. {
+                player.health_timer = player.health_timer - time.delta_seconds();
+            }
+            // Now send this information back to the server 
+            if did_lose_health { 
+                if client_info.socket.is_none() {
+                    return;
+                }
+        
+                info!("Sending player info");
+                let socket = client_info.socket.as_mut().unwrap();
+                socket.set_nonblocking(true).expect("could not set non-blocking");
+     
+                    // println!("Old client position is {:?}", old_position);
+                
+                for client in client_list.0.iter()
+                {
+                    if player_num.0 == client.username[4..client.username.len()].parse::<u32>().unwrap()
+                    {
+                        let new_info = Some(PlayerInfo{
+                            position: client.player_info.as_ref().unwrap().position.clone(),
+                            velocity: client.player_info.as_ref().unwrap().velocity.clone(),
+                            health: player.health,
+                        });
+                        let identifier = "PHIFC";
+                        let message = serde_json::to_string(&new_info).expect("Failed to serialize");
+                        let big_message = identifier.to_string() + &message;
+                        match socket.send(big_message.as_bytes()) {
+                            Ok(_) => {},
+                            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                                // Ignore WouldBlock errors
+                            },
+                            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                                println!("Socket is already connected");
+                            },
+                            Err(e) => {
+                                println!("failed to send server updated position");
+                                println!("Failed to send data: {:?}", e);
+                            }
+                        }
+        
+                    }
+                }
+                    
+            }
         }
     }
 }
@@ -1610,6 +2182,32 @@ fn swing(
         }
     }
 }
+
+fn update_balls(
+    mut ball_list: EventReader<ClientBallInfo>,
+    mut ball_query: Query<
+    (&mut Transform, &mut BallVelocity, &BallNumber),
+    With<Ball>>,
+)
+{
+    for event in ball_list.iter()
+    {
+        for (mut transform, mut velocity, ball_num) in ball_query.iter_mut()
+        {
+            // println!("updating ball {}", ball_num.number);
+            for ball in event.data.iter()
+            {
+                if ball.ball_number.number == ball_num.number
+                {
+                    transform.translation.x = ball.position.0;
+                    transform.translation.y = ball.position.1;
+                    *velocity = ball.velocity.clone();
+                }
+            }
+        }
+    }
+}
+
 
 fn swing_m4(
     //mut commands: Commands,

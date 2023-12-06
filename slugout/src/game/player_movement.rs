@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    multiplayer::{ClientSocket, SocketAddress},
+    multiplayer::{ClientSocket, SocketAddress, PlayerInfo},
     MAP,
 };
 
@@ -19,14 +19,8 @@ const RUG_SPEED: f32 = 200.;
 const ACCEL_RATE: f32 = 58000.;
 const NPC_SIZE: f32 = 30.;
 
-#[derive(Serialize, Deserialize)]
-struct PlayerInfo {
-    position: (f32, f32),
-    health: u32,
-    // Add other relevant fields here
-}
 
-#[derive(Component)]
+#[derive(Component, Clone, Serialize, Deserialize)]
 pub struct PlayerVelocity {
     pub velocity: Vec2,
     pub prev_position: (f32, f32),
@@ -192,14 +186,13 @@ pub fn move_player_mult(
         (&mut Transform, &mut PlayerVelocity),
         (With<Player>, Without<Face>, Without<Bat>),
     >,
-    //    mut face: Query<&mut Transform, (With<Face>, Without<Player>, Without<Bat>)>,
-    mut client_socket: ResMut<ClientSocket>,
-    socket_address: Res<SocketAddress>,
+    mut bat: Query<&mut Transform, (With<Bat>, With<Player>, Without<Face>)>,
+    mut client_info: ResMut<crate::multiplayer::ClientSocket>,
     time: Res<Time>,
 ) {
     let (mut transform, mut velocity) = player.single_mut();
-    //  let mut face_transform = face.single_mut();
-    //let mut bat_transform = bat.single_mut();
+    // let mut face_transform = face.single_mut();
+    let mut bat_transform = bat.single_mut();
 
     /////////////////////////////////////////////////////////////// with objects
     let recliner_size = Vec2::new(109., 184.);
@@ -315,6 +308,7 @@ pub fn move_player_mult(
         -(1280. / 2.) + PLAYER_SIZE / 2.,
         1280. / 2. - PLAYER_SIZE / 2.,
     );
+
     transform.translation.y = (transform.translation.y + velocity.velocity.y).clamp(
         -(720. / 2.) + PLAYER_SIZE / 2.,
         720. / 2. - PLAYER_SIZE / 2.,
@@ -322,50 +316,52 @@ pub fn move_player_mult(
 
     // face_transform.translation.x = transform.translation.x;
     // face_transform.translation.y = transform.translation.y;
-    //bat_transform.translation.x = transform.translation.x - 5.;
-    //bat_transform.translation.y = transform.translation.y;
-    // Check if the position has changed before sending a message
     if transform.translation.x != velocity.prev_position.0
         || transform.translation.y != velocity.prev_position.1
     {
-        // Check if the client socket is not yet initialized
-        if client_socket.0.is_none() {
-            // If not initialized, return early from the function
+            //send updated info
+            // make sure this struct has been instantiated
+        if client_info.socket.is_none() {
             return;
         }
-        // Unwrap to get a mutable reference to the client socket
-        let socket = client_socket.0.as_mut().unwrap();
-        // Set the socket to non-blocking mode
-        socket
-            .set_nonblocking(true)
-            .expect("Cannot set nonblocking");
-        // Create player information
-        let player_info = PlayerInfo {
-            position: (transform.translation.x, transform.translation.y),
-            health: 100,
-            // Other fields go here
-        };
-        // Serialize the player information into a JSON-formatted string
-        let message = serde_json::to_string(&player_info).expect("Failed to serialize");
-        // Get the server address from the socket_address resource
-        let server_address_str = &socket_address.0;
-        // Send the serialized player information to the server
-        socket
-            .send_to(message.as_bytes(), server_address_str)
-            .expect("Failed to send data.");
-        let mut response = [0; 1024];
-        match socket.recv_from(&mut response) {
-            Ok((size, _peer)) => {
-                let response_str = std::str::from_utf8(&response[0..size]).expect("Bad data.");
-                //println!("Received response: {}", response_str);
+
+        info!("Sending player info");
+        let socket = client_info.socket.as_mut().unwrap();
+        socket.set_nonblocking(true).expect("could not set non-blocking");
+            let old_position = (transform.translation.x, transform.translation.y);
+            // println!("Old client position is {:?}", old_position);
+        
+            let player_info = PlayerInfo {
+                position: (transform.translation.x, transform.translation.y),
+                velocity: PlayerVelocity { velocity: Vec2 { x: velocity.velocity.x, y: velocity.velocity.y }, prev_position: (transform.translation.x, transform.translation.y), confused: false },
+                health: 100,
+            };
+            // println!("New client position is {:?}", player_info.position);
+        
+            let message = serde_json::to_string(&player_info).expect("Failed to serialize");
+
+            let id = "PLAFC";
+            let big_message = id.to_string()  + &message;
+            // println!("Sending my new positional data to the server, it is: {:?}", message);
+            // println!("what is server address string {:?}", server_address_str);
+            match socket.send(big_message.as_bytes()) {
+                Ok(_) => {},
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                    // Ignore WouldBlock errors
+                },
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    println!("Socket is already connected");
+                },
+                Err(e) => {
+                    println!("failed to send server updated position");
+                    println!("Failed to send data: {:?}", e);
+                }
             }
-            Err(_e) => {
-                //eprintln!("Error receiving data: {}", e);
-            }
-        }
-        // Update the previous position
+        
         velocity.prev_position = (transform.translation.x, transform.translation.y);
     }
+    //bat_transform.translation.x = transform.translation.x - 5.;
+    //bat_transform.translation.y = transform.translation.y;
 }
 
 pub fn collision_check_map1(
